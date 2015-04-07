@@ -109,7 +109,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       private boolean countInstructions; // Whether to count and report number of instructions executed 
       private boolean selfModifyingCode; // Whether to allow self-modifying code (e.g. write to text segment)
       private static final String rangeSeparator = "-";
-      private static final int splashDuration = 2000; // time in MS to show splash screen
       private static final int memoryWordsPerLine = 4; // display 4 memory words, tab separated, per line
       private static final int DECIMAL = 0; // memory and register display format
       private static final int HEXADECIMAL = 1;// memory and register display format
@@ -127,12 +126,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       private int simulateErrorExitCode;// MARS command exit code to return if simulation error occurs
    		
       public MarsLaunch(String[] args) {
-         boolean gui = (args.length == 0);
-         Globals.initialize(gui);  
-         if (gui) {
-            launchIDE();  
-         } 
-         else { // running from command line.
+          // running from command line.
             // assure command mode works in headless environment (generates exception if not)
             System.setProperty("java.awt.headless", "true"); 
             simulate = true;
@@ -165,7 +159,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                dumpSegments();
             }
             System.exit(Globals.exitCode);
-         }
       }   		
    	
       /////////////////////////////////////////////////////////////
@@ -231,23 +224,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       } 	
    	
    		
-   	/////////////////////////////////////////////////////////////////
-   	// There are no command arguments, so run in interactive mode by
-   	// launching the GUI-fronted integrated development environment.
-   	
-      private void launchIDE() {
-         // System.setProperty("apple.laf.useScreenMenuBar", "true"); // Puts MARS menu on Mac OS menu bar
-         new MarsSplashScreen(splashDuration).showSplash();
-         SwingUtilities.invokeLater(
-               new Runnable() {
-                  public void run() {
-                     //Turn off metal's use of bold fonts
-                     //UIManager.put("swing.boldMetal", Boolean.FALSE);
-                     new VenusUI("MARS "+Globals.version);
-                  }
-               }); 
-         return;					
-      }
+   
    			
    			
    	//////////////////////////////////////////////////////////////////////

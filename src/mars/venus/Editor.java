@@ -43,7 +43,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       public static final int MIN_BLINK_RATE = 0;     // no flashing
       public static final int MAX_BLINK_RATE = 1000;  // once per second
    
-      private VenusUI mainUI;
       private EditTabbedPane editTabbedPane;
       private String mainUIbaseTitle;
     /* number of times File->New has been selected.  Used to generate
@@ -58,12 +57,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     /**
      * Create editor.
      *
-     * @param ui the GUI that owns this editor
+     * @param frameTitle The main window's title
      */
-       public Editor(VenusUI ui) {
-         mainUI = ui;
+       public Editor(String frameTitle) {
          FileStatus.reset(); 
-         mainUIbaseTitle = mainUI.getTitle();
+         mainUIbaseTitle = frameTitle;
          newUsageCount = 0;
       	// Directory from which MARS was launched. Guaranteed to have a value.
          defaultOpenDirectory = System.getProperty("user.dir");
@@ -170,12 +168,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 */
        public void setTitle(String path, String name, int status) {
          if (status == FileStatus.NO_FILE || name==null || name.length()==0) {
-            mainUI.setTitle(mainUIbaseTitle);
+            Globals.getGui().setTitle(mainUIbaseTitle);
          } 
          else {
             String edited = (status==FileStatus.NEW_EDITED || status==FileStatus.EDITED) ? "*" : " ";
             String titleName = (status==FileStatus.NEW_EDITED || status==FileStatus.NEW_NOT_EDITED) ? name : path;
-            mainUI.setTitle(titleName + edited + " - " + mainUIbaseTitle);
+            Globals.getGui().setTitle(titleName + edited + " - " + mainUIbaseTitle);
             editTabbedPane.setTitleAt(editTabbedPane.getSelectedIndex(), name + edited);
          }
       }

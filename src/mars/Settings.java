@@ -258,25 +258,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       private String[] colorSettingsValues;
    
       private Preferences preferences;
-   	
-   /**
-     * Create Settings object and set to saved values.  If saved values not found, will set
-     * based on defaults stored in Settings.properties file.  If file problems, will set based
-     * on defaults stored in this class.   
-     */
-       public Settings() {
-         this(true);
-      }
    
    /**
      * Create Settings object and set to saved values.  If saved values not found, will set
      * based on defaults stored in Settings.properties file.  If file problems, will set based
      * on defaults stored in this class.
-     * @param gui true if running the graphical IDE, false if running from command line.
-     * Ignored as of release 3.6 but retained for compatability.
      */
      
-       public Settings(boolean gui) {
+       public Settings() {
          booleanSettingsValues = new boolean[booleanSettingsKeys.length];
          stringSettingsValues = new String[stringSettingsKeys.length];
          fontFamilySettingsValues = new String[fontFamilySettingsKeys.length];
@@ -287,13 +276,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       	// is platform-dependent.  For Windows, they are stored in Registry.  To see,
       	// run regedit and browse to: HKEY_CURRENT_USER\Software\JavaSoft\Prefs\mars
          preferences = Preferences.userNodeForPackage(this.getClass());
-      	// The gui parameter, formerly passed to initialize(), is no longer needed
-      	// because I removed (1/21/09) the call to generate the Font object for the text editor.
-      	// Font objects are now generated only on demand so the "if (gui)" guard
-      	// is no longer necessary.  Originally added by Berkeley b/c they were running it on a 
-      	// headless server and running in command mode.  The Font constructor resulted in Swing 
-      	// initialization which caused problems.  Now this will only occur on demand from
-      	// Venus, which happens only when running as GUI.
          initialize();
       }
    

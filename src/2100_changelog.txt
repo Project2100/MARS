@@ -1,0 +1,51 @@
+####1.0
+
+Mars:
+- This class now checks for empty argument list in stead of the MarsLaunch class
+    DEPND: MarsLaunch()
+
+MarsLaunch:
+- This class is now dedicated to the CLI mode
+- Moved launchIDE() to VenusUI, now public and static
+    DEPND: VenusUI
+
+VenusUI:
+- Cleaned up launchIDE, now sets system LAF
+- Merged the two WindowAdapters in constructor
+- Import cleanup
+- Removed mainUI field, frame is already referenced in Globals
+- Attempts at removing 'this' inside constructor, FileStatus is now set
+  externally
+- Removed unused integer frameState
+- setVisible() call moved from constructor to launchIDE()
+- Edited VenusUI.this.WindowListener.windowClosing() method to set the correct 
+  close operation instead of calling System.exit(0)
+- Removed possible redundant Globals.initialize() call in constructor,
+  is already called in Mars.main()
+
+Settings:
+- removed obsolete gui parameter, now all constructors are nilary
+    DEPND: Globals()
+    DEPND: VenusUI()
+    DEPND: AbstractMarsToolAndApplication.go()
+
+DigitalLabSim / MipsXRay / MessagesPane:
+- Rectified character encodings
+
+MarsSplashScreen:
+* Overhaul of internal structure: showSplash() is now static and takes duration
+  as argument, constructor is private
+    DEPND: VenusUI()
+
+Editor:
+- Constructor now takes only the frame title instead of the whole gui object
+    DEPND: VenusUI()
+
+RunClearBreakpointsAction:
+- Constructor now takes frame reference from function parameter
+  instead of Globals
+
+MainPane:
+- Import cleanup
+- Simplified constructor
+- All fields are now private

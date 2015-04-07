@@ -48,7 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public RunClearBreakpointsAction(String name, Icon icon, String descrip,
                              Integer mnemonic, KeyStroke accel, VenusUI gui) {
          super(name, icon, descrip, mnemonic, accel, gui);
-         Globals.getGui().getMainPane().getExecutePane().getTextSegmentWindow().registerTableModelListener(this);
+         gui.getMainPane().getExecutePane().getTextSegmentWindow().registerTableModelListener(this);
       }
    	 /**
 		  *  When this option is selected, tell text segment window to clear breakpoints in its table model.

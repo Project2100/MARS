@@ -138,7 +138,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          theWindow = this;
          this.isBeingUsedAsAMarsTool = false;
          thisMarsApp.setTitle(this.title);
-         mars.Globals.initialize(true);   				
+         mars.Globals.initialize();   				
       	// assure the dialog goes away if user clicks the X
          thisMarsApp.addWindowListener(
                 new WindowAdapter() {

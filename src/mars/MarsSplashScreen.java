@@ -1,118 +1,99 @@
-   package mars;
-   import java.awt.*;
-   import javax.swing.*;
+package mars;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Toolkit;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JWindow;
+import javax.swing.Timer;
 
 /*
-Copyright (c) 2003-2010,  Pete Sanderson and Kenneth Vollmar
+ Copyright (c) 2003-2010,  Pete Sanderson and Kenneth Vollmar
 
-Developed by Pete Sanderson (psanderson@otterbein.edu)
-and Kenneth Vollmar (kenvollmar@missouristate.edu)
+ Developed by Pete Sanderson (psanderson@otterbein.edu)
+ and Kenneth Vollmar (kenvollmar@missouristate.edu)
 
-Permission is hereby granted, free of charge, to any person obtaining 
-a copy of this software and associated documentation files (the 
-"Software"), to deal in the Software without restriction, including 
-without limitation the rights to use, copy, modify, merge, publish, 
-distribute, sublicense, and/or sell copies of the Software, and to 
-permit persons to whom the Software is furnished to do so, subject 
-to the following conditions:
+ Permission is hereby granted, free of charge, to any person obtaining 
+ a copy of this software and associated documentation files (the 
+ "Software"), to deal in the Software without restriction, including 
+ without limitation the rights to use, copy, modify, merge, publish, 
+ distribute, sublicense, and/or sell copies of the Software, and to 
+ permit persons to whom the Software is furnished to do so, subject 
+ to the following conditions:
 
-The above copyright notice and this permission notice shall be 
-included in all copies or substantial portions of the Software.
+ The above copyright notice and this permission notice shall be 
+ included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
-ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
-CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
+ ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+ CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-(MIT license, http://www.opensource.org/licenses/mit-license.html)
- */
+ (MIT license, http://www.opensource.org/licenses/mit-license.html)
+*/
 
 /**
- * Produces MARS splash screen.<br>
- * Adapted from http://www.java-tips.org/content/view/1267/2/<br>
+ * Produces MARS splash screen.
+ * 
+ * @author Andrea Proietto
  */
+public class MarsSplashScreen extends JWindow {
 
-    public class MarsSplashScreen extends JWindow {
-      
-      private int duration;
-      
-       public MarsSplashScreen(int d) {
-         duration = d;
-      }
-      
-      /**
-   	 * A simple little method to show a title screen in the center
-       * of the screen for the amount of time given in the constructor
-   	 */
-       public void showSplash() {
-         ImageBackgroundPanel content = new ImageBackgroundPanel();
-			this.setContentPane(content);
-         
-         // Set the window's bounds, centering the window
-			// Wee bit of a hack.  I've hardcoded the image dimensions of 
-			// MarsSurfacePathfinder.jpg, because obtaining them via
-			// getHeight() and getWidth() is not trival -- it is possible
-			// that at the time of the call the image has not completed
-			// loading so the Image object doesn't know how big it is.
-			// So observers are involved -- see the API.
-         int width = 390;
-         int height =215;
-         Toolkit tk = Toolkit.getDefaultToolkit();
-         Dimension screen = tk.getScreenSize();
-         int x = (screen.width-width)/2;
-         int y = (screen.height-height)/2;
-         setBounds(x,y,width,height);
-         
-         // Build the splash screen
-         JLabel title = new JLabel("MARS: Mips Assembler and Runtime Simulator", JLabel.CENTER);      
-         JLabel copyrt1 = new JLabel
-               ("<html><br><br>Version "+Globals.version+" Copyright (c) "+Globals.copyrightYears+"</html>", JLabel.CENTER);
-         JLabel copyrt2 = new JLabel
-               ("<html><br><br>"+Globals.copyrightHolders+"</html>", JLabel.CENTER);
-         title.setFont(new Font("Sans-Serif", Font.BOLD, 16));
-         title.setForeground(Color.black);
-         copyrt1.setFont(new Font("Sans-Serif", Font.BOLD, 14));
-         copyrt2.setFont(new Font("Sans-Serif", Font.BOLD, 14));
-         copyrt1.setForeground(Color.white);
-         copyrt2.setForeground(Color.white);
+    private MarsSplashScreen() {
 
-			content.add(title,BorderLayout.NORTH);
-			content.add(copyrt1,BorderLayout.CENTER);
-			content.add(copyrt2,BorderLayout.SOUTH);
+        // Construct the labels
+        JLabel title = new JLabel("MARS: Mips Assembler and Runtime Simulator", JLabel.CENTER);
+        title.setFont(new Font("Sans-Serif", Font.BOLD, 16));
+        title.setForeground(Color.black);
+        
+        JLabel copyright = new JLabel("<html><br/><br/>Version " + Globals.version
+                + " Copyright (c) " + Globals.copyrightYears
+                + "<br/><br/><br/>" + Globals.copyrightHolders + "</html>",
+                JLabel.CENTER);
+        copyright.setFont(new Font("Sans-Serif", Font.BOLD, 14));
+        copyright.setForeground(Color.white);
 
-         // Display it
-         setVisible(true);
-         // Wait a little while, maybe while loading resources
-         try { Thread.sleep(duration); } 
-             catch (Exception e) {}
-         setVisible(false);
-      }
-   	
-       class ImageBackgroundPanel extends JPanel
-      {
-         Image image;
-          public ImageBackgroundPanel()
-         {
-            try
-            {
-				   image = new ImageIcon(Toolkit.getDefaultToolkit().getImage(this.getClass().getResource(Globals.imagesPath+"MarsSurfacePathfinder.jpg"))).getImage();
+        // Construct the panel with the background image
+        JPanel content = new JPanel() {
+            ImageIcon image = new ImageIcon(Toolkit.getDefaultToolkit().getImage(
+                    this.getClass().getResource(Globals.imagesPath + "MarsSurfacePathfinder.jpg")));
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.drawImage(image.getImage(), 0, 0, this);
             }
-                catch (Exception e) {System.out.println(e); /*handled in paintComponent()*/ }
-         }
-      
-          @Override
-          protected void paintComponent(Graphics g)
-         {
-            super.paintComponent(g); 
-            if (image != null)
-               g.drawImage(image, 0,0,this.getWidth(),this.getHeight(),this);
-         }
-      }
-   
-   
-   
-      
-   }
+
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(image.getIconWidth(), image.getIconHeight());
+            }
+        };
+
+        // Compose and finalize the splash
+        content.add(title);
+        content.add(copyright);
+        setContentPane(content);
+        pack();
+        setLocationRelativeTo(null);
+    }
+
+    /**
+     * Show the application's splash screen.
+     *
+     * @param duration The time expressed in milliseconds to display the splash
+     */
+    public static void showSplash(int duration) {
+        MarsSplashScreen splash = new MarsSplashScreen();
+        splash.setVisible(true);
+
+        new Timer(duration, (event) -> splash.setVisible(false)).start();
+    }
+}
