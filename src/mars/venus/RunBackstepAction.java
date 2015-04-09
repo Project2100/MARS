@@ -4,6 +4,7 @@
    import java.awt.*;
    import java.awt.event.*;
    import javax.swing.*;
+   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -53,7 +54,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          boolean done = false;
          if(!FileStatus.isAssembled()){
                      // note: this should never occur since backstepping is only enabled after successful assembly.
-            JOptionPane.showMessageDialog(mainUI,"The program must be assembled before it can be run.");
+            JOptionPane.showMessageDialog(mainFrame,"The program must be assembled before it can be run.");
             return;
          }
          mainUI.setStarted(true);

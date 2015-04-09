@@ -8,6 +8,7 @@
    import java.awt.event.*;
    import javax.swing.*;
    import java.io.*;
+   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2007,  Pete Sanderson and Kenneth Vollmar
@@ -82,12 +83,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             }            
             else{
                // This should never occur because at termination the Go and Step buttons are disabled.
-               JOptionPane.showMessageDialog(mainUI,"reset "+mainUI.getReset()+" started "+mainUI.getStarted());//"You must reset before you can execute the program again.");                 
+               JOptionPane.showMessageDialog(mainFrame,"reset "+mainUI.getReset()+" started "+mainUI.getStarted());//"You must reset before you can execute the program again.");                 
             }
          }
          else{
             // note: this should never occur since "Go" is only enabled after successful assembly.
-            JOptionPane.showMessageDialog(mainUI,"The program must be assembled before it can be run.");
+            JOptionPane.showMessageDialog(mainFrame,"The program must be assembled before it can be run.");
          }		
       }
       

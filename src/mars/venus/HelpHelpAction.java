@@ -9,6 +9,7 @@
    import javax.swing.*;
    import javax.swing.event.*;
    import javax.swing.text.html.*;
+   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2008,  Pete Sanderson and Kenneth Vollmar
@@ -73,7 +74,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          tabbedPane.addTab("Acknowledgements", createHTMLHelpPanel("Acknowledgements.html"));
          tabbedPane.addTab("Instruction Set Song", createHTMLHelpPanel("MIPSInstructionSetSong.html"));
          // Create non-modal dialog. Based on java.sun.com "How to Make Dialogs", DialogDemo.java		
-         final JDialog dialog = new JDialog(mainUI, "MARS "+Globals.version+" Help");
+         final JDialog dialog = new JDialog(mainFrame, "MARS "+Globals.version+" Help");
       	// assure the dialog goes away if user clicks the X
          dialog.addWindowListener(
                 new WindowAdapter() {
@@ -106,7 +107,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          dialog.setContentPane(contentPane);      
          //Show it.
          dialog.setSize(this.getSize());
-         dialog.setLocationRelativeTo(mainUI);
+         dialog.setLocationRelativeTo(mainFrame);
          dialog.setVisible(true);
       
       //////////////////////////////////////////////////////////////////
@@ -375,9 +376,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   doc.processHTMLFrameHyperlinkEvent(evt); 
                } 
                else {
-                  webpageDisplay = new JDialog(mainUI, "Primitive HTML Viewer");
+                  webpageDisplay = new JDialog(mainFrame, "Primitive HTML Viewer");
                   webpageDisplay.setLayout(new BorderLayout());
-                  webpageDisplay.setLocation(mainUI.getSize().width/6, mainUI.getSize().height/6);
+                  webpageDisplay.setLocation(mainFrame.getSize().width/6, mainFrame.getSize().height/6);
                   JEditorPane webpagePane;
                   try { 
                      webpagePane = new JEditorPane(e.getURL());
@@ -407,7 +408,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                               }
                            }		
                         });
-                  webpagePane.setPreferredSize(new Dimension(mainUI.getSize().width*2/3, mainUI.getSize().height*2/3));
+                  webpagePane.setPreferredSize(new Dimension(mainFrame.getSize().width*2/3, mainFrame.getSize().height*2/3));
                   webpagePane.setEditable(false);
                   webpagePane.setCaretPosition(0);
                   JScrollPane webpageScrollPane = new JScrollPane(webpagePane, 

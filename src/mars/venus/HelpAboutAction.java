@@ -3,6 +3,7 @@
    import java.awt.*;
    import java.awt.event.*;
    import javax.swing.*;
+   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
@@ -42,11 +43,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
    		  
        public void actionPerformed(ActionEvent e){
-          JOptionPane.showMessageDialog(mainUI,
+          JOptionPane.showMessageDialog(mainFrame,
 			              "MARS "+Globals.version+"    Copyright "+Globals.copyrightYears+"\n"+
 							  Globals.copyrightHolders+"\n"+
 							  "MARS is the Mips Assembler and Runtime Simulator.\n\n"+
 							  "Mars image courtesy of NASA/JPL.\n"+
+                                                          "Application icon taken from [PLACEHOLDER]"+
 							  "Toolbar and menu icons are from:\n"+
 							  "  *  Tango Desktop Project (tango.freedesktop.org),\n"+
 							  "  *  glyFX (www.glyfx.com) Common Toolbar Set,\n"+

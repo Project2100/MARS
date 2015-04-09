@@ -10,6 +10,7 @@
    import java.io.*;
    import java.util.*;
    import javax.swing.plaf.basic.*;
+   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2008,  Pete Sanderson and Kenneth Vollmar
@@ -75,7 +76,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        private boolean dumpMemory() {
          dumpDialog = createDumpDialog();
          dumpDialog.pack();
-         dumpDialog.setLocationRelativeTo(Globals.getGui());
+         dumpDialog.setLocationRelativeTo(mainFrame);
          dumpDialog.setVisible(true);	
          return true;
       	/////////////////////////////////////////////////////////////////////
@@ -84,7 +85,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	
    	 // The dump dialog that appears when menu item is selected.
        private JDialog createDumpDialog() {
-         JDialog dumpDialog = new JDialog(Globals.getGui(), title, true);
+         JDialog dumpDialog = new JDialog(mainFrame, title, true);
          dumpDialog.setContentPane(buildDialogPanel());
          dumpDialog.setDefaultCloseOperation(
                         JDialog.DO_NOTHING_ON_CLOSE);
@@ -221,14 +222,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          saveDialog = new JFileChooser(mainUI.getEditor().getCurrentSaveDirectory());
          saveDialog.setDialogTitle(title);
          while (!operationOK) {
-            int decision = saveDialog.showSaveDialog(mainUI);
+            int decision = saveDialog.showSaveDialog(mainFrame);
             if (decision != JFileChooser.APPROVE_OPTION) {
                return false;
             }
             theFile = saveDialog.getSelectedFile();
             operationOK = true;
             if (theFile.exists()) {
-               int overwrite = JOptionPane.showConfirmDialog(mainUI,
+               int overwrite = JOptionPane.showConfirmDialog(mainFrame,
                      "File "+theFile.getName()+" already exists.  Do you wish to overwrite it?",
                      "Overwrite existing file?",
                      JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);

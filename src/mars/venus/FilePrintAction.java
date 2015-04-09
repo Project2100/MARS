@@ -6,6 +6,7 @@
    import java.io.*;
    import java.awt.print.*;
    import java.util.*;
+   import static mars.venus.VenusUI.mainFrame;
  
  /*
 Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
@@ -60,7 +61,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          double margins = .5; // all margins (left,right,top,bottom) fixed at .5"
          HardcopyWriter out;
          try {
-            out = new HardcopyWriter(mainUI,editPane.getFilename(),
+            out = new HardcopyWriter(mainFrame,editPane.getFilename(),
 				                         fontsize, margins, margins, margins, margins);
          }
              catch (HardcopyWriter.PrintCanceledException pce) {

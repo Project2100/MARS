@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
+import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
@@ -51,8 +52,9 @@ import mars.*;
  * not as subclasses of JMenuBar and JToolBar, but as instances of them.  They are both
  * here primarily so both can share the Action objects.
  */
-public class VenusUI extends JFrame {
+public class VenusUI {
 
+    public static final JFrame mainFrame=new JFrame("MARS " + Globals.version);
     public JMenuBar menu;
     JToolBar toolbar;
     MainPane mainPane;
@@ -128,14 +130,14 @@ public class VenusUI extends JFrame {
                 Logger.getLogger(VenusUI.class.getName()).log(Level.WARNING, "Could not set system LAF", ex);
             }
 
-            VenusUI f = new VenusUI("MARS " + Globals.version);
-            Globals.setGui(f);
+            VenusUI f = new VenusUI();
+            //Globals.setGui(f);
 
             FileStatus.reset();
             // The following has side effect of establishing menu state
             FileStatus.set(FileStatus.NO_FILE);
 
-            f.setVisible(true);
+            mainFrame.setVisible(true);
         });
     }
 
@@ -144,9 +146,8 @@ public class VenusUI extends JFrame {
      *
      * @param s Name of the window to be created.
      */
-    public VenusUI(String s) {
-        super(s);
-        editor = new Editor(s);
+    public VenusUI() {
+        editor = new Editor(mainFrame.getTitle());
 
         double screenWidth = Toolkit.getDefaultToolkit().getScreenSize().getWidth();
         double screenHeight = Toolkit.getDefaultToolkit().getScreenSize().getHeight();
@@ -167,8 +168,8 @@ public class VenusUI extends JFrame {
         //this.setSize((int)(screenWidth*.8),(int)(screenHeight*.8));
 
         //  image courtesy of NASA/JPL.
-        setIconImage(Toolkit.getDefaultToolkit().getImage(
-                this.getClass().getResource(Globals.imagesPath + "RedMars16.gif")));
+        mainFrame.setIconImage(Toolkit.getDefaultToolkit().getImage(
+                this.getClass().getResource(Globals.imagesPath + "Mars_Icon_2_512x512x32.png")));
 
       	// Everything in frame will be arranged on JPanel "center", which is only frame component.
         // "center" has BorderLayout and 2 major components:
@@ -210,7 +211,7 @@ public class VenusUI extends JFrame {
         // due to dependencies, do not set up menu/toolbar until now.
         createActionObjects(this);
         menu = setUpMenuBar();
-        setJMenuBar(menu);
+        mainFrame.setJMenuBar(menu);
 
         toolbar = setUpToolBar();
 
@@ -221,25 +222,24 @@ public class VenusUI extends JFrame {
         center.add(jp, BorderLayout.NORTH);
         center.add(horizonSplitter);
 
-        getContentPane().add(center);
+        mainFrame.getContentPane().add(center);
 
-        addWindowListener(new WindowAdapter() {
+        mainFrame.addWindowListener(new WindowAdapter() {
             // This is invoked when exiting the app through the X icon.  It will in turn
             // check for unsaved edits before exiting.
             @Override
             public void windowClosing(WindowEvent e) {
                 if (editor.closeAll())
-                    setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                    mainFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             }
         });
 
       	// The following will handle the windowClosing event properly in the 
         // situation where user Cancels out of "save edits?" dialog.  By default,
         // the GUI frame will be hidden but I want it to do nothing.
-        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-
-        pack();
+        mainFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        mainFrame.pack();
     }
 
     /*
@@ -1191,7 +1191,7 @@ public class VenusUI extends JFrame {
         popup.add(new JCheckBoxMenuItem(settingsLabelAction));
         //Add listener to components that can bring up popup menus. 
         MouseListener popupListener = new PopupListener(popup);
-        this.addMouseListener(popupListener);
+        mainFrame.addMouseListener(popupListener);
     }
 
 }

@@ -10,6 +10,7 @@
    import mars.simulator.Simulator;
    import javax.swing.event.DocumentEvent;
    import javax.swing.text.Position.Bias;
+   import static mars.venus.VenusUI.mainFrame;
 
 /*
 Copyright (c) 2003-2010,  Pete Sanderson and Kenneth Vollmar
@@ -350,7 +351,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          String input;
          JOptionPane pane = new JOptionPane(prompt,JOptionPane.QUESTION_MESSAGE,JOptionPane.DEFAULT_OPTION); 
          pane.setWantsInput(true);
-         JDialog dialog = pane.createDialog(Globals.getGui(), "MIPS Keyboard Input"); 
+         JDialog dialog = pane.createDialog(mainFrame, "MIPS Keyboard Input"); 
          dialog.setVisible(true); 
          input = (String) pane.getInputValue();
          this.postRunMessage(Globals.userInputAlert+input+"\n");

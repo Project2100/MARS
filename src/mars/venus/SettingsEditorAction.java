@@ -12,6 +12,7 @@
    import javax.swing.border.*;
    import javax.swing.event.*;
    import java.io.*;
+   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2011,  Pete Sanderson and Kenneth Vollmar
@@ -67,7 +68,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	  *  editor settings.
    	  */
        public void actionPerformed(ActionEvent e) {
-         editorDialog = new EditorFontDialog(Globals.getGui(), "Text Editor Settings", true, Globals.getSettings().getEditorFont() );
+         editorDialog = new EditorFontDialog(mainFrame, "Text Editor Settings", true, Globals.getSettings().getEditorFont() );
          editorDialog.setVisible(true);
       
       }

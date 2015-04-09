@@ -10,6 +10,7 @@
    import javax.swing.border.*;
    import javax.swing.event.*;
    import java.io.*;
+   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -117,7 +118,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	  *  editor settings.
    	  */
        public void actionPerformed(ActionEvent e) {
-         highlightDialog = new JDialog(Globals.getGui(), "Runtime Table Highlighting Colors and Fonts", true);
+         highlightDialog = new JDialog(mainFrame, "Runtime Table Highlighting Colors and Fonts", true);
          highlightDialog.setContentPane(buildDialogPanel());
          highlightDialog.setDefaultCloseOperation(
                         JDialog.DO_NOTHING_ON_CLOSE);
@@ -128,7 +129,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   }
                });
          highlightDialog.pack();
-         highlightDialog.setLocationRelativeTo(Globals.getGui());
+         highlightDialog.setLocationRelativeTo(mainFrame);
          highlightDialog.setVisible(true);
       }
    		  

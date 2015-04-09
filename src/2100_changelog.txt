@@ -1,3 +1,11 @@
+####1.1
+
+VenusUI:
+- Application icon changed
+- Does not extend JFrame anymore, now has a PSF reference to a standard JFrame,
+  which is now the GUI root
+    DEPND: ...
+
 ####1.0
 
 Mars:

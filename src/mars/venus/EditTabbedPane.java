@@ -12,6 +12,7 @@
    import java.io.*;
    import java.beans.PropertyChangeListener;
    import javax.swing.filechooser.FileFilter;
+   import static mars.venus.VenusUI.mainFrame;
 		
 	/*
 Copyright (c) 2003-2010,  Pete Sanderson and Kenneth Vollmar
@@ -355,14 +356,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                // end of 13-July-2011 code.
                saveDialog.setDialogTitle("Save As");
             
-               int decision = saveDialog.showSaveDialog(mainUI);
+               int decision = saveDialog.showSaveDialog(mainFrame);
                if (decision != JFileChooser.APPROVE_OPTION) {
                   return null;
                }
                theFile = saveDialog.getSelectedFile();
                operationOK = true;
                if (theFile.exists()) {
-                  int overwrite = JOptionPane.showConfirmDialog(mainUI,
+                  int overwrite = JOptionPane.showConfirmDialog(mainFrame,
                      "File "+theFile.getName()+" already exists.  Do you wish to overwrite it?",
                      "Overwrite existing file?",
                      JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
@@ -523,7 +524,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 
    	 
        private int confirm(String name) {
-         return JOptionPane.showConfirmDialog(mainUI,
+         return JOptionPane.showConfirmDialog(mainFrame,
             "Changes to "+name+" will be lost unless you save.  Do you wish to save all changes now?",
             "Save program changes?",
             JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);		 
@@ -570,7 +571,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                fileChooser.setSelectedFile(mostRecentlyOpenedFile);
             }
          
-            if (fileChooser.showOpenDialog(mainUI) == JFileChooser.APPROVE_OPTION) {
+            if (fileChooser.showOpenDialog(mainFrame) == JFileChooser.APPROVE_OPTION) {
                File theFile = fileChooser.getSelectedFile();
                theEditor.setCurrentOpenDirectory(theFile.getParent());
                //theEditor.setCurrentSaveDirectory(theFile.getParent());// 13-July-2011 DPS.

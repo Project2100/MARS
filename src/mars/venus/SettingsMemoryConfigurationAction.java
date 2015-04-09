@@ -11,6 +11,7 @@
    import javax.swing.border.*;
    import javax.swing.event.*;
    import java.io.*;
+   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -68,7 +69,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	  *  editor settings.
    	  */
        public void actionPerformed(ActionEvent e) {
-         configDialog = new MemoryConfigurationDialog(Globals.getGui(), "MIPS Memory Configuration", true );
+         configDialog = new MemoryConfigurationDialog(mainFrame, "MIPS Memory Configuration", true );
          configDialog.setVisible(true);
       }
    	
