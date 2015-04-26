@@ -75,7 +75,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	  */
        public BackStepper() {
          engaged = true;
-         backSteps = new BackstepStack(Globals.maximumBacksteps);
+         backSteps = new BackstepStack(Main.maximumBacksteps);
       }
    
        /**
@@ -142,16 +142,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                try {
                   switch (step.action) {
                      case MEMORY_RESTORE_RAW_WORD : 
-                        Globals.memory.setRawWord(step.param1, step.param2);
+                        Main.memory.setRawWord(step.param1, step.param2);
                         break;
                      case MEMORY_RESTORE_WORD : 
-                        Globals.memory.setWord(step.param1, step.param2);
+                        Main.memory.setWord(step.param1, step.param2);
                         break;
                      case MEMORY_RESTORE_HALF :
-                        Globals.memory.setHalf(step.param1, step.param2);
+                        Main.memory.setHalf(step.param1, step.param2);
                         break;
                      case MEMORY_RESTORE_BYTE :
-                        Globals.memory.setByte(step.param1, step.param2);
+                        Main.memory.setByte(step.param1, step.param2);
                         break;
                      case REGISTER_RESTORE :
                         RegisterFile.updateRegister(step.param1, step.param2);
@@ -350,7 +350,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             // Client does not have direct access to program statement, and rather than making all
             // of them go through the methods below to obtain it, we will do it here.  
             // Want the program statement but do not want observers notified.
-               ps = Globals.memory.getStatementNoNotify(programCounter);
+               ps = Main.memory.getStatementNoNotify(programCounter);
             } 
                 catch (Exception e) {
                 // The only situation causing this so far: user modifies memory or register

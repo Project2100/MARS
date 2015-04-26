@@ -1,5 +1,5 @@
    package mars.mips.hardware;
-   import mars.Globals;
+   import mars.Main;
    import java.util.*;
 
 /*
@@ -167,7 +167,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             currentConfiguration = defaultConfiguration;
          	// Get current config from settings
          	//String currentConfigurationIdentifier = Globals.getSettings().getMemoryConfiguration();
-            setCurrentConfiguration(getConfigurationByName(Globals.getSettings().getMemoryConfiguration()));
+            setCurrentConfiguration(getConfigurationByName(Main.getSettings().getMemoryConfiguration()));
          //	Iterator configurationsIterator = getConfigurationsIterator();
          //	while (configurationsIterator.hasNext()) {
          	//  MemoryConfiguration config = (MemoryConfiguration)configurationsIterator.next();
@@ -217,7 +217,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             return false;
          if (config != currentConfiguration) {
             currentConfiguration = config;
-            Globals.memory.clear();
+            Main.memory.clear();
             RegisterFile.getUserRegister("$gp").changeResetValue(config.getGlobalPointer());
             RegisterFile.getUserRegister("$sp").changeResetValue(config.getStackPointer());
             RegisterFile.getProgramCounterRegister().changeResetValue(config.getTextBaseAddress());

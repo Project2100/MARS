@@ -54,7 +54,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		  *  When this option is selected, tell text segment window to clear breakpoints in its table model.
 		  */
        public void actionPerformed(ActionEvent e) {
-         Globals.getGui().getMainPane().getExecutePane().getTextSegmentWindow().clearAllBreakpoints();
+         Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow().clearAllBreakpoints();
 		}
    	
 		 /**
@@ -65,7 +65,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		  */
        public void tableChanged(TableModelEvent e) {
          setEnabled(
-            Globals.getGui().getMainPane().getExecutePane().getTextSegmentWindow().getBreakpointCount()>0);
+            Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow().getBreakpointCount()>0);
       }
    	   	
    }

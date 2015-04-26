@@ -233,13 +233,13 @@
       {  
          ArrayList matches = null;
          if (token != null && token.id == Token.KEYWORD1) {
-            ArrayList instrMatches =  mars.Globals.instructionSet.matchOperator(tokenText);
+            ArrayList instrMatches =  mars.Main.instructionSet.matchOperator(tokenText);
             if (instrMatches.size() > 0) {
                int realMatches = 0;
                matches = new ArrayList();
                for (int i=0; i<instrMatches.size(); i++) {
                   Instruction inst = (Instruction) instrMatches.get(i);
-                  if (mars.Globals.getSettings().getExtendedAssemblerEnabled() || inst instanceof BasicInstruction) {
+                  if (mars.Main.getSettings().getExtendedAssemblerEnabled() || inst instanceof BasicInstruction) {
                      matches.add(new PopupHelpItem(tokenText, inst.getExampleFormat(), inst.getDescription()));
                      realMatches++;
                   }
@@ -370,7 +370,7 @@
                   return getTextFromDirectiveMatch(trimmedTokenText, false);
                } 
                else
-                  if (trimmedTokenText.length() >= mars.Globals.getSettings().getEditorPopupPrefixLength()) { 
+                  if (trimmedTokenText.length() >= mars.Main.getSettings().getEditorPopupPrefixLength()) { 
                      return getTextFromInstructionMatch(trimmedTokenText, false);
                   }
             }
@@ -415,10 +415,10 @@
          ArrayList matches = null;
          ArrayList results = new ArrayList();
          if (exact) {
-            matches =  mars.Globals.instructionSet.matchOperator(tokenText);
+            matches =  mars.Main.instructionSet.matchOperator(tokenText);
          } 
          else {
-            matches =  mars.Globals.instructionSet.prefixMatchOperator(tokenText);
+            matches =  mars.Main.instructionSet.prefixMatchOperator(tokenText);
          }
          if (matches == null) {
             return null;
@@ -428,7 +428,7 @@
          TreeSet mnemonics = new TreeSet();
          for (int i=0; i<matches.size(); i++) {
             Instruction inst = (Instruction) matches.get(i);
-            if (mars.Globals.getSettings().getExtendedAssemblerEnabled() || inst instanceof BasicInstruction) {
+            if (mars.Main.getSettings().getExtendedAssemblerEnabled() || inst instanceof BasicInstruction) {
                if (exact) {
                   results.add(new PopupHelpItem(tokenText, inst.getExampleFormat(), inst.getDescription(), exact));
                } 
@@ -478,7 +478,7 @@
          {
             cKeywords = new KeywordMap(false);
          	// add Instruction mnemonics
-            java.util.ArrayList instructionSet = mars.Globals.instructionSet.getInstructionList();
+            java.util.ArrayList instructionSet = mars.Main.instructionSet.getInstructionList();
             for (int i=0; i< instructionSet.size(); i++) {
                cKeywords.add( ((mars.mips.instructions.Instruction)instructionSet.get(i)).getName(), Token.KEYWORD1 );
             }

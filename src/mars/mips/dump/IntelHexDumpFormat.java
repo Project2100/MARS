@@ -1,6 +1,6 @@
    package mars.mips.dump;
 
-   import mars.Globals;
+   import mars.Main;
    import mars.mips.hardware.*;
    import java.io.*;
 
@@ -37,7 +37,7 @@
             String string = null;
             try {
                for (int address = firstAddress; address <= lastAddress; address += Memory.WORD_LENGTH_BYTES) {
-                  Integer temp = Globals.memory.getRawWordOrNull(address);
+                  Integer temp = Main.memory.getRawWordOrNull(address);
                   if (temp == null) 
                      break;
                   string = Integer.toHexString(temp.intValue());

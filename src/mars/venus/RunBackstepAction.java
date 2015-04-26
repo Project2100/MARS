@@ -4,7 +4,6 @@
    import java.awt.*;
    import java.awt.event.*;
    import javax.swing.*;
-   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -54,20 +53,20 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          boolean done = false;
          if(!FileStatus.isAssembled()){
                      // note: this should never occur since backstepping is only enabled after successful assembly.
-            JOptionPane.showMessageDialog(mainFrame,"The program must be assembled before it can be run.");
+            JOptionPane.showMessageDialog(VenusUI.getMainFrame(),"The program must be assembled before it can be run.");
             return;
          }
          mainUI.setStarted(true);
          mainUI.messagesPane.setSelectedComponent(mainUI.messagesPane.runTab);
          executePane.getTextSegmentWindow().setCodeHighlighting(true);
       		
-         if (Globals.getSettings().getBackSteppingEnabled()) {
-            boolean inDelaySlot = Globals.program.getBackStepper().inDelaySlot(); // Added 25 June 2007
+         if (Main.getSettings().getBackSteppingEnabled()) {
+            boolean inDelaySlot = Main.program.getBackStepper().inDelaySlot(); // Added 25 June 2007
 				Memory.getInstance().addObserver(executePane.getDataSegmentWindow());
 				RegisterFile.addRegistersObserver(executePane.getRegistersWindow());
 				Coprocessor0.addRegistersObserver(executePane.getCoprocessor0Window());
 				Coprocessor1.addRegistersObserver(executePane.getCoprocessor1Window());
-            Globals.program.getBackStepper().backStep();
+            Main.program.getBackStepper().backStep();
 				Memory.getInstance().deleteObserver(executePane.getDataSegmentWindow());
 				RegisterFile.deleteRegistersObserver(executePane.getRegistersWindow());
             executePane.getRegistersWindow().updateRegisters();

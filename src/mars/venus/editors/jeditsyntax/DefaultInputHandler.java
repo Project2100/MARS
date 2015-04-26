@@ -198,7 +198,7 @@
                currentBindings = bindings;
                // No binding for this keyStroke, pass it to menu 
                // (mnemonic, accelerator).  DPS 4-may-2010
-               mars.Globals.getGui().dispatchEventToMenu(evt);
+               mars.Main.getEnv().dispatchEventToMenu(evt);
                evt.consume();
                return;
             }

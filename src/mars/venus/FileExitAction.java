@@ -1,53 +1,54 @@
-   package mars.venus;
-   import mars.*;
-   import java.awt.*;
-   import java.awt.event.*;
-   import javax.swing.*;
-	
-	/*
-Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
+package mars.venus;
 
-Developed by Pete Sanderson (psanderson@otterbein.edu)
-and Kenneth Vollmar (kenvollmar@missouristate.edu)
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
+import javax.swing.Icon;
+import javax.swing.KeyStroke;
 
-Permission is hereby granted, free of charge, to any person obtaining 
-a copy of this software and associated documentation files (the 
-"Software"), to deal in the Software without restriction, including 
-without limitation the rights to use, copy, modify, merge, publish, 
-distribute, sublicense, and/or sell copies of the Software, and to 
-permit persons to whom the Software is furnished to do so, subject 
-to the following conditions:
+/*
+ Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
 
-The above copyright notice and this permission notice shall be 
-included in all copies or substantial portions of the Software.
+ Developed by Pete Sanderson (psanderson@otterbein.edu)
+ and Kenneth Vollmar (kenvollmar@missouristate.edu)
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
-ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
-CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ Permission is hereby granted, free of charge, to any person obtaining 
+ a copy of this software and associated documentation files (the 
+ "Software"), to deal in the Software without restriction, including 
+ without limitation the rights to use, copy, modify, merge, publish, 
+ distribute, sublicense, and/or sell copies of the Software, and to 
+ permit persons to whom the Software is furnished to do so, subject 
+ to the following conditions:
 
-(MIT license, http://www.opensource.org/licenses/mit-license.html)
+ The above copyright notice and this permission notice shall be 
+ included in all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
+ ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+ CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+ (MIT license, http://www.opensource.org/licenses/mit-license.html)
+*/
+
+/**
+ * Action for the File -> Exit menu item
  */
-	
+class FileExitAction extends GuiAction {
+
+    public FileExitAction(String name, Icon icon, String descrip,
+            int mnemonic, KeyStroke accel) {
+        super(name, icon, descrip, mnemonic, accel);
+    }
+
     /**
-    * Action  for the File -> Exit menu item
-    */   			
-    public class FileExitAction extends GuiAction {
-   	 
-       public FileExitAction(String name, Icon icon, String descrip,
-                             Integer mnemonic, KeyStroke accel, VenusUI gui) {
-         super(name, icon, descrip, mnemonic, accel, gui);
-      }
-   		 
-   	/**
-		 * Exit MARS, unless one or more files have unsaved edits and user cancels.
-		 */	  
-       public void actionPerformed(ActionEvent e){
-		    if (mainUI.editor.closeAll()) {
-             System.exit(0);
-			 }
-      }
-   }   
+     * Exit MARS, unless one or more files have unsaved edits and user cancels.
+     */
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        // Crafting a WindowClosing event, will call mainFrame's WindowListener
+        VenusUI.getMainFrame().dispatchEvent(new WindowEvent(VenusUI.getMainFrame(), WindowEvent.WINDOW_CLOSING));
+    }
+}

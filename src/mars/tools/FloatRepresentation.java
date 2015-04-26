@@ -389,14 +389,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	// If display is attached to a register then update the register value.
        private synchronized void updateAnyAttachedRegister(int intValue) {
          if (attachedRegister != null) {
-            synchronized (Globals.memoryAndRegistersLock) {
+            synchronized (Main.memoryAndRegistersLock) {
                attachedRegister.setValue(intValue);
             }
          	// HERE'S A HACK!!  Want to immediately display the updated register value in MARS
          	// but that code was not written for event-driven update (e.g. Observer) --
          	// it was written to poll the registers for their values.  So we force it to do so.
-            if (Globals.getGui() != null) {
-               Globals.getGui().getRegistersPane().getCoprocessor1Window().updateRegisters();
+            if (Main.getEnv() != null) {
+               Main.getEnv().getRegistersPane().getCoprocessor1Window().updateRegisters();
             }
          }
       }

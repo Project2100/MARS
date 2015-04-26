@@ -10,7 +10,7 @@
    import javax.swing.border.*;
    import javax.swing.event.*;
    import java.io.*;
-   import static mars.venus.VenusUI.mainFrame;
+   import static mars.venus.VenusUI.getMainFrame;
 	
 	/*
 Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -118,7 +118,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	  *  editor settings.
    	  */
        public void actionPerformed(ActionEvent e) {
-         highlightDialog = new JDialog(mainFrame, "Runtime Table Highlighting Colors and Fonts", true);
+         highlightDialog = new JDialog(getMainFrame(), "Runtime Table Highlighting Colors and Fonts", true);
          highlightDialog.setContentPane(buildDialogPanel());
          highlightDialog.setDefaultCloseOperation(
                         JDialog.DO_NOTHING_ON_CLOSE);
@@ -129,7 +129,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   }
                });
          highlightDialog.pack();
-         highlightDialog.setLocationRelativeTo(mainFrame);
+         highlightDialog.setLocationRelativeTo(getMainFrame());
          highlightDialog.setVisible(true);
       }
    		  
@@ -308,7 +308,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    
        // Called once, upon dialog setup.
        private void initializeButtonColors() {
-         Settings settings = Globals.getSettings();
+         Settings settings = Main.getSettings();
          LineBorder lineBorder = new LineBorder(Color.BLACK);
          Color backgroundSetting, foregroundSetting;
          Font fontSetting;
@@ -346,7 +346,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    
    	// Set the color settings according to current button colors.  Occurs when "Apply" selected.
        private void setHighlightingSettings() {
-         Settings settings = Globals.getSettings();
+         Settings settings = Main.getSettings();
          for (int i=0; i<backgroundSettingPositions.length; i++) {
             settings.setColorSettingByPosition(backgroundSettingPositions[i], backgroundButtons[i].getBackground());			
             settings.setColorSettingByPosition(foregroundSettingPositions[i], foregroundButtons[i].getBackground());
@@ -354,7 +354,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          }
          settings.setDataSegmentHighlighting(currentDataHighlightSetting);
          settings.setRegistersHighlighting(currentRegisterHighlightSetting);
-         ExecutePane executePane = Globals.getGui().getMainPane().getExecutePane();
+         ExecutePane executePane = Main.getEnv().getMainPane().getExecutePane();
          executePane.getRegistersWindow().refresh();
          executePane.getCoprocessor0Window().refresh();
          executePane.getCoprocessor1Window().refresh();
@@ -371,7 +371,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    					
    	 // Called when Reset selected.  
        private void resetButtonColors() {
-         Settings settings = Globals.getSettings();
+         Settings settings = Main.getSettings();
          dataHighlightButton.setText(getHighlightControlText(initialDataHighlightSetting));
          registerHighlightButton.setText(getHighlightControlText(initialRegisterHighlightSetting));
          Color backgroundSetting, foregroundSetting;
@@ -488,9 +488,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                backgroundButtons[position].setEnabled(false);
                foregroundButtons[position].setEnabled(false);
                fontButtons[position].setEnabled(false);
-               newBackground = Globals.getSettings().getDefaultColorSettingByPosition(backgroundSettingPositions[position]);
-               newForeground = Globals.getSettings().getDefaultColorSettingByPosition(foregroundSettingPositions[position]);
-               newFont = Globals.getSettings().getDefaultFontByPosition(fontSettingPositions[position]);
+               newBackground = Main.getSettings().getDefaultColorSettingByPosition(backgroundSettingPositions[position]);
+               newForeground = Main.getSettings().getDefaultColorSettingByPosition(foregroundSettingPositions[position]);
+               newFont = Main.getSettings().getDefaultFontByPosition(fontSettingPositions[position]);
                currentNondefaultBackground[position] = backgroundButtons[position].getBackground();
                currentNondefaultForeground[position] = foregroundButtons[position].getBackground();
                currentNondefaultFont[position] = samples[position].getFont();

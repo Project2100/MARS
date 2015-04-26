@@ -158,7 +158,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                }
                dumpSegments();
             }
-            System.exit(Globals.exitCode);
+            System.exit(Main.exitCode);
       }   		
    	
       /////////////////////////////////////////////////////////////
@@ -167,6 +167,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    
       private void dumpSegments() {
        
+          (new DumpFormatLoader()).loadDumpFormats();
          if (dumpTriples == null) 
             return;
          
@@ -193,15 +194,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                out.println("Error while attempting to save dump, segment/address-range " + triple[0] + " is invalid!");
                continue;
             }
-            DumpFormatLoader loader = new DumpFormatLoader();
-            ArrayList dumpFormats = loader.loadDumpFormats();
-            DumpFormat format = DumpFormatLoader.findDumpFormatGivenCommandDescriptor(dumpFormats, triple[1]);
+            DumpFormat format = DumpFormatLoader.fromCommandDescriptor(triple[1]);
             if (format == null) {
                out.println("Error while attempting to save dump, format " + triple[1] + " was not found!");
                continue;
             }
             try {
-               int highAddress = Globals.memory.getAddressOfFirstNull(segInfo[0].intValue(), segInfo[1].intValue())- Memory.WORD_LENGTH_BYTES;
+               int highAddress = Main.memory.getAddressOfFirstNull(segInfo[0].intValue(), segInfo[1].intValue())- Memory.WORD_LENGTH_BYTES;
                if (highAddress < segInfo[0].intValue()) {
                   out.println("This segment has not been written to, there is nothing to dump.");
                   continue;
@@ -323,7 +322,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   }
             }
             if (args[i].toLowerCase().equals("d")) { 
-               Globals.debug = true;
+               Main.debug = true;
                continue;
             }
             if (args[i].toLowerCase().equals("a")) { 
@@ -332,7 +331,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             }
             if (args[i].toLowerCase().equals("ad") || 
                	 args[i].toLowerCase().equals("da")) {
-               Globals.debug = true;
+               Main.debug = true;
                simulate = false;
                continue;
             }
@@ -442,12 +441,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             return programRan;
          }
          try {
-            Globals.getSettings().setBooleanSettingNonPersistent(Settings.DELAYED_BRANCHING_ENABLED, delayedBranching);
-            Globals.getSettings().setBooleanSettingNonPersistent(Settings.SELF_MODIFYING_CODE_ENABLED, selfModifyingCode);
+            Main.getSettings().setBooleanSettingNonPersistent(Settings.DELAYED_BRANCHING_ENABLED, delayedBranching);
+            Main.getSettings().setBooleanSettingNonPersistent(Settings.SELF_MODIFYING_CODE_ENABLED, selfModifyingCode);
             File mainFile = new File((String) filenameList.get(0)).getAbsoluteFile();// First file is "main" file
             ArrayList filesToAssemble;
             if (assembleProject) { 
-               filesToAssemble = FilenameFinder.getFilenameList(mainFile.getParent(), Globals.fileExtensions);
+               filesToAssemble = FilenameFinder.getFilenameList(mainFile.getParent(), Main.fileExtensions);
                if (filenameList.size() > 1) {
                   // Using "p" project option PLUS listing more than one filename on command line.
                   // Add the additional files, avoiding duplicates.
@@ -469,12 +468,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             else {
                filesToAssemble = FilenameFinder.getFilenameList(filenameList, FilenameFinder.MATCH_ALL_EXTENSIONS);
             }
-            if (Globals.debug) {
+            if (Main.debug) {
                out.println("--------  TOKENIZING BEGINS  -----------");
             }
             ArrayList MIPSprogramsToAssemble = 
                       code.prepareFilesForAssembly(filesToAssemble, mainFile.getAbsolutePath(), null);		
-            if (Globals.debug) {
+            if (Main.debug) {
                out.println("--------  ASSEMBLY BEGINS  -----------");
             }
          	// Added logic to check for warnings and print if any. DPS 11/28/06
@@ -488,7 +487,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                new ProgramArgumentList(programArgumentList).storeProgramArguments();
             	// establish observer if specified  
                establishObserver();
-               if (Globals.debug) {
+               if (Main.debug) {
                   out.println("--------  SIMULATION BEGINS  -----------");
                }
                programRan = true;
@@ -497,12 +496,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   out.println("\nProgram terminated when maximum step limit "+maxSteps+" reached.");
                }
             }
-            if (Globals.debug) {
+            if (Main.debug) {
                out.println("\n--------  ALL PROCESSING COMPLETE  -----------");
             }
          }
             catch (ProcessingException e) {
-               Globals.exitCode = (programRan) ? simulateErrorExitCode : assembleErrorExitCode;
+               Main.exitCode = (programRan) ? simulateErrorExitCode : assembleErrorExitCode;
                out.println(e.errors().generateErrorAndWarningReport());
                out.println("Processing terminated due to errors.");
             } 
@@ -560,7 +559,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   }
                };
             try {
-               Globals.memory.addObserver(instructionCounter, Memory.textBaseAddress, Memory.textLimitAddress);
+               Main.memory.addObserver(instructionCounter, Memory.textBaseAddress, Memory.textLimitAddress);
             } 
                catch (AddressErrorException aee) {
                   out.println("Internal error: MarsLaunch uses incorrect text segment address for instruction observer");
@@ -699,11 +698,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                try {
                   // Allow display of binary text segment (machine code) DPS 14-July-2008
                   if (Memory.inTextSegment(addr) || Memory.inKernelTextSegment(addr)) {
-                     Integer iValue = Globals.memory.getRawWordOrNull(addr);
+                     Integer iValue = Main.memory.getRawWordOrNull(addr);
                      value = (iValue==null) ? 0 : iValue.intValue();
                   } 
                   else {
-                     value = Globals.memory.getWord(addr);
+                     value = Main.memory.getWord(addr);
                   }
                   out.print( formatIntForDisplay(value)+"\t");
                }
@@ -739,7 +738,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                return;
             }
          }
-         out.println("MARS "+Globals.version+"  Copyright "+Globals.copyrightYears+" "+Globals.copyrightHolders+"\n");
+         out.println("MARS "+Main.version+"  Copyright "+Main.copyrightYears+" "+Main.copyrightHolders+"\n");
       }
    	
    

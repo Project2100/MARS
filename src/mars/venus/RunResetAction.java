@@ -60,7 +60,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       	// I am choosing the second approach although it will slow down the reset
       	// operation.  The first approach requires additional Memory class methods.
          try {
-            Globals.program.assemble(RunAssembleAction.getMIPSprogramsToAssemble(),
+            Main.program.assemble(RunAssembleAction.getMIPSprogramsToAssemble(),
 				                         RunAssembleAction.getExtendedAssemblerEnabled(),
 												 RunAssembleAction.getWarningsAreErrors());
          } 

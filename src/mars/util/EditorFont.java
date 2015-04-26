@@ -177,7 +177,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       private static final String SPACES = "                                                  ";
    	 
        public static String substituteSpacesForTabs(String string) {
-         return substituteSpacesForTabs(string, Globals.getSettings().getEditorTabSize());
+         return substituteSpacesForTabs(string, Main.getSettings().getEditorTabSize());
       }
 
    	/**

@@ -76,7 +76,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                         }
                      }
                   	// Better to use notify, but I am tired...
-                     Globals.getGui().getMainPane().getExecutePane().numberDisplayBaseChanged(choose);
+                     Main.getEnv().getMainPane().getExecutePane().numberDisplayBaseChanged(choose);
                   }
                });
       }

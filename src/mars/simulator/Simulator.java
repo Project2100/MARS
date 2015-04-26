@@ -78,7 +78,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    
        private Simulator() {
          simulatorThread = null;
-         if (Globals.getGui() != null) {
+         if (VenusUI.getMainFrame() != null) {
             interactiveGUIUpdater = new UpdateGUI();
          } 
       }
@@ -219,7 +219,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       	 *  @param starter the GUI component responsible for this call, usually GO or STEP.  null if none.
       	 */
           SimThread(MIPSprogram p, int pc, int maxSteps, int[] breakPoints, AbstractAction starter) {
-            super(Globals.getGui()!=null);  
+            super(Main.getEnv()!=null);  
             this.p = p;
             this.pc = pc;
             this.maxSteps = maxSteps;
@@ -271,7 +271,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             RegisterFile.initializeProgramCounter(pc);
             ProgramStatement statement = null;
             try {
-               statement = Globals.memory.getStatement(RegisterFile.getProgramCounter());
+               statement = Main.memory.getStatement(RegisterFile.getProgramCounter());
             } 
                 catch (AddressErrorException e) {
                   ErrorList el = new ErrorList();
@@ -329,7 +329,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             	// to access MIPS memory and registers only through synchronized blocks on same 
             	// lock variable, then full (albeit heavy-handed) protection of MIPS memory and 
             	// registers is assured.  Not as critical for reading from those resources.
-               synchronized (Globals.memoryAndRegistersLock) {
+               synchronized (Main.memoryAndRegistersLock) {
                   try {                      
                      if (Simulator.externalInterruptingDevice != NO_DEVICE) {
                         int deviceInterruptCode = externalInterruptingDevice;
@@ -346,8 +346,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      instruction.getSimulationCode().simulate(statement);
                   	
                   	// IF statement added 7/26/06 (explanation above)
-                     if (Globals.getSettings().getBackSteppingEnabled()) {
-                        Globals.program.getBackStepper().addDoNothing(pc);
+                     if (Main.getSettings().getBackSteppingEnabled()) {
+                        Main.program.getBackStepper().addDoNothing(pc);
                      }
                   } 
                       catch (ProcessingException pe) {
@@ -366,7 +366,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                         	// MIPS program with appropriate error message.
                            ProgramStatement exceptionHandler = null;
                            try {
-                              exceptionHandler = Globals.memory.getStatement(Memory.exceptionHandlerAddress);
+                              exceptionHandler = Main.memory.getStatement(Memory.exceptionHandlerAddress);
                            } 
                                catch (AddressErrorException aee) { } // will not occur with this well-known addres
                            if (exceptionHandler != null) {
@@ -428,7 +428,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                           RunSpeedPanel.getInstance().getRunSpeed() < RunSpeedPanel.UNLIMITED_SPEED) {
                   SwingUtilities.invokeLater(interactiveGUIUpdater);
                }
-               if (Globals.getGui() != null || Globals.runSpeedPanelExists) { // OR added by DPS 24 July 2008 to enable speed control by stand-alone tool
+               if (Main.getEnv() != null || Main.runSpeedPanelExists) { // OR added by DPS 24 July 2008 to enable speed control by stand-alone tool
                   if (maxSteps != 1 && 
                           RunSpeedPanel.getInstance().getRunSpeed() < RunSpeedPanel.UNLIMITED_SPEED) {
                      try { Thread.sleep((int)(1000/RunSpeedPanel.getInstance().getRunSpeed())); // make sure it's never zero!
@@ -441,7 +441,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                // Get next instruction in preparation for next iteration.
             
                try {
-                  statement = Globals.memory.getStatement(RegisterFile.getProgramCounter());
+                  statement = Main.memory.getStatement(RegisterFile.getProgramCounter());
                } 
                    catch (AddressErrorException e) {
                      ErrorList el = new ErrorList();
@@ -489,7 +489,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       	 
           public void finished() {
            // If running from the command-line, then there is no GUI to update.
-            if (Globals.getGui() == null) {
+            if (Main.getEnv() == null) {
                return;
             }
             String starterName = (String) starter.getValue(AbstractAction.NAME);
@@ -520,16 +520,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	
        private class UpdateGUI implements Runnable {
           public void run() {
-            if (Globals.getGui().getRegistersPane().getSelectedComponent() == 
-                                                     Globals.getGui().getMainPane().getExecutePane().getRegistersWindow()) {
-               Globals.getGui().getMainPane().getExecutePane().getRegistersWindow().updateRegisters();
+            if (Main.getEnv().getRegistersPane().getSelectedComponent() == 
+                                                     Main.getEnv().getMainPane().getExecutePane().getRegistersWindow()) {
+               Main.getEnv().getMainPane().getExecutePane().getRegistersWindow().updateRegisters();
             } 
             else {
-               Globals.getGui().getMainPane().getExecutePane().getCoprocessor1Window().updateRegisters();
+               Main.getEnv().getMainPane().getExecutePane().getCoprocessor1Window().updateRegisters();
             }
-            Globals.getGui().getMainPane().getExecutePane().getDataSegmentWindow().updateValues();
-            Globals.getGui().getMainPane().getExecutePane().getTextSegmentWindow().setCodeHighlighting(true);
-            Globals.getGui().getMainPane().getExecutePane().getTextSegmentWindow().highlightStepAtPC();   
+            Main.getEnv().getMainPane().getExecutePane().getDataSegmentWindow().updateValues();
+            Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow().setCodeHighlighting(true);
+            Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow().highlightStepAtPC();   
          }
       }
    

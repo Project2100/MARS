@@ -8,7 +8,7 @@
    import javax.swing.*;
    import javax.swing.event.*;
    import javax.swing.border.*;
-   import static mars.venus.VenusUI.mainFrame;
+   import static mars.venus.VenusUI.getMainFrame;
 	
 	/*
 Copyright (c) 2003-2007,  Pete Sanderson and Kenneth Vollmar
@@ -115,7 +115,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          createSettings();
       	// If running withint MARS, set to its icon image; if not fuggetit.
          try {
-            this.setIconImage(mainFrame.getIconImage());
+            this.setIconImage(getMainFrame().getIconImage());
          } 
              catch (Exception e) { }
          getContentPane().setLayout(new BorderLayout());
@@ -291,7 +291,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       	// If this doesn't work, e.g. getGui() returns null, then there
       	// are no alternatives so just let what would happen, happen.
          try {
-            mainFrame.update(mainFrame.getGraphics());
+            getMainFrame().update(getMainFrame().getGraphics());
          } 
              catch (Exception e) { }
          // Perform the screen capture.

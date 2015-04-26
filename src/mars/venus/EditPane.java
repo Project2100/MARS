@@ -72,11 +72,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          currentDirectoryPath = System.getProperty("user.dir");
          // mainUI.editor = new Editor(mainUI);
       	// We want to be notified of editor font changes! See update() below.
-         Globals.getSettings().addObserver(this);
+         Main.getSettings().addObserver(this);
          this.fileStatus = new FileStatus();      
          lineNumbers = new JLabel();
       
-         if (Globals.getSettings().getBooleanSetting(Settings.GENERIC_TEXT_EDITOR)) {
+         if (Main.getSettings().getBooleanSetting(Settings.GENERIC_TEXT_EDITOR)) {
             this.sourceCode = new GenericTextArea(this, lineNumbers);
          } 
          else {
@@ -126,7 +126,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                            FileStatus.set(FileStatus.EDITED);
                      }
                   	
-                     Globals.getGui().getMainPane().getExecutePane().clearPane(); // DPS 9-Aug-2011
+                     Main.getEnv().getMainPane().getExecutePane().clearPane(); // DPS 9-Aug-2011
                   	
                      if (showingLineNumbers()) {
                         lineNumbers.setText(getLineNumbersList(sourceCode.getDocument()));
@@ -144,7 +144,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          showLineNumbers.setToolTipText("If checked, will display line number for each line of text.");
          showLineNumbers.setEnabled(false);
       	// Show line numbers by default.
-         showLineNumbers.setSelected(Globals.getSettings().getEditorLineNumbersDisplayed());     
+         showLineNumbers.setSelected(Main.getSettings().getEditorLineNumbersDisplayed());     
                	
          this.setSourceCode("",false);
            
@@ -166,7 +166,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                         lineNumbers.setVisible(false);
                      }
                      sourceCode.revalidate(); // added 16 Jan 2012 to assure label redrawn.
-                     Globals.getSettings().setEditorLineNumbersDisplayed(showLineNumbers.isSelected());
+                     Main.getSettings().setEditorLineNumbersDisplayed(showLineNumbers.isSelected());
                   	// needed because caret disappears when checkbox clicked
                      sourceCode.setCaretVisible(true); 
                      sourceCode.requestFocusInWindow();
@@ -592,10 +592,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 *  This method is specified by the Observer interface.
    	 */
       public void update(Observable fontChanger, Object arg) {
-         sourceCode.setFont(Globals.getSettings().getEditorFont());
-         sourceCode.setLineHighlightEnabled(Globals.getSettings().getBooleanSetting(Settings.EDITOR_CURRENT_LINE_HIGHLIGHTING));
-         sourceCode.setCaretBlinkRate(Globals.getSettings().getCaretBlinkRate());
-         sourceCode.setTabSize(Globals.getSettings().getEditorTabSize());
+         sourceCode.setFont(Main.getSettings().getEditorFont());
+         sourceCode.setLineHighlightEnabled(Main.getSettings().getBooleanSetting(Settings.EDITOR_CURRENT_LINE_HIGHLIGHTING));
+         sourceCode.setCaretBlinkRate(Main.getSettings().getCaretBlinkRate());
+         sourceCode.setTabSize(Main.getSettings().getEditorTabSize());
          sourceCode.updateSyntaxStyles();
          sourceCode.revalidate();
       	// We want line numbers to be displayed same size but always PLAIN style.

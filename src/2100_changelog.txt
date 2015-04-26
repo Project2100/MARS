@@ -1,3 +1,21 @@
+####1.2
+
+DumpFormat - DumpFormatLoader - DumpAction:
+! Various optimizations
+
+GuiAction:
+! First attempts at mainFrame reference removal and action generalization
+
+Mars/Globals:
+! Merged Mars into Globals, now refactored as Main
+    DEPND: ...
+
+MarsSplashScreen:
+- Moved from mars package to venus package
+
+RunSpeedPanel:
+- Layout overhaul
+
 ####1.1
 
 VenusUI:

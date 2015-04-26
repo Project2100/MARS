@@ -158,10 +158,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          try { // needed for all memory writes
             for (int i=0; i<programArgumentList.size(); i++) {
                programArgument = (String) programArgumentList.get(i);
-               Globals.memory.set(highAddress, 0, 1);  // trailing null byte for each argument
+               Main.memory.set(highAddress, 0, 1);  // trailing null byte for each argument
                highAddress--;
                for (int j = programArgument.length()-1; j >= 0; j--) {
-                  Globals.memory.set(highAddress, programArgument.charAt(j), 1);
+                  Main.memory.set(highAddress, programArgument.charAt(j), 1);
                   highAddress--;				  
                }
                argStartAddress[i] = highAddress+1;
@@ -176,13 +176,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                // byte from highAddress+1 is filled).
                stackAddress = highAddress - (highAddress % Memory.WORD_LENGTH_BYTES) - Memory.WORD_LENGTH_BYTES; 
             }
-            Globals.memory.set(stackAddress, 0, Memory.WORD_LENGTH_BYTES);  // null word for end of argv array
+            Main.memory.set(stackAddress, 0, Memory.WORD_LENGTH_BYTES);  // null word for end of argv array
             stackAddress -= Memory.WORD_LENGTH_BYTES;
             for (int i=argStartAddress.length-1; i >= 0; i--) {
-               Globals.memory.set(stackAddress, argStartAddress[i], Memory.WORD_LENGTH_BYTES);
+               Main.memory.set(stackAddress, argStartAddress[i], Memory.WORD_LENGTH_BYTES);
                stackAddress -= Memory.WORD_LENGTH_BYTES;
             }
-            Globals.memory.set(stackAddress, argStartAddress.length, Memory.WORD_LENGTH_BYTES); // argc
+            Main.memory.set(stackAddress, argStartAddress.length, Memory.WORD_LENGTH_BYTES); // argc
             stackAddress -= Memory.WORD_LENGTH_BYTES;
             
             // Need to set $sp register to stack address, $a0 to argc, $a1 to argv

@@ -12,7 +12,6 @@
    import javax.swing.border.*;
    import javax.swing.event.*;
    import java.io.*;
-   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2011,  Pete Sanderson and Kenneth Vollmar
@@ -68,7 +67,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	  *  editor settings.
    	  */
        public void actionPerformed(ActionEvent e) {
-         editorDialog = new EditorFontDialog(mainFrame, "Text Editor Settings", true, Globals.getSettings().getEditorFont() );
+         editorDialog = new EditorFontDialog(VenusUI.getMainFrame(), "Text Editor Settings", true, Main.getSettings().getEditorFont() );
          editorDialog.setVisible(true);
       
       }
@@ -128,7 +127,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       	  
           public EditorFontDialog(Frame owner, String title, boolean modality, Font font) {
             super(owner, title, modality, font);
-            if (Globals.getSettings().getBooleanSetting(Settings.GENERIC_TEXT_EDITOR)) {
+            if (Main.getSettings().getBooleanSetting(Settings.GENERIC_TEXT_EDITOR)) {
                syntaxStylePanel.setVisible(false);
                otherSettingsPanel.setVisible(false); 
             }
@@ -188,7 +187,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                         reset();
                      }
                   });
-            initialGenericTextEditor = Globals.getSettings().getBooleanSetting(Settings.GENERIC_TEXT_EDITOR);
+            initialGenericTextEditor = Main.getSettings().getBooleanSetting(Settings.GENERIC_TEXT_EDITOR);
             genericEditorCheck = new JCheckBox("Use Generic Editor", initialGenericTextEditor);
             genericEditorCheck.setToolTipText(GENERIC_TOOL_TIP_TEXT);
             genericEditorCheck.addItemListener(
@@ -222,28 +221,28 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       // User has clicked "Apply" or "Apply and Close" button.  Required method, is 
       // abstract in superclass.
           protected void apply(Font font) {
-            Globals.getSettings().setBooleanSetting(Settings.GENERIC_TEXT_EDITOR, genericEditorCheck.isSelected());
-            Globals.getSettings().setBooleanSetting(Settings.EDITOR_CURRENT_LINE_HIGHLIGHTING, lineHighlightCheck.isSelected());
-            Globals.getSettings().setBooleanSetting(Settings.AUTO_INDENT, autoIndentCheck.isSelected());
-            Globals.getSettings().setCaretBlinkRate(((Integer)blinkRateSpinSelector.getValue()).intValue());
-            Globals.getSettings().setEditorTabSize(tabSizeSelector.getValue());
+            Main.getSettings().setBooleanSetting(Settings.GENERIC_TEXT_EDITOR, genericEditorCheck.isSelected());
+            Main.getSettings().setBooleanSetting(Settings.EDITOR_CURRENT_LINE_HIGHLIGHTING, lineHighlightCheck.isSelected());
+            Main.getSettings().setBooleanSetting(Settings.AUTO_INDENT, autoIndentCheck.isSelected());
+            Main.getSettings().setCaretBlinkRate(((Integer)blinkRateSpinSelector.getValue()).intValue());
+            Main.getSettings().setEditorTabSize(tabSizeSelector.getValue());
             if (syntaxStylesAction) { 
                for (int i=0; i<syntaxStyleIndex.length; i++) {
-                  Globals.getSettings().setEditorSyntaxStyleByPosition( syntaxStyleIndex[i], 
+                  Main.getSettings().setEditorSyntaxStyleByPosition( syntaxStyleIndex[i], 
                      new SyntaxStyle(samples[i].getForeground(),
                         italic[i].isSelected(), bold[i].isSelected()) );
                }
                syntaxStylesAction = false; // reset
             }
-            Globals.getSettings().setEditorFont(font);
+            Main.getSettings().setEditorFont(font);
             for (int i=0; i<popupGuidanceOptions.length; i++) {
                if (popupGuidanceOptions[i].isSelected()) {
                   if (i==0) {
-                     Globals.getSettings().setBooleanSetting(Settings.POPUP_INSTRUCTION_GUIDANCE, false);
+                     Main.getSettings().setBooleanSetting(Settings.POPUP_INSTRUCTION_GUIDANCE, false);
                   } 
                   else {
-                     Globals.getSettings().setBooleanSetting(Settings.POPUP_INSTRUCTION_GUIDANCE, true);
-                     Globals.getSettings().setEditorPopupPrefixLength(i);
+                     Main.getSettings().setBooleanSetting(Settings.POPUP_INSTRUCTION_GUIDANCE, true);
+                     Main.getSettings().setEditorPopupPrefixLength(i);
                   }
                   break;
                }
@@ -276,7 +275,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             JPanel otherSettingsPanel = new JPanel();
          	
             // Tab size selector
-            initialEditorTabSize = Globals.getSettings().getEditorTabSize();
+            initialEditorTabSize = Main.getSettings().getEditorTabSize();
             tabSizeSelector = new JSlider(Editor.MIN_TAB_SIZE, Editor.MAX_TAB_SIZE, initialEditorTabSize);
             tabSizeSelector.setToolTipText("Use slider to select tab size from "+Editor.MIN_TAB_SIZE+" to "+Editor.MAX_TAB_SIZE+".");
             tabSizeSelector.addChangeListener(
@@ -298,19 +297,19 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   });  				
          	
          	// highlighting of current line
-            initialLineHighlighting = Globals.getSettings().getBooleanSetting(Settings.EDITOR_CURRENT_LINE_HIGHLIGHTING);
+            initialLineHighlighting = Main.getSettings().getBooleanSetting(Settings.EDITOR_CURRENT_LINE_HIGHLIGHTING);
             lineHighlightCheck = new JCheckBox("Highlight the line currently being edited");
             lineHighlightCheck.setSelected(initialLineHighlighting); 
             lineHighlightCheck.setToolTipText(CURRENT_LINE_HIGHLIGHT_TOOL_TIP_TEXT);
 
          	// auto-indent 
-            initialAutoIndent = Globals.getSettings().getBooleanSetting(Settings.AUTO_INDENT);
+            initialAutoIndent = Main.getSettings().getBooleanSetting(Settings.AUTO_INDENT);
             autoIndentCheck = new JCheckBox("Auto-Indent");
             autoIndentCheck.setSelected(initialAutoIndent); 
             autoIndentCheck.setToolTipText(AUTO_INDENT_TOOL_TIP_TEXT);
                  
             // cursor blink rate selector
-            initialCaretBlinkRate = Globals.getSettings().getCaretBlinkRate();
+            initialCaretBlinkRate = Main.getSettings().getCaretBlinkRate();
             blinkSample = new JTextField("     ");
             blinkSample.setCaretPosition(2);
             blinkSample.setToolTipText(BLINK_SAMPLE_TOOL_TIP_TEXT);
@@ -360,8 +359,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                popupGuidanceOptions[i].setToolTipText(POPUP_GUIDANCE_TOOL_TIP_TEXT[i]);
                popupGuidanceButtons.add(popupGuidanceOptions[i]);
             }				
-            initialPopupGuidance = Globals.getSettings().getBooleanSetting(Settings.POPUP_INSTRUCTION_GUIDANCE) 
-                  ? Globals.getSettings().getEditorPopupPrefixLength()
+            initialPopupGuidance = Main.getSettings().getBooleanSetting(Settings.POPUP_INSTRUCTION_GUIDANCE) 
+                  ? Main.getSettings().getEditorPopupPrefixLength()
                	: 0 ;
             popupGuidanceOptions[initialPopupGuidance].setSelected(true);
             JPanel popupPanel = new JPanel(new GridLayout(3,1));

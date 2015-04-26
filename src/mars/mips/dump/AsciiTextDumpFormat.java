@@ -1,7 +1,7 @@
    package mars.mips.dump;
 
    import mars.util.Binary;
-   import mars.Globals;
+   import mars.Main;
    import mars.mips.hardware.*;
    import java.io.*;
 /*
@@ -78,7 +78,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          String string = null;
          try {
             for (int address = firstAddress; address <= lastAddress; address += Memory.WORD_LENGTH_BYTES) {
-               Integer temp = Globals.memory.getRawWordOrNull(address);
+               Integer temp = Main.memory.getRawWordOrNull(address);
                if (temp == null) 
                   break;
                out.println(Binary.intToAscii(temp.intValue()));

@@ -45,7 +45,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    		 
        public void actionPerformed(ActionEvent e) {
 		   boolean usePopup = ((JCheckBoxMenuItem) e.getSource()).isSelected();
-         Globals.getSettings().setBooleanSetting(Settings.POPUP_SYSCALL_INPUT, usePopup);
+         Main.getSettings().setBooleanSetting(Settings.POPUP_SYSCALL_INPUT, usePopup);
       }
    	   	
    }

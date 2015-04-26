@@ -82,7 +82,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          {
             while (index < retLength)
             {
-               Globals.memory.setByte(byteAddress++,
+               Main.memory.setByte(byteAddress++,
                                         myBuffer[index++]);
             }
          } 

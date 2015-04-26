@@ -1,6 +1,6 @@
    package mars.venus.editors.generic;
 
-   import mars.Globals;
+   import mars.Main;
    import mars.venus.EditPane;
    import mars.venus.editors.MARSTextEditingArea;
    import java.awt.*;
@@ -52,10 +52,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public GenericTextArea(EditPane editPain, JComponent lineNumbers) {
          this.editPane = editPain;
          this.sourceCode = this;
-         this.setFont(Globals.getSettings().getEditorFont());
-         this.setTabSize(Globals.getSettings().getEditorTabSize());
+         this.setFont(Main.getSettings().getEditorFont());
+         this.setTabSize(Main.getSettings().getEditorTabSize());
          this.setMargin(new Insets(0,3,3,3));
-         this.setCaretBlinkRate(Globals.getSettings().getCaretBlinkRate());
+         this.setCaretBlinkRate(Main.getSettings().getCaretBlinkRate());
       
          JPanel source = new JPanel(new BorderLayout());
          source.add(lineNumbers, BorderLayout.WEST);

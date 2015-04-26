@@ -60,7 +60,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    
        public RegistersWindow(){
          Simulator.getInstance().addObserver(this);
-			settings = Globals.getSettings();
+			settings = Main.getSettings();
          this.highlighting = false;
          table = new MyTippedJTable(new RegTableModel(setupWindow()));
          table.getColumnModel().getColumn(NAME_COLUMN).setPreferredWidth(25);
@@ -109,7 +109,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public void clearWindow() {
          this.clearHighlighting();
          RegisterFile.resetRegisters();
-         this.updateRegisters(Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase());
+         this.updateRegisters(Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase());
       }
       
    	/**
@@ -136,7 +136,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 * update register display using current number base (10 or 16)
    	 */
        public void updateRegisters() {
-         updateRegisters(Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase());
+         updateRegisters(Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase());
       }
    	
    	/**
@@ -202,7 +202,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             	// AddressCellRenderer class in DataSegmentWindow.java.
                this.highlighting = true;
                this.highlightCellForRegister((Register)observable);
-               Globals.getGui().getRegistersPane().setSelectedComponent(this);
+               Main.getEnv().getRegistersPane().setSelectedComponent(this);
             }
          }
       }
@@ -263,7 +263,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    
    	////////////////////////////////////////////////////////////////////////////
    	
-       class RegTableModel extends AbstractTableModel {
+       private class RegTableModel extends AbstractTableModel {
          final String[] columnNames =  {"Name", "Number", "Value"};
          Object[][] data;
       	
@@ -329,10 +329,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                }
          	//  Assures that if changed during MIPS program execution, the update will
          	//  occur only between MIPS instructions.
-            synchronized (Globals.memoryAndRegistersLock) {
+            synchronized (Main.memoryAndRegistersLock) {
                RegisterFile.updateRegister(row, val);
             }
-            int valueBase = Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase();
+            int valueBase = Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
             data[row][col] = NumberDisplayBaseChooser.formatNumber(val, valueBase); 
             fireTableCellUpdated(row, col);
             return;

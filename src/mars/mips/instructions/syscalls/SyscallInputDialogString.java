@@ -67,12 +67,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          char ch[] = { ' '}; // Need an array to convert to String
          try
          {
-            ch[0] = (char) Globals.memory.getByte(byteAddress);
+            ch[0] = (char) Main.memory.getByte(byteAddress);
             while (ch[0] != 0) // only uses single location ch[0]
             {
                message = message.concat(new String(ch)); // parameter to String constructor is a char[] array
                byteAddress++;
-               ch[0] = (char) Globals.memory.getByte(byteAddress);
+               ch[0] = (char) Main.memory.getByte(byteAddress);
             }
          }
              catch (AddressErrorException e)
@@ -105,14 +105,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                     // Copy the input data to buffer as space permits
                for (int index = 0; (index < inputString.length()) && (index < maxLength - 1); index++)
                {
-                  Globals.memory.setByte(byteAddress + index,
+                  Main.memory.setByte(byteAddress + index,
                                        inputString.charAt(index));
                }
                if (inputString.length() < maxLength-1) 
 					{
-                  Globals.memory.setByte(byteAddress + (int)Math.min(inputString.length(), maxLength-2), '\n');  // newline at string end
+                  Main.memory.setByte(byteAddress + (int)Math.min(inputString.length(), maxLength-2), '\n');  // newline at string end
                }
-               Globals.memory.setByte(byteAddress + (int)Math.min((inputString.length()+1), maxLength-1), 0);  // null char to end string
+               Main.memory.setByte(byteAddress + (int)Math.min((inputString.length()+1), maxLength-1), 0);  // null char to end string
                     
                if (inputString.length() > maxLength - 1)
                {

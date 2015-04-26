@@ -103,7 +103,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        // Will get any syscall number override specifications from MARS config file and
        // process them.  This will alter syscallList entry for affected names.
        private ArrayList processSyscallNumberOverrides(ArrayList syscallList) {
-         ArrayList overrides = new Globals().getSyscallOverrides();
+         ArrayList overrides = new Main().getSyscallOverrides();
          SyscallNumberOverride override;
          Syscall syscall;
          for (int index=0; index < overrides.size(); index++) {

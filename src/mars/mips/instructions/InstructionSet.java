@@ -657,7 +657,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      try
                      {
                         RegisterFile.updateRegister(operands[0],
-                            Globals.memory.getWord(
+                            Main.memory.getWord(
                             RegisterFile.getValue(operands[2]) + operands[1]));
                      } 
                          catch (AddressErrorException e)
@@ -687,7 +687,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      try
                      {
                         RegisterFile.updateRegister(operands[0],
-                            Globals.memory.getWord(
+                            Main.memory.getWord(
                             RegisterFile.getValue(operands[2]) + operands[1]));
                      } 
                          catch (AddressErrorException e)
@@ -710,8 +710,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      {
                         int address = RegisterFile.getValue(operands[2]) + operands[1];
                         int result = RegisterFile.getValue(operands[0]);
-                        for (int i=0; i<=address % Globals.memory.WORD_LENGTH_BYTES; i++) {
-                           result = Binary.setByte(result,3-i,Globals.memory.getByte(address-i));
+                        for (int i=0; i<=address % Main.memory.WORD_LENGTH_BYTES; i++) {
+                           result = Binary.setByte(result,3-i,Main.memory.getByte(address-i));
                         }
                         RegisterFile.updateRegister(operands[0], result);
                      } 
@@ -735,8 +735,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      {
                         int address = RegisterFile.getValue(operands[2]) + operands[1];
                         int result = RegisterFile.getValue(operands[0]);
-                        for (int i=0; i<=3-(address % Globals.memory.WORD_LENGTH_BYTES); i++) {
-                           result = Binary.setByte(result,i,Globals.memory.getByte(address+i));
+                        for (int i=0; i<=3-(address % Main.memory.WORD_LENGTH_BYTES); i++) {
+                           result = Binary.setByte(result,i,Main.memory.getByte(address+i));
                         }
                         RegisterFile.updateRegister(operands[0], result);
                      } 
@@ -758,7 +758,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      int[] operands = statement.getOperands();
                      try
                      {
-                        Globals.memory.setWord(
+                        Main.memory.setWord(
                             RegisterFile.getValue(operands[2]) + operands[1],
                             RegisterFile.getValue(operands[0]));
                      } 
@@ -782,7 +782,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      int[] operands = statement.getOperands();
                      try
                      {
-                        Globals.memory.setWord(
+                        Main.memory.setWord(
                             RegisterFile.getValue(operands[2]) + operands[1],
                             RegisterFile.getValue(operands[0]));
                      } 
@@ -807,8 +807,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      {
                         int address = RegisterFile.getValue(operands[2]) + operands[1];
                         int source = RegisterFile.getValue(operands[0]);
-                        for (int i=0; i<=address % Globals.memory.WORD_LENGTH_BYTES; i++) {
-                           Globals.memory.setByte(address-i,Binary.getByte(source,3-i));
+                        for (int i=0; i<=address % Main.memory.WORD_LENGTH_BYTES; i++) {
+                           Main.memory.setByte(address-i,Binary.getByte(source,3-i));
                         }
                      } 
                          catch (AddressErrorException e)
@@ -831,8 +831,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      {
                         int address = RegisterFile.getValue(operands[2]) + operands[1];
                         int source = RegisterFile.getValue(operands[0]);
-                        for (int i=0; i<=3-(address % Globals.memory.WORD_LENGTH_BYTES); i++) {
-                           Globals.memory.setByte(address+i,Binary.getByte(source,i));
+                        for (int i=0; i<=3-(address % Main.memory.WORD_LENGTH_BYTES); i++) {
+                           Main.memory.setByte(address+i,Binary.getByte(source,i));
                         }
                      } 
                          catch (AddressErrorException e)
@@ -1281,7 +1281,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      try
                      {
                         RegisterFile.updateRegister(operands[0],
-                            Globals.memory.getByte(
+                            Main.memory.getByte(
                             RegisterFile.getValue(operands[2])
                                     + (operands[1] << 16 >> 16))
                                             << 24
@@ -1306,7 +1306,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      try
                      {
                         RegisterFile.updateRegister(operands[0],
-                            Globals.memory.getHalf(
+                            Main.memory.getHalf(
                             RegisterFile.getValue(operands[2])
                                     + (operands[1] << 16 >> 16))
                                             << 16
@@ -1332,7 +1332,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      {
                      // offset is sign-extended and loaded halfword value is zero-extended
                         RegisterFile.updateRegister(operands[0],
-                            Globals.memory.getHalf(
+                            Main.memory.getHalf(
                             RegisterFile.getValue(operands[2])
                                     + (operands[1] << 16 >> 16))
                                             & 0x0000ffff);
@@ -1356,7 +1356,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      try
                      {
                         RegisterFile.updateRegister(operands[0],
-                            Globals.memory.getByte(
+                            Main.memory.getByte(
                             RegisterFile.getValue(operands[2])
                                     + (operands[1] << 16 >> 16))
                                             & 0x000000ff);
@@ -1379,7 +1379,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      int[] operands = statement.getOperands();
                      try
                      {
-                        Globals.memory.setByte(
+                        Main.memory.setByte(
                             RegisterFile.getValue(operands[2])
                                     + (operands[1] << 16 >> 16),
                                     RegisterFile.getValue(operands[0])
@@ -1403,7 +1403,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      int[] operands = statement.getOperands();
                      try
                      {
-                        Globals.memory.setHalf(
+                        Main.memory.setHalf(
                             RegisterFile.getValue(operands[2])
                                     + (operands[1] << 16 >> 16),
                                     RegisterFile.getValue(operands[0])
@@ -2724,7 +2724,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      try
                      {
                         Coprocessor1.updateRegister(operands[0],
-                            Globals.memory.getWord(
+                            Main.memory.getWord(
                             RegisterFile.getValue(operands[2]) + operands[1]));
                      } 
                          catch (AddressErrorException e)
@@ -2747,7 +2747,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                         throw new ProcessingException(statement, "first register must be even-numbered");
                      }
                   	// IF statement added by DPS 13-July-2011.
-                     if (!Globals.memory.doublewordAligned(RegisterFile.getValue(operands[2]) + operands[1])) {
+                     if (!Main.memory.doublewordAligned(RegisterFile.getValue(operands[2]) + operands[1])) {
                         throw new ProcessingException(statement,
                            new AddressErrorException("address not aligned on doubleword boundary ",
                            Exceptions.ADDRESS_EXCEPTION_LOAD, RegisterFile.getValue(operands[2]) + operands[1]));
@@ -2756,10 +2756,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      try
                      {
                         Coprocessor1.updateRegister(operands[0],
-                            Globals.memory.getWord(
+                            Main.memory.getWord(
                             RegisterFile.getValue(operands[2]) + operands[1]));
                         Coprocessor1.updateRegister(operands[0]+1,
-                            Globals.memory.getWord(
+                            Main.memory.getWord(
                             RegisterFile.getValue(operands[2]) + operands[1] + 4));
                      } 
                          catch (AddressErrorException e)
@@ -2780,7 +2780,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      int[] operands = statement.getOperands();
                      try
                      {
-                        Globals.memory.setWord(
+                        Main.memory.setWord(
                             RegisterFile.getValue(operands[2]) + operands[1],
                             Coprocessor1.getValue(operands[0]));
                      } 
@@ -2804,17 +2804,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                         throw new ProcessingException(statement, "first register must be even-numbered");
                      }
                   	// IF statement added by DPS 13-July-2011.
-                     if (!Globals.memory.doublewordAligned(RegisterFile.getValue(operands[2]) + operands[1])) {
+                     if (!Main.memory.doublewordAligned(RegisterFile.getValue(operands[2]) + operands[1])) {
                         throw new ProcessingException(statement,
                            new AddressErrorException("address not aligned on doubleword boundary ",
                            Exceptions.ADDRESS_EXCEPTION_STORE, RegisterFile.getValue(operands[2]) + operands[1]));
                      }
                      try
                      {
-                        Globals.memory.setWord(
+                        Main.memory.setWord(
                             RegisterFile.getValue(operands[2]) + operands[1],
                             Coprocessor1.getValue(operands[0]));
-                        Globals.memory.setWord(
+                        Main.memory.setWord(
                             RegisterFile.getValue(operands[2]) + operands[1] + 4,
                             Coprocessor1.getValue(operands[0]+1));
                      } 
@@ -3263,7 +3263,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 // the bottom (currently line 194, heavily commented).
    	 
        private void processBranch(int displacement) {
-         if (Globals.getSettings().getDelayedBranchingEnabled()) {
+         if (Main.getSettings().getDelayedBranchingEnabled()) {
             // Register the branch target address (absolute byte address).
             DelayedBranch.register(RegisterFile.getProgramCounter() + (displacement << 2));
          } 
@@ -3286,7 +3286,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 */
    	 
        private void processJump(int targetAddress) {
-         if (Globals.getSettings().getDelayedBranchingEnabled()) {
+         if (Main.getSettings().getDelayedBranchingEnabled()) {
             DelayedBranch.register(targetAddress);
          } 
          else {
@@ -3308,7 +3308,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 
        private void processReturnAddress(int register) {
          RegisterFile.updateRegister(register, RegisterFile.getProgramCounter() +
-                 ((Globals.getSettings().getDelayedBranchingEnabled()) ? 
+                 ((Main.getSettings().getDelayedBranchingEnabled()) ? 
             	  Instruction.INSTRUCTION_LENGTH : 0) );	 
       }
 

@@ -10,7 +10,7 @@
    package mars.venus.editors.jeditsyntax;
 
    import mars.venus.editors.jeditsyntax.tokenmarker.*;
-   import mars.Globals;
+   import mars.Main;
    import javax.swing.text.*;
    import javax.swing.*;
    import java.awt.*;
@@ -122,18 +122,18 @@
       {
          SyntaxStyle[] styles = new SyntaxStyle[Token.ID_COUNT];
       
-         styles[Token.NULL]     = Globals.getSettings().getEditorSyntaxStyleByPosition(Token.NULL);
-         styles[Token.COMMENT1] = Globals.getSettings().getEditorSyntaxStyleByPosition(Token.COMMENT1);
-         styles[Token.COMMENT2] = Globals.getSettings().getEditorSyntaxStyleByPosition(Token.COMMENT2);
-         styles[Token.KEYWORD1] = Globals.getSettings().getEditorSyntaxStyleByPosition(Token.KEYWORD1);
-         styles[Token.KEYWORD2] = Globals.getSettings().getEditorSyntaxStyleByPosition(Token.KEYWORD2);
-         styles[Token.KEYWORD3] = Globals.getSettings().getEditorSyntaxStyleByPosition(Token.KEYWORD3);
-         styles[Token.LITERAL1] = Globals.getSettings().getEditorSyntaxStyleByPosition(Token.LITERAL1);
-         styles[Token.LITERAL2] = Globals.getSettings().getEditorSyntaxStyleByPosition(Token.LITERAL2);
-         styles[Token.LABEL]    = Globals.getSettings().getEditorSyntaxStyleByPosition(Token.LABEL);
-         styles[Token.OPERATOR] = Globals.getSettings().getEditorSyntaxStyleByPosition(Token.OPERATOR);
-         styles[Token.INVALID]  = Globals.getSettings().getEditorSyntaxStyleByPosition(Token.INVALID);
-         styles[Token.MACRO_ARG]= Globals.getSettings().getEditorSyntaxStyleByPosition(Token.MACRO_ARG);      
+         styles[Token.NULL]     = Main.getSettings().getEditorSyntaxStyleByPosition(Token.NULL);
+         styles[Token.COMMENT1] = Main.getSettings().getEditorSyntaxStyleByPosition(Token.COMMENT1);
+         styles[Token.COMMENT2] = Main.getSettings().getEditorSyntaxStyleByPosition(Token.COMMENT2);
+         styles[Token.KEYWORD1] = Main.getSettings().getEditorSyntaxStyleByPosition(Token.KEYWORD1);
+         styles[Token.KEYWORD2] = Main.getSettings().getEditorSyntaxStyleByPosition(Token.KEYWORD2);
+         styles[Token.KEYWORD3] = Main.getSettings().getEditorSyntaxStyleByPosition(Token.KEYWORD3);
+         styles[Token.LITERAL1] = Main.getSettings().getEditorSyntaxStyleByPosition(Token.LITERAL1);
+         styles[Token.LITERAL2] = Main.getSettings().getEditorSyntaxStyleByPosition(Token.LITERAL2);
+         styles[Token.LABEL]    = Main.getSettings().getEditorSyntaxStyleByPosition(Token.LABEL);
+         styles[Token.OPERATOR] = Main.getSettings().getEditorSyntaxStyleByPosition(Token.OPERATOR);
+         styles[Token.INVALID]  = Main.getSettings().getEditorSyntaxStyleByPosition(Token.INVALID);
+         styles[Token.MACRO_ARG]= Main.getSettings().getEditorSyntaxStyleByPosition(Token.MACRO_ARG);      
          return styles;
       }
    

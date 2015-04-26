@@ -62,7 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    
        public Coprocessor0Window() {
          Simulator.getInstance().addObserver(this);
-			settings = Globals.getSettings();
+			settings = Main.getSettings();
          this.highlighting = false;
          table = new MyTippedJTable(new RegTableModel(setupWindow()));
          table.getColumnModel().getColumn(NAME_COLUMN).setPreferredWidth(50);
@@ -101,7 +101,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public void clearWindow() {
          this.clearHighlighting();
          Coprocessor0.resetRegisters();
-         this.updateRegisters(Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase());
+         this.updateRegisters(Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase());
       }
     
    	/**
@@ -128,7 +128,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 *  Update register display using current display base (10 or 16)
    	 */
        public void updateRegisters() {
-         this.updateRegisters(Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase());
+         this.updateRegisters(Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase());
       }
    	
    	/**
@@ -191,7 +191,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             	// AddressCellRenderer class in DataSegmentWindow.java.
                this.highlighting = true;
                this.highlightCellForRegister((Register)observable);
-               Globals.getGui().getRegistersPane().setSelectedComponent(this);
+               Main.getEnv().getRegistersPane().setSelectedComponent(this);
             }
          }
       }
@@ -314,10 +314,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                }
          	//  Assures that if changed during MIPS program execution, the update will
          	//  occur only between MIPS instructions.
-            synchronized (Globals.memoryAndRegistersLock) {
+            synchronized (Main.memoryAndRegistersLock) {
                Coprocessor0.updateRegister(registers[row].getNumber(), val);
             }
-            int valueBase = Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase();
+            int valueBase = Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
             data[row][col] = NumberDisplayBaseChooser.formatNumber(val, valueBase); 
             fireTableCellUpdated(row, col);
             return;

@@ -10,7 +10,6 @@
    import mars.simulator.Simulator;
    import javax.swing.event.DocumentEvent;
    import javax.swing.text.Position.Bias;
-   import static mars.venus.VenusUI.mainFrame;
 
 /*
 Copyright (c) 2003-2010,  Pete Sanderson and Kenneth Vollmar
@@ -54,8 +53,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	// reaches MAXIMUM_SCROLLED_CHARACTERS in length then cut off 
    	// the first NUMBER_OF_CHARACTERS_TO_CUT characters.  The latter
    	// must obviously be smaller than the former.
-      public static final int MAXIMUM_SCROLLED_CHARACTERS = Globals.maximumMessageCharacters;
-      public static final int NUMBER_OF_CHARACTERS_TO_CUT = Globals.maximumMessageCharacters/10 ; // 10%
+      public static final int MAXIMUM_SCROLLED_CHARACTERS = Main.maximumMessageCharacters;
+      public static final int NUMBER_OF_CHARACTERS_TO_CUT = Main.maximumMessageCharacters/10 ; // 10%
    
    /**
      *  Constructor for the class, sets up two fresh tabbed text areas for program feedback.
@@ -227,7 +226,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 *  @param column Column number for error message
    	 */   
        public void selectEditorTextLine(String fileName, int line, int column) {
-         EditTabbedPane editTabbedPane = (EditTabbedPane) Globals.getGui().getMainPane().getEditTabbedPane();      
+         EditTabbedPane editTabbedPane = (EditTabbedPane) Main.getEnv().getMainPane().getEditTabbedPane();      
          EditPane editPane, currentPane = null;
          editPane = editTabbedPane.getEditPaneForFile(new java.io.File(fileName).getPath());
          if (editPane != null) {
@@ -351,10 +350,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          String input;
          JOptionPane pane = new JOptionPane(prompt,JOptionPane.QUESTION_MESSAGE,JOptionPane.DEFAULT_OPTION); 
          pane.setWantsInput(true);
-         JDialog dialog = pane.createDialog(mainFrame, "MIPS Keyboard Input"); 
+         JDialog dialog = pane.createDialog(VenusUI.getMainFrame(), "MIPS Keyboard Input"); 
          dialog.setVisible(true); 
          input = (String) pane.getInputValue();
-         this.postRunMessage(Globals.userInputAlert+input+"\n");
+         this.postRunMessage(Main.userInputAlert+input+"\n");
          return input;
       }
    

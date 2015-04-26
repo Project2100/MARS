@@ -48,8 +48,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    		 
        public void actionPerformed(ActionEvent e) {
 		   boolean visibility = ((JCheckBoxMenuItem) e.getSource()).isSelected();
-		   Globals.getGui().getMainPane().getExecutePane().setLabelWindowVisibility(visibility);
-         Globals.getSettings().setLabelWindowVisibility(visibility);
+		   Main.getEnv().getMainPane().getExecutePane().setLabelWindowVisibility(visibility);
+         Main.getSettings().setLabelWindowVisibility(visibility);
       }
    	   	
    }

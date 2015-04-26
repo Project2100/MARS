@@ -6,7 +6,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.Timer;
 
-import mars.Globals;
+import mars.Main;
 import mars.mips.hardware.AddressErrorException;
 import mars.mips.hardware.Coprocessor0;
 import mars.mips.hardware.Memory;
@@ -106,17 +106,17 @@ public class DigitalLabSim extends AbstractMarsToolAndApplication {
     }
     private synchronized void updateMMIOControlAndData(int dataAddr, int dataValue) {
         if (!this.isBeingUsedAsAMarsTool || (this.isBeingUsedAsAMarsTool && connectButton.isConnected())) {
-           synchronized (Globals.memoryAndRegistersLock) {
+           synchronized (Main.memoryAndRegistersLock) {
               try {
-              		Globals.memory.setByte(dataAddr, dataValue);
+              		Main.memory.setByte(dataAddr, dataValue);
               } 
                   catch (AddressErrorException aee) {
                     System.out.println("Tool author specified incorrect MMIO address!"+aee);
                     System.exit(0);
                  }
            }
-           if (Globals.getGui() != null && Globals.getGui().getMainPane().getExecutePane().getTextSegmentWindow().getCodeHighlighting() ) {
-              Globals.getGui().getMainPane().getExecutePane().getDataSegmentWindow().updateValues();
+           if (Main.getEnv() != null && Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow().getCodeHighlighting() ) {
+              Main.getEnv().getMainPane().getExecutePane().getDataSegmentWindow().updateValues();
            }
         }
      }

@@ -1,5 +1,5 @@
    package mars.util;
-	import mars.Globals;
+	import mars.Main;
    import java.util.*;
 	
 	/*
@@ -257,20 +257,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
      * Prefix a hexadecimal-indicating string "0x" to the string which is 
      * returned by the method "Integer.toHexString". Prepend leading zeroes
      * to that string as necessary to make it always eight hexadecimal digits.
+     * 
+     * Optimized surrogate of String.format("%0#10x", value);
      *
      * @param d The int value to convert.
      * @return String containing '0', '1', ...'F' which form hexadecimal equivalent of int.
      */
        public static String intToHexString(int d)
       {
-         String leadingZero = new String("0");
-         String leadingX = new String("0x");
-         String t = Integer.toHexString(d);
-         while (t.length() < 8)
-            t = leadingZero.concat(t);
-            
-         t = leadingX.concat(t);   
-         return t;
+          String t = Integer.toHexString(d);
+
+          char[] pad = new char[10 - t.length()];
+          Arrays.fill(pad, '0');
+          pad[1] = 'x';
+          if (d == 0) return new String(pad);
+
+          return new String(pad) + t;
       }
    
     /**
@@ -337,7 +339,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          StringBuilder result = new StringBuilder(8);
          for (int i=3; i>=0; i--) {
             int byteValue = getByte(d, i);
-            result.append( (byteValue < Globals.ASCII_TABLE.length) ? Globals.ASCII_TABLE[byteValue] : Globals.ASCII_NON_PRINT );
+            result.append((byteValue < Main.ASCII_TABLE.length) ? Main.ASCII_TABLE[byteValue] : Main.ASCII_NON_PRINT );
          }
          return result.toString();
       }

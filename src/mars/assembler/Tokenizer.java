@@ -288,7 +288,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          int tokenPos = 0;
          int tokenStartPos = 1;
          boolean insideQuotedString = false;  
-         if (Globals.debug) 
+         if (Main.debug) 
             System.out.println("source line --->"+theLine+"<---");
       // Each iteration of this loop processes one character in the source line.
          while (linePos < line.length) {

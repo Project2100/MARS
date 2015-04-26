@@ -3,7 +3,6 @@
    import java.awt.*;
    import java.awt.event.*;
    import javax.swing.*;
-   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
@@ -43,9 +42,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
    		  
        public void actionPerformed(ActionEvent e){
-          JOptionPane.showMessageDialog(mainFrame,
-			              "MARS "+Globals.version+"    Copyright "+Globals.copyrightYears+"\n"+
-							  Globals.copyrightHolders+"\n"+
+          JOptionPane.showMessageDialog(VenusUI.getMainFrame(),
+			              "MARS "+Main.version+"    Copyright "+Main.copyrightYears+"\n"+
+							  Main.copyrightHolders+"\n"+
 							  "MARS is the Mips Assembler and Runtime Simulator.\n\n"+
 							  "Mars image courtesy of NASA/JPL.\n"+
                                                           "Application icon taken from [PLACEHOLDER]"+

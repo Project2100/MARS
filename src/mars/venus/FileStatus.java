@@ -85,7 +85,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 */
        public static void set(int newStatus) {
          systemStatus = newStatus;
-         Globals.getGui().setMenuState(systemStatus);
+         Main.getEnv().setMenuState(systemStatus);
       }
    	
      /**

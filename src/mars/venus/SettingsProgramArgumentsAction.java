@@ -50,11 +50,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    		 
        public void actionPerformed(ActionEvent e) {
 		   boolean selected = ((JCheckBoxMenuItem)e.getSource()).isSelected();
-		   Globals.getSettings().setProgramArguments(selected);
+		   Main.getSettings().setProgramArguments(selected);
 			if (selected) {
-			   Globals.getGui().getMainPane().getExecutePane().getTextSegmentWindow().addProgramArgumentsPanel();
+			   Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow().addProgramArgumentsPanel();
 			} else {
-			   Globals.getGui().getMainPane().getExecutePane().getTextSegmentWindow().removeProgramArgumentsPanel();			
+			   Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow().removeProgramArgumentsPanel();			
 			}
       }
    	   	

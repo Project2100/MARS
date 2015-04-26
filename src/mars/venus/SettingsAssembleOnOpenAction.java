@@ -47,7 +47,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
    		 
        public void actionPerformed(ActionEvent e) {
-		   Globals.getSettings().setAssembleOnOpenEnabled(
+		   Main.getSettings().setAssembleOnOpenEnabled(
 		       ((JCheckBoxMenuItem) e.getSource()).isSelected());
       }
    	   	

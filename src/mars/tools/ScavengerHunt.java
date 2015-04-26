@@ -7,7 +7,7 @@
    import java.util.*;
    import javax.swing.JOptionPane;
    import mars.util.*;
-import static mars.venus.VenusUI.mainFrame;
+import static mars.venus.VenusUI.getMainFrame;
 
 /**
  * Demo of Mars tool capability.    Ken Vollmar, 27 Oct 2006  KenVollmar@missouristate.edu
@@ -156,7 +156,7 @@ import static mars.venus.VenusUI.mainFrame;
             // final JFrame frame = new JFrame("ScavengerHunt");
             // Recommended by Pete Sanderson, 2 Nov. 2006, so that the Tool window and
             // MARS window can be on the screen at the same time.
-            final JDialog dialog = new JDialog(mainFrame,"ScavengerHunt");
+            final JDialog dialog = new JDialog(getMainFrame(),"ScavengerHunt");
          
             // System.out.println("ScavengerHuntRunnable.constructor: starting....");
          
@@ -452,7 +452,7 @@ import static mars.venus.VenusUI.mainFrame;
         // Register as observer for a particular MIPS data range. Other ranges
         // are not used by this Tool.
          try {
-            Globals.memory.addObserver(this, 0xffff8000, 0xfffffff0);  // must be on word boundaries
+            Main.memory.addObserver(this, 0xffff8000, 0xfffffff0);  // must be on word boundaries
          }
              catch (AddressErrorException e)
             {
@@ -762,7 +762,7 @@ import static mars.venus.VenusUI.mainFrame;
          SetWordCounter++;
       
          try {
-            Globals.memory.setWord(address, data); // Write
+            Main.memory.setWord(address, data); // Write
          }
              catch ( AddressErrorException e) {
                System.out.println("ScavengerHunt.toolSetWord: deliberate exit on AEE exception.");
@@ -817,7 +817,7 @@ import static mars.venus.VenusUI.mainFrame;
            Binary.intToHexString(Globals.memory.getWord(address)) +
            " which is at MIPS Memory[" + Binary.intToHexString(address) + "]" );
          */
-            returnValue = Globals.memory.getWord(address);
+            returnValue = Main.memory.getWord(address);
          
          /*
          System.out.println("ScavengerHunt.toolGetWord: Mem[" +

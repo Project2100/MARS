@@ -4,7 +4,6 @@
    import java.awt.*;
    import java.awt.event.*;
    import javax.swing.*;
-   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -48,7 +47,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
    		  
        public void actionPerformed(ActionEvent e){
-         findReplaceDialog = new FindReplaceDialog(mainFrame, DIALOG_TITLE, false );
+         findReplaceDialog = new FindReplaceDialog(VenusUI.getMainFrame(), DIALOG_TITLE, false );
          findReplaceDialog.setVisible(true);
       }
    	

@@ -147,7 +147,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    **/
    
        public int getErrorLimit() {
-         return Globals.maximumErrorMessages;
+         return Main.maximumErrorMessages;
       }
    
    /**

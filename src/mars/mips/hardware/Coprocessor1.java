@@ -1,6 +1,6 @@
    package mars.mips.hardware;
    import mars.util.*;
-   import mars.Globals;
+   import mars.Main;
    import java.util.*;
 
 /*
@@ -329,8 +329,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          int old = 0;
          for (int i=0; i< registers.length; i++){
             if(registers[i].getNumber()== num) {
-               old = (Globals.getSettings().getBackSteppingEnabled())
-                        ? Globals.program.getBackStepper().addCoprocessor1Restore(num,registers[i].setValue(val))
+               old = (Main.getSettings().getBackSteppingEnabled())
+                        ? Main.program.getBackStepper().addCoprocessor1Restore(num,registers[i].setValue(val))
                   		: registers[i].setValue(val);
                break;
             }
@@ -441,12 +441,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          if (flag >= 0 && flag < numConditionFlags) {
             old = getConditionFlag(flag);
             condition.setValue(Binary.setBit(condition.getValue(),flag));
-            if (Globals.getSettings().getBackSteppingEnabled())
+            if (Main.getSettings().getBackSteppingEnabled())
                if (old==0) {
-                  Globals.program.getBackStepper().addConditionFlagClear(flag);
+                  Main.program.getBackStepper().addConditionFlagClear(flag);
                } 
                else {
-                  Globals.program.getBackStepper().addConditionFlagSet(flag);
+                  Main.program.getBackStepper().addConditionFlagSet(flag);
                }
          }
          return old;
@@ -463,12 +463,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          if (flag >= 0 && flag < numConditionFlags) {
             old = getConditionFlag(flag);
             condition.setValue(Binary.clearBit(condition.getValue(),flag));
-            if (Globals.getSettings().getBackSteppingEnabled())
+            if (Main.getSettings().getBackSteppingEnabled())
                if (old==0) {
-                  Globals.program.getBackStepper().addConditionFlagClear(flag);
+                  Main.program.getBackStepper().addConditionFlagClear(flag);
                } 
                else {
-                  Globals.program.getBackStepper().addConditionFlagSet(flag);
+                  Main.program.getBackStepper().addConditionFlagSet(flag);
                }
          }
          return old;

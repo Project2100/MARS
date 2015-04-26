@@ -69,15 +69,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          {
             for (int index = 0; index < stringLength; index++)
             {
-               Globals.memory.setByte(buf + index,
+               Main.memory.setByte(buf + index,
                                        inputString.charAt(index));
             }            
             if (stringLength < maxLength)
             {
-               Globals.memory.setByte(buf + stringLength, '\n');
+               Main.memory.setByte(buf + stringLength, '\n');
                stringLength++;
             }
-            if (addNullByte) Globals.memory.setByte(buf + stringLength, 0);
+            if (addNullByte) Main.memory.setByte(buf + stringLength, 0);
          } 
              catch (AddressErrorException e)
             {

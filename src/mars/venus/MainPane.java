@@ -59,7 +59,6 @@ public class MainPane extends JTabbedPane {
      */
     public MainPane(VenusUI appFrame, Editor editor, RegistersWindow regs,
             Coprocessor1Window cop1Regs, Coprocessor0Window cop0Regs) {
-        
         super();
         setTabPlacement(JTabbedPane.TOP);
         setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
@@ -68,7 +67,7 @@ public class MainPane extends JTabbedPane {
         addTab("Edit", editTabbedPane);
         setToolTipTextAt(0, "Text editor for composing MIPS programs.");
         
-        executeTab = new ExecutePane(appFrame, regs, cop1Regs, cop0Regs);
+        executeTab = new ExecutePane(regs, cop1Regs, cop0Regs);
         addTab("Execute", executeTab);
         setToolTipTextAt(1, "View and control assembly language program execution.  Enabled upon successful assemble.");
 
@@ -84,10 +83,10 @@ public class MainPane extends JTabbedPane {
             public void stateChanged(ChangeEvent ce) {
                 JTabbedPane tabbedPane = (JTabbedPane) ce.getSource();
                 Component c = tabbedPane.getComponentAt(tabbedPane.getSelectedIndex());
-                ExecutePane executePane = Globals.getGui().getMainPane().getExecutePane();
+                ExecutePane executePane = Main.getEnv().getMainPane().getExecutePane();
                 if (c == executePane) {
                     executePane.setWindowBounds();
-                    Globals.getGui().getMainPane().removeChangeListener(this);
+                    Main.getEnv().getMainPane().removeChangeListener(this);
                 }
             }
         });

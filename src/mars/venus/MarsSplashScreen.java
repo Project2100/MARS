@@ -1,4 +1,4 @@
-package mars;
+package mars.venus;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -10,6 +10,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JWindow;
 import javax.swing.Timer;
+import mars.Main;
 
 /*
  Copyright (c) 2003-2010,  Pete Sanderson and Kenneth Vollmar
@@ -53,9 +54,9 @@ public class MarsSplashScreen extends JWindow {
         title.setFont(new Font("Sans-Serif", Font.BOLD, 16));
         title.setForeground(Color.black);
         
-        JLabel copyright = new JLabel("<html><br/><br/>Version " + Globals.version
-                + " Copyright (c) " + Globals.copyrightYears
-                + "<br/><br/><br/>" + Globals.copyrightHolders + "</html>",
+        JLabel copyright = new JLabel("<html><br/><br/>Version " + Main.version
+                + " Copyright (c) " + Main.copyrightYears
+                + "<br/><br/><br/>" + Main.copyrightHolders + "</html>",
                 JLabel.CENTER);
         copyright.setFont(new Font("Sans-Serif", Font.BOLD, 14));
         copyright.setForeground(Color.white);
@@ -63,7 +64,7 @@ public class MarsSplashScreen extends JWindow {
         // Construct the panel with the background image
         JPanel content = new JPanel() {
             ImageIcon image = new ImageIcon(Toolkit.getDefaultToolkit().getImage(
-                    this.getClass().getResource(Globals.imagesPath + "MarsSurfacePathfinder.jpg")));
+                    this.getClass().getResource(Main.imagesPath + "MarsSurfacePathfinder.jpg")));
 
             @Override
             protected void paintComponent(Graphics g) {

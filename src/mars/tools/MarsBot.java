@@ -109,8 +109,8 @@
                     // Write this new information to MARS memory area
                   try
                   {
-                     Globals.memory.setWord(ADDR_WHEREAREWEX, (int) MarsBotXPosition);
-                     Globals.memory.setWord(ADDR_WHEREAREWEY, (int) MarsBotYPosition);
+                     Main.memory.setWord(ADDR_WHEREAREWEX, (int) MarsBotXPosition);
+                     Main.memory.setWord(ADDR_WHEREAREWEY, (int) MarsBotYPosition);
                   
                   }
                       catch ( AddressErrorException e)
@@ -260,7 +260,7 @@
          t1.start();
         // New: DPS 27 Feb 2006.  Register observer for memory subrange.
          try {
-            Globals.memory.addObserver(this,0xffff8000,0xffff8060);
+            Main.memory.addObserver(this,0xffff8000,0xffff8060);
          } 
              catch (AddressErrorException aee) { 
                System.out.println(aee);

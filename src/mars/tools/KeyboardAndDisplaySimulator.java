@@ -7,7 +7,7 @@
    import java.awt.*;
    import java.awt.event.*;
    import java.util.*;
-   import mars.Globals;
+   import mars.Main;
    import mars.venus.RunSpeedPanel;
    import mars.mips.hardware.*;
    import mars.simulator.Exceptions;
@@ -703,10 +703,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 // NOTE: last argument TRUE means update only the MMIO Control register; FALSE means update both Control and Data.
       private synchronized void updateMMIOControlAndData(int controlAddr, int controlValue, int dataAddr, int dataValue, boolean controlOnly) {
          if (!this.isBeingUsedAsAMarsTool || (this.isBeingUsedAsAMarsTool && connectButton.isConnected())) {
-            synchronized (Globals.memoryAndRegistersLock) {
+            synchronized (Main.memoryAndRegistersLock) {
                try {
-                  Globals.memory.setRawWord(controlAddr, controlValue);
-                  if (!controlOnly) Globals.memory.setRawWord(dataAddr, dataValue);
+                  Main.memory.setRawWord(controlAddr, controlValue);
+                  if (!controlOnly) Main.memory.setRawWord(dataAddr, dataValue);
                }
                   catch (AddressErrorException aee) {
                      System.out.println("Tool author specified incorrect MMIO address!"+aee);
@@ -717,8 +717,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          	// but that code was not written for event-driven update (e.g. Observer) --
          	// it was written to poll the memory cells for their values.  So we force it to do so.
          
-            if (Globals.getGui() != null && Globals.getGui().getMainPane().getExecutePane().getTextSegmentWindow().getCodeHighlighting() ) {
-               Globals.getGui().getMainPane().getExecutePane().getDataSegmentWindow().updateValues();
+            if (Main.getEnv() != null && Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow().getCodeHighlighting() ) {
+               Main.getEnv().getMainPane().getExecutePane().getDataSegmentWindow().updateValues();
             }
          }
       }
@@ -730,7 +730,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
      // Have to preserve the value of Interrupt Enable bit (bit 1)
       private static boolean isReadyBitSet(int mmioControlRegister) {
          try {
-            return (Globals.memory.get(mmioControlRegister, Memory.WORD_LENGTH_BYTES) & 1) == 1;
+            return (Main.memory.get(mmioControlRegister, Memory.WORD_LENGTH_BYTES) & 1) == 1;
          }
             catch (AddressErrorException aee) {
                System.out.println("Tool author specified incorrect MMIO address!"+aee);
@@ -745,7 +745,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
      // Have to preserve the value of Interrupt Enable bit (bit 1)
       private static int readyBitSet(int mmioControlRegister) {
          try {
-            return Globals.memory.get(mmioControlRegister, Memory.WORD_LENGTH_BYTES) | 1;
+            return Main.memory.get(mmioControlRegister, Memory.WORD_LENGTH_BYTES) | 1;
          }
             catch (AddressErrorException aee) {
                System.out.println("Tool author specified incorrect MMIO address!"+aee);
@@ -759,7 +759,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
      // Have to preserve the value of Interrupt Enable bit (bit 1). Bits 2 and higher don't matter.
       private static int readyBitCleared(int mmioControlRegister) {
          try {
-            return Globals.memory.get(mmioControlRegister, Memory.WORD_LENGTH_BYTES) & 2;
+            return Main.memory.get(mmioControlRegister, Memory.WORD_LENGTH_BYTES) & 2;
          }
             catch (AddressErrorException aee) {
                System.out.println("Tool author specified incorrect MMIO address!"+aee);

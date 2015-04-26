@@ -70,7 +70,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          else {
             Symbol s= new Symbol(label, address, b);
             table.add(s);
-            if (Globals.debug) System.out.println("The symbol " + label + " with address " + address + " has been added to the "+this.filename+" symbol table.");
+            if (Main.debug) System.out.println("The symbol " + label + " with address " + address + " has been added to the "+this.filename+" symbol table.");
          }
       }
    
@@ -87,7 +87,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          for (int i=0; i < table.size(); i++) {
             if (((Symbol)(table.get(i))).getName().equals(label)){
                table.remove(i);
-               if (Globals.debug) System.out.println("The symbol " + label + " has been removed from the "+this.filename+" symbol table.");
+               if (Main.debug) System.out.println("The symbol " + label + " has been removed from the "+this.filename+" symbol table.");
                break;
             }
          }
@@ -118,7 +118,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	  **/		
        public int getAddressLocalOrGlobal(String s) {
          int address = this.getAddress(s);
-         return (address==NOT_FOUND) ? Globals.symbolTable.getAddress(s) : address ;
+         return (address==NOT_FOUND) ? Main.symbolTable.getAddress(s) : address ;
       }
    	
    	
@@ -167,7 +167,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        **/
        public Symbol getSymbolGivenAddressLocalOrGlobal(String s){
          Symbol sym = this.getSymbolGivenAddress(s);
-         return (sym==null) ? Globals.symbolTable.getSymbolGivenAddress(s) : sym ;
+         return (sym==null) ? Main.symbolTable.getSymbolGivenAddress(s) : sym ;
       }
    			  
    

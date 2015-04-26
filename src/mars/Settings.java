@@ -287,7 +287,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
      * @return true if backstepping is permitted, false otherwise.
      */
        public boolean getBackSteppingEnabled() {
-         return (Globals.program!=null && Globals.program.getBackStepper()!=null && Globals.program.getBackStepper().enabled());
+         return (Main.program!=null && Main.program.getBackStepper()!=null && Main.program.getBackStepper().enabled());
       }
    
    
@@ -1241,29 +1241,29 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          String settingValue;
          try {
             for (int i=0; i<booleanSettingsKeys.length; i++) {
-               settingValue = Globals.getPropertyEntry(filename, booleanSettingsKeys[i]);
+               settingValue = Main.getPropertyEntry(filename, booleanSettingsKeys[i]);
                if (settingValue != null) {
                   booleanSettingsValues[i] = defaultBooleanSettingsValues[i] = Boolean.valueOf(settingValue).booleanValue();
                }
             }
             for (int i=0; i<stringSettingsKeys.length; i++) {
-               settingValue = Globals.getPropertyEntry(filename, stringSettingsKeys[i]);
+               settingValue = Main.getPropertyEntry(filename, stringSettingsKeys[i]);
                if (settingValue != null )
                   stringSettingsValues[i] = defaultStringSettingsValues[i] = settingValue;
             }        
             for (int i=0; i<fontFamilySettingsValues.length; i++) {
-               settingValue = Globals.getPropertyEntry(filename, fontFamilySettingsKeys[i]);
+               settingValue = Main.getPropertyEntry(filename, fontFamilySettingsKeys[i]);
                if (settingValue != null )
                   fontFamilySettingsValues[i] = defaultFontFamilySettingsValues[i] = settingValue;			
-               settingValue = Globals.getPropertyEntry(filename, fontStyleSettingsKeys[i]);
+               settingValue = Main.getPropertyEntry(filename, fontStyleSettingsKeys[i]);
                if (settingValue != null )
                   fontStyleSettingsValues[i] = defaultFontStyleSettingsValues[i] = settingValue;				
-               settingValue = Globals.getPropertyEntry(filename, fontSizeSettingsKeys[i]);
+               settingValue = Main.getPropertyEntry(filename, fontSizeSettingsKeys[i]);
                if (settingValue != null )
                   fontSizeSettingsValues[i] = defaultFontSizeSettingsValues[i] = settingValue;				
             }         
             for (int i=0; i<colorSettingsKeys.length; i++) {
-               settingValue = Globals.getPropertyEntry(filename, colorSettingsKeys[i]);
+               settingValue = Main.getPropertyEntry(filename, colorSettingsKeys[i]);
                if (settingValue != null )
                   colorSettingsValues[i] = defaultColorSettingsValues[i] = settingValue;
             }

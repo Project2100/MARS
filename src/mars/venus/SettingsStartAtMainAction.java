@@ -49,7 +49,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
    		 
        public void actionPerformed(ActionEvent e) {
-		   Globals.getSettings().setStartAtMain(((JCheckBoxMenuItem)e.getSource()).isSelected());
+		   Main.getSettings().setStartAtMain(((JCheckBoxMenuItem)e.getSource()).isSelected());
       }
    	   	
    }

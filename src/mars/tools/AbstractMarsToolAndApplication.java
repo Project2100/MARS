@@ -8,9 +8,8 @@
    import java.io.*;
    import mars.*;
    import mars.util.*;
-   import mars.tools.*;
    import mars.mips.hardware.*;
-   import static mars.venus.VenusUI.mainFrame;
+   import static mars.venus.VenusUI.getMainFrame;
 
 /*
 Copyright (c) 2003-2008,  Pete Sanderson and Kenneth Vollmar
@@ -139,7 +138,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          theWindow = this;
          this.isBeingUsedAsAMarsTool = false;
          thisMarsApp.setTitle(this.title);
-         mars.Globals.initialize();   				
+         mars.Main.initialize();   				
       	// assure the dialog goes away if user clicks the X
          thisMarsApp.addWindowListener(
                 new WindowAdapter() {
@@ -181,7 +180,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    
        public void action() {
          this.isBeingUsedAsAMarsTool = true;
-         dialog = new JDialog(mainFrame, this.title);
+         dialog = new JDialog(getMainFrame(), this.title);
       	// assure the dialog goes away if user clicks the X
          dialog.addWindowListener(
                 new WindowAdapter() {
@@ -200,7 +199,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          initializePostGUI();
          dialog.setContentPane(contentPane);
          dialog.pack();      
-         dialog.setLocationRelativeTo(mainFrame);
+         dialog.setLocationRelativeTo(getMainFrame());
          dialog.setVisible(true);
       }
    	
@@ -340,7 +339,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                         fileChooser.setSelectedFile(mostRecentlyOpenedFile);
                      }
                      // DPS 13 June 2007.  The next 4 lines add file filter to file chooser.
-                     FileFilter defaultFileFilter = FilenameFinder.getFileFilter(Globals.fileExtensions, "Assembler Files", true);
+                     FileFilter defaultFileFilter = FilenameFinder.getFileFilter(Main.fileExtensions, "Assembler Files", true);
                      fileChooser.addChoosableFileFilter(defaultFileFilter); 
                      fileChooser.addChoosableFileFilter(fileChooser.getAcceptAllFileFilter());
                      fileChooser.setFileFilter(defaultFileFilter);      
@@ -521,7 +520,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        protected void addAsObserver(int lowEnd, int highEnd) {
          String errorMessage = "Error connecting to MIPS memory";
          try {
-            Globals.memory.addObserver(thisMarsApp,lowEnd, highEnd);
+            Main.memory.addObserver(thisMarsApp,lowEnd, highEnd);
          } 
              catch (AddressErrorException aee) {
                if (this.isBeingUsedAsAMarsTool) {
@@ -553,7 +552,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 */		 
    	 
        protected void deleteAsObserver() {
-         Globals.memory.deleteObserver(thisMarsApp);
+         Main.memory.deleteObserver(thisMarsApp);
       }
    
       /**
@@ -644,14 +643,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       	
           public void connect() {
             observing = true;
-            synchronized (Globals.memoryAndRegistersLock) {// DPS 23 July 2008
+            synchronized (Main.memoryAndRegistersLock) {// DPS 23 July 2008
                addAsObserver();
             }
             setText(disconnectText);
          }
       	
           public void disconnect() {
-            synchronized (Globals.memoryAndRegistersLock) {// DPS 23 July 2008
+            synchronized (Main.memoryAndRegistersLock) {// DPS 23 July 2008
                deleteAsObserver();
             }
             observing = false;
@@ -698,21 +697,21 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
            // boolean warningsAreErrors = false;           // Ditto.
            
             String exceptionHandler = null;
-            if (Globals.getSettings().getExceptionHandlerEnabled() &&
-                   Globals.getSettings().getExceptionHandler() != null &&
-                   Globals.getSettings().getExceptionHandler().length() > 0) {
-               exceptionHandler = Globals.getSettings().getExceptionHandler();
+            if (Main.getSettings().getExceptionHandlerEnabled() &&
+                   Main.getSettings().getExceptionHandler() != null &&
+                   Main.getSettings().getExceptionHandler().length() > 0) {
+               exceptionHandler = Main.getSettings().getExceptionHandler();
             }
            
             Thread.currentThread().setPriority(Thread.NORM_PRIORITY-1);
             Thread.yield();
             MIPSprogram program = new MIPSprogram();
-            mars.Globals.program = program; // Shouldn't have to do this...
+            mars.Main.program = program; // Shouldn't have to do this...
             String fileToAssemble = mostRecentlyOpenedFile.getPath();
             ArrayList filesToAssemble = null;
             if (multiFileAssemble) {// setting (check box in file open dialog) calls for multiple file assembly 
                filesToAssemble = FilenameFinder.getFilenameList(
-                               new File(fileToAssemble).getParent(), Globals.fileExtensions);
+                               new File(fileToAssemble).getParent(), Main.fileExtensions);
             } 
             else {
                filesToAssemble = new ArrayList();
@@ -729,7 +728,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                } 
          
             try {
-               program.assemble(programsToAssemble, Globals.getSettings().getExtendedAssemblerEnabled(), Globals.getSettings().getWarningsAreErrors());
+               program.assemble(programsToAssemble, Main.getSettings().getExtendedAssemblerEnabled(), Main.getSettings().getWarningsAreErrors());
             }
                 catch (mars.ProcessingException pe) {
                   operationStatusMessages.displayTerminatingMessage("Assembly Error: "+fileToAssemble);

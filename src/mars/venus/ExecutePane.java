@@ -2,7 +2,6 @@
    import mars.*;
    import javax.swing.*;
    import java.awt.*;
-   import java.util.*;
 
 /*
 Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
@@ -44,7 +43,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       private DataSegmentWindow dataSegment;
       private TextSegmentWindow  textSegment;
       private LabelsWindow labelValues;
-      private VenusUI mainUI;   
       private NumberDisplayBaseChooser valueDisplayBase;
       private NumberDisplayBaseChooser addressDisplayBase;
       private boolean labelWindowVisible;
@@ -58,14 +56,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    * @param cop0Regs window containing Coprocessor 0 register set
    */
    
-       public ExecutePane(VenusUI mainUI, RegistersWindow regs, Coprocessor1Window cop1Regs, Coprocessor0Window cop0Regs) {
-         this.mainUI = mainUI;
+       public ExecutePane(RegistersWindow regs, Coprocessor1Window cop1Regs, Coprocessor0Window cop0Regs) {
       	// Although these are displayed in Data Segment, they apply to all three internal
       	// windows within the Execute pane.  So they will be housed here.
          addressDisplayBase = new NumberDisplayBaseChooser("Hexadecimal Addresses",
-                                    Globals.getSettings().getDisplayAddressesInHex());
+                                    Main.getSettings().getDisplayAddressesInHex());
          valueDisplayBase = new NumberDisplayBaseChooser("Hexadecimal Values",
-                                    Globals.getSettings().getDisplayValuesInHex());//VenusUI.DEFAULT_NUMBER_BASE);
+                                    Main.getSettings().getDisplayValuesInHex());//VenusUI.DEFAULT_NUMBER_BASE);
          addressDisplayBase.setToolTipText("If checked, displays all memory addresses in hexadecimal.  Otherwise, decimal.");
          valueDisplayBase.setToolTipText("If checked, displays all memory and register contents in hexadecimal.  Otherwise, decimal.");
          NumberDisplayBaseChooser[] choosers = { addressDisplayBase, valueDisplayBase };
@@ -75,7 +72,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          textSegment = new TextSegmentWindow();
          dataSegment = new DataSegmentWindow(choosers);
          labelValues = new LabelsWindow();
-         labelWindowVisible = Globals.getSettings().getLabelWindowVisibility();
+         labelWindowVisible = Main.getSettings().getLabelWindowVisibility();
          this.add(textSegment);  // these 3 LOC moved up.  DPS 3-Sept-2014
          this.add(dataSegment);
          this.add(labelValues);
@@ -158,9 +155,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          this.getCoprocessor0Window().clearWindow();
          this.getLabelsWindow().clearWindow();
       		// seems to be required, to display cleared Execute tab contents...
-         if (mainUI.getMainPane().getSelectedComponent()== this) {
-            mainUI.getMainPane().setSelectedComponent(mainUI.getMainPane().getEditTabbedPane());
-            mainUI.getMainPane().setSelectedComponent(this);
+         MainPane pane = Main.getEnv().getMainPane();
+         if (pane.getSelectedComponent()== this) {
+            pane.setSelectedComponent(pane.getEditTabbedPane());
+            pane.setSelectedComponent(this);
          }
       }
    	

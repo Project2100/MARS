@@ -57,7 +57,7 @@
                }
             };
          this.getDocument().addUndoableEditListener(undoableEditListener); 
-         this.setFont(Globals.getSettings().getEditorFont());
+         this.setFont(Main.getSettings().getEditorFont());
          this.setTokenMarker(new MIPSTokenMarker());
       	
          addCaretListener(this);

@@ -57,7 +57,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import mars.Globals;
+import mars.Main;
 import mars.ProgramStatement;
 import mars.mips.hardware.AccessNotice;
 import mars.mips.hardware.AddressErrorException;
@@ -155,7 +155,7 @@ public class MipsXray extends AbstractMarsToolAndApplication{
 
       // Insert image in the panel and configure the parameters to run animation.
       protected JComponent buildMainDisplayArea() {
-   	   mainUI = Globals.getGui();
+   	   mainUI = Main.getEnv();
    	   this.createActionObjects();
    	   toolbar= this.setUpToolBar();
    	  
@@ -163,8 +163,7 @@ public class MipsXray extends AbstractMarsToolAndApplication{
    	    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
    	    gc = ge.getDefaultScreenDevice().getDefaultConfiguration();
    	    try {
-   			  BufferedImage im =  ImageIO.read( 
-   					  getClass().getResource(Globals.imagesPath+"datapath.png") );
+   			  BufferedImage im =  ImageIO.read(getClass().getResource(Main.imagesPath+"datapath.png") );
    	
    		       int transparency = im.getColorModel().getTransparency();
    		       datapath =  gc.createCompatibleImage( im.getWidth(), im.getHeight(),
@@ -177,11 +176,11 @@ public class MipsXray extends AbstractMarsToolAndApplication{
    	     } 
    	     catch(IOException e) {
    	       System.out.println("Load Image error for " +
-   	    		   getClass().getResource(Globals.imagesPath+"datapath.png") + ":\n" + e); 
+   	    		   getClass().getResource(Main.imagesPath+"datapath.png") + ":\n" + e); 
    	       		   e.printStackTrace();
    	     }
    	     System.setProperty("sun.java2d.translaccel", "true"); 
-            ImageIcon icon = new ImageIcon(getClass().getResource(Globals.imagesPath+"datapath.png"));
+            ImageIcon icon = new ImageIcon(getClass().getResource(Main.imagesPath+"datapath.png"));
             Image im = icon.getImage();
             icon = new ImageIcon(im);
             
@@ -193,7 +192,7 @@ public class MipsXray extends AbstractMarsToolAndApplication{
     }
       
       protected JComponent buildMainDisplayArea(String figure) {
-      	   mainUI = Globals.getGui();
+      	   mainUI = Main.getEnv();
       	   this.createActionObjects();
       	   toolbar= this.setUpToolBar();
       	  
@@ -201,8 +200,7 @@ public class MipsXray extends AbstractMarsToolAndApplication{
       	    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
       	    gc = ge.getDefaultScreenDevice().getDefaultConfiguration();
       	    try {
-      			  BufferedImage im =  ImageIO.read( 
-      					  getClass().getResource(Globals.imagesPath+figure) );
+      			  BufferedImage im =  ImageIO.read(getClass().getResource(Main.imagesPath+figure) );
       	
       		       int transparency = im.getColorModel().getTransparency();
       		       datapath =  gc.createCompatibleImage( im.getWidth(), im.getHeight(),
@@ -215,11 +213,11 @@ public class MipsXray extends AbstractMarsToolAndApplication{
       	     } 
       	     catch(IOException e) {
       	       System.out.println("Load Image error for " +
-      	    		   getClass().getResource(Globals.imagesPath+figure) + ":\n" + e); 
+      	    		   getClass().getResource(Main.imagesPath+figure) + ":\n" + e); 
       	       		   e.printStackTrace();
       	     }
       	     System.setProperty("sun.java2d.translaccel", "true"); 
-               ImageIcon icon = new ImageIcon(getClass().getResource(Globals.imagesPath+figure));
+               ImageIcon icon = new ImageIcon(getClass().getResource(Main.imagesPath+figure));
                Image im = icon.getImage();
                icon = new ImageIcon(im);
                
@@ -298,18 +296,18 @@ public class MipsXray extends AbstractMarsToolAndApplication{
            Class cs = this.getClass();
            try{
                runAssembleAction = new RunAssembleAction("Assemble",  
-                       new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath+"Assemble22.png"))),
+                       new ImageIcon(tk.getImage(cs.getResource(Main.imagesPath+"Assemble22.png"))),
    							  "Assemble the current file and clear breakpoints", new Integer(KeyEvent.VK_A),
    							  KeyStroke.getKeyStroke( KeyEvent.VK_F3, 0), 
    							  mainUI);			
 
                runStepAction = new RunStepAction("Step", 
-                       new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath+"StepForward22.png"))),
+                       new ImageIcon(tk.getImage(cs.getResource(Main.imagesPath+"StepForward22.png"))),
    							  "Run one step at a time", new Integer(KeyEvent.VK_T),
    							  KeyStroke.getKeyStroke( KeyEvent.VK_F7, 0),
    							  mainUI);	
                runBackstepAction = new RunBackstepAction("Backstep", 
-                       new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath+"StepBack22.png"))),
+                       new ImageIcon(tk.getImage(cs.getResource(Main.imagesPath+"StepBack22.png"))),
    							  "Undo the last step", new Integer(KeyEvent.VK_B),
    							  KeyStroke.getKeyStroke( KeyEvent.VK_F8, 0), 
    							  mainUI);		
@@ -1111,8 +1109,7 @@ class DatapathAnimation extends JPanel
 	 //initialize the image of datapath.
 	 private void initImages(){
 		 try {
-			 BufferedImage im =  ImageIO.read( 
-					 getClass().getResource(Globals.imagesPath+"datapath.png") );
+			 BufferedImage im =  ImageIO.read(getClass().getResource(Main.imagesPath+"datapath.png") );
 
 			 int transparency = im.getColorModel().getTransparency();
 			 datapath =  gc.createCompatibleImage(
@@ -1124,7 +1121,7 @@ class DatapathAnimation extends JPanel
 		 } 
 		 catch(IOException e) {
 			 System.out.println("Load Image error for " +
-					 getClass().getResource(Globals.imagesPath+"datapath.png") + ":\n" + e); 
+					 getClass().getResource(Main.imagesPath+"datapath.png") + ":\n" + e); 
 		 }
 	 } 
 

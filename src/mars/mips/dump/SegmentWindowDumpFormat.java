@@ -1,6 +1,6 @@
    package mars.mips.dump;
 
-   import mars.Globals;
+   import mars.Main;
    import mars.ProgramStatement;
    import mars.util.Binary;
    import mars.mips.hardware.*;
@@ -82,11 +82,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       
          PrintStream out = new PrintStream(new FileOutputStream(file));
       
-         boolean hexAddresses = Globals.getSettings().getDisplayAddressesInHex();
+         boolean hexAddresses = Main.getSettings().getDisplayAddressesInHex();
       	
       	// If address in data segment, print in same format as Data Segment Window
          if (Memory.inDataSegment(firstAddress)) {
-            boolean hexValues = Globals.getSettings().getDisplayValuesInHex();
+            boolean hexValues = Main.getSettings().getDisplayValuesInHex();
             int offset = 0;
             String string="";
             try {
@@ -95,7 +95,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      string = ((hexAddresses) ? Binary.intToHexString(address) : Binary.unsignedIntToIntString(address))  + "    ";
                   }
                   offset++;
-                  Integer temp = Globals.memory.getRawWordOrNull(address);
+                  Integer temp = Main.memory.getRawWordOrNull(address);
                   if (temp == null) 
                      break;
                   string += ((hexValues) 
@@ -126,12 +126,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          try {
             for (int address = firstAddress; address <= lastAddress; address += Memory.WORD_LENGTH_BYTES) {
                string = ((hexAddresses) ? Binary.intToHexString(address) : Binary.unsignedIntToIntString(address))  + "  ";
-               Integer temp = Globals.memory.getRawWordOrNull(address);
+               Integer temp = Main.memory.getRawWordOrNull(address);
                if (temp == null) 
                   break;
                string += Binary.intToHexString(temp.intValue()) + "  ";
                try {
-                  ProgramStatement ps = Globals.memory.getStatement(address);
+                  ProgramStatement ps = Main.memory.getStatement(address);
                   string += (ps.getPrintableBasicAssemblyStatement()+"                      ").substring(0,22);
                   string += (((ps.getSource()=="") ? "" : new Integer(ps.getSourceLine()).toString())+"     ").substring(0,5);
                   string += ps.getSource();

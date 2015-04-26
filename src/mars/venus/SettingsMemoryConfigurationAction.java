@@ -11,7 +11,6 @@
    import javax.swing.border.*;
    import javax.swing.event.*;
    import java.io.*;
-   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -69,7 +68,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	  *  editor settings.
    	  */
        public void actionPerformed(ActionEvent e) {
-         configDialog = new MemoryConfigurationDialog(mainFrame, "MIPS Memory Configuration", true );
+         configDialog = new MemoryConfigurationDialog(VenusUI.getMainFrame(), "MIPS Memory Configuration", true );
          configDialog.setVisible(true);
       }
    	
@@ -225,10 +224,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       
           private void performApply() {
             if (MemoryConfigurations.setCurrentConfiguration(this.selectedConfigurationButton.getConfiguration())) {
-               Globals.getSettings().setMemoryConfiguration(this.selectedConfigurationButton.getConfiguration().getConfigurationIdentifier());
-               Globals.getGui().getRegistersPane().getRegistersWindow().clearHighlighting();
-               Globals.getGui().getRegistersPane().getRegistersWindow().updateRegisters();
-               Globals.getGui().getMainPane().getExecutePane().getDataSegmentWindow().updateBaseAddressComboBox();
+               Main.getSettings().setMemoryConfiguration(this.selectedConfigurationButton.getConfiguration().getConfigurationIdentifier());
+               Main.getEnv().getRegistersPane().getRegistersWindow().clearHighlighting();
+               Main.getEnv().getRegistersPane().getRegistersWindow().updateRegisters();
+               Main.getEnv().getMainPane().getExecutePane().getDataSegmentWindow().updateBaseAddressComboBox();
                    // 21 July 2009 Re-assemble if the situation demands it to maintain consistency.
                if (FileStatus.get() == FileStatus.RUNNABLE ||
                    FileStatus.get() == FileStatus.RUNNING ||
@@ -238,7 +237,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   if (FileStatus.get() == FileStatus.RUNNING) {
                      Simulator.getInstance().stopExecution(thisAction);
                   }
-                  Globals.getGui().getRunAssembleAction().actionPerformed(null);
+                  Main.getEnv().getRunAssembleAction().actionPerformed(null);
                }
             }
          }

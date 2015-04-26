@@ -12,7 +12,7 @@
    import java.io.*;
    import java.beans.PropertyChangeListener;
    import javax.swing.filechooser.FileFilter;
-   import static mars.venus.VenusUI.mainFrame;
+   import static mars.venus.VenusUI.getMainFrame;
 		
 	/*
 Copyright (c) 2003-2010,  Pete Sanderson and Kenneth Vollmar
@@ -73,7 +73,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      if (editPane != null) {
                         // New IF statement to permit free traversal of edit panes w/o invalidating
                      	// assembly if assemble-all is selected.  DPS 9-Aug-2011
-                        if (Globals.getSettings().getBooleanSetting(mars.Settings.ASSEMBLE_ALL_ENABLED)) { 
+                        if (Main.getSettings().getBooleanSetting(mars.Settings.ASSEMBLE_ALL_ENABLED)) { 
                            EditTabbedPane.this.updateTitles(editPane); 
                         } 
                         else {
@@ -356,14 +356,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                // end of 13-July-2011 code.
                saveDialog.setDialogTitle("Save As");
             
-               int decision = saveDialog.showSaveDialog(mainFrame);
+               int decision = saveDialog.showSaveDialog(getMainFrame());
                if (decision != JFileChooser.APPROVE_OPTION) {
                   return null;
                }
                theFile = saveDialog.getSelectedFile();
                operationOK = true;
                if (theFile.exists()) {
-                  int overwrite = JOptionPane.showConfirmDialog(mainFrame,
+                  int overwrite = JOptionPane.showConfirmDialog(getMainFrame(),
                      "File "+theFile.getName()+" already exists.  Do you wish to overwrite it?",
                      "Overwrite existing file?",
                      JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
@@ -450,7 +450,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          if (editPane == null) {
             FileStatus.set(FileStatus.NO_FILE);
             this.editor.setTitle("","",FileStatus.NO_FILE);
-            Globals.getGui().setMenuState(FileStatus.NO_FILE);
+            Main.getEnv().setMenuState(FileStatus.NO_FILE);
          } 
          else {
             FileStatus.set(editPane.getFileStatus());
@@ -467,7 +467,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        private void updateTitlesAndMenuState(EditPane editPane) {
          editor.setTitle(editPane.getPathname(), editPane.getFilename(), editPane.getFileStatus());
          editPane.updateStaticFileStatus(); //  for legacy code that depends on the static FileStatus (pre 4.0)
-         Globals.getGui().setMenuState(editPane.getFileStatus());	
+         Main.getEnv().setMenuState(editPane.getFileStatus());	
       }
    
      // Handy little utility to update the title on the current tab and the frame title bar
@@ -524,7 +524,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 
    	 
        private int confirm(String name) {
-         return JOptionPane.showConfirmDialog(mainFrame,
+         return JOptionPane.showConfirmDialog(getMainFrame(),
             "Changes to "+name+" will be lost unless you save.  Do you wish to save all changes now?",
             "Save program changes?",
             JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);		 
@@ -550,7 +550,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          // Note: add sequence is significant - last one added becomes default.
             fileFilterList = new ArrayList();
             fileFilterList.add(fileChooser.getAcceptAllFileFilter());
-            fileFilterList.add(FilenameFinder.getFileFilter(Globals.fileExtensions, "Assembler Files", true));
+            fileFilterList.add(FilenameFinder.getFileFilter(Main.fileExtensions, "Assembler Files", true));
             fileFilterCount = 0; // this will trigger fileChooser file filter load in next line
             setChoosableFileFilters();
          }
@@ -567,11 +567,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          // Set default to previous file opened, if any.  This is useful in conjunction
          // with option to assemble file automatically upon opening.  File likely to have
          // been edited externally (e.g. by Mipster).
-            if (Globals.getSettings().getAssembleOnOpenEnabled() && mostRecentlyOpenedFile != null) {
+            if (Main.getSettings().getAssembleOnOpenEnabled() && mostRecentlyOpenedFile != null) {
                fileChooser.setSelectedFile(mostRecentlyOpenedFile);
             }
          
-            if (fileChooser.showOpenDialog(mainFrame) == JFileChooser.APPROVE_OPTION) {
+            if (fileChooser.showOpenDialog(getMainFrame()) == JFileChooser.APPROVE_OPTION) {
                File theFile = fileChooser.getSelectedFile();
                theEditor.setCurrentOpenDirectory(theFile.getParent());
                //theEditor.setCurrentSaveDirectory(theFile.getParent());// 13-July-2011 DPS.
@@ -581,7 +581,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             
                 // possibly send this file right through to the assembler by firing Run->Assemble's
                 // actionPerformed() method.
-               if (theFile.canRead() && Globals.getSettings().getAssembleOnOpenEnabled()) {
+               if (theFile.canRead() && Main.getSettings().getAssembleOnOpenEnabled()) {
                   mainUI.getRunAssembleAction().actionPerformed(null);
                }
             }
@@ -617,9 +617,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             FileStatus.setFile(theFile);
             FileStatus.set(FileStatus.OPENING);// DPS 9-Aug-2011
             if (theFile.canRead()) {
-               Globals.program = new MIPSprogram();
+               Main.program = new MIPSprogram();
                try {
-                  Globals.program.readSource(currentFilePath);
+                  Main.program.readSource(currentFilePath);
                } 
                    catch (ProcessingException pe) {
                   }
@@ -630,10 +630,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                // to the Edit pane as it was read, way slower due to dynamic string alloc.  
                StringBuffer fileContents = new StringBuffer((int)theFile.length());
                int lineNumber = 1;
-               String line = Globals.program.getSourceLine(lineNumber++);
+               String line = Main.program.getSourceLine(lineNumber++);
                while (line != null) {
                   fileContents.append(line+"\n");
-                  line = Globals.program.getSourceLine(lineNumber++);
+                  line = Main.program.getSourceLine(lineNumber++);
                }
                editPane.setSourceCode(fileContents.toString(), true);
                	// The above operation generates an undoable edit, setting the initial
@@ -652,7 +652,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                
                // If assemble-all, then allow opening of any file w/o invalidating assembly.
             	// DPS 9-Aug-2011
-               if (Globals.getSettings().getBooleanSetting(mars.Settings.ASSEMBLE_ALL_ENABLED)) {
+               if (Main.getSettings().getBooleanSetting(mars.Settings.ASSEMBLE_ALL_ENABLED)) {
                   updateTitles(editPane);
                } 
                else {// this was the original code...

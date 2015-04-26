@@ -88,7 +88,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public TextSegmentWindow(){
          super("Text Segment", true, false, true, true);
          Simulator.getInstance().addObserver(this);
-         Globals.getSettings().addObserver(this);
+         Main.getSettings().addObserver(this);
          contentPane = this.getContentPane();
          codeHighlighting = true;
          breakpointsEnabled = true;
@@ -105,10 +105,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	  *  Should convert the lines of code over to the table rows and columns.
    	  **/
        public  void setupTable(){
-         int addressBase = Globals.getGui().getMainPane().getExecutePane().getAddressDisplayBase();
+         int addressBase = Main.getEnv().getMainPane().getExecutePane().getAddressDisplayBase();
          codeHighlighting = true;
          breakpointsEnabled = true;
-         ArrayList sourceStatementList = Globals.program.getMachineList();
+         ArrayList sourceStatementList = Main.program.getMachineList();
          data = new Object[sourceStatementList.size()][columnNames.length];
          intAddresses = new int[data.length];
          addressRows = new Hashtable(data.length);
@@ -187,12 +187,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          tableScroller = new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, 
                          ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
          contentPane.add(tableScroller);
-         if (Globals.getSettings().getProgramArguments()) {
+         if (Main.getSettings().getProgramArguments()) {
             addProgramArgumentsPanel();  
          } 
       	 
          deleteAsTextSegmentObserver();
-         if (Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+         if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
             addAsTextSegmentObserver();
          }
       }
@@ -249,7 +249,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public void updateCodeAddresses() {
          if (contentPane.getComponentCount() == 0) 
             return; // ignore if no content to change
-         int addressBase = Globals.getGui().getMainPane().getExecutePane().getAddressDisplayBase();
+         int addressBase = Main.getEnv().getMainPane().getExecutePane().getAddressDisplayBase();
          int address;
          String formattedAddress;
          for (int i=0; i<intAddresses.length; i++) {
@@ -265,7 +265,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public void updateBasicStatements() {
          if (contentPane.getComponentCount() == 0) 
             return; // ignore if no content to change
-         ArrayList sourceStatementList = Globals.program.getMachineList();
+         ArrayList sourceStatementList = Main.program.getMachineList();
          for(int i=0; i < sourceStatementList.size(); i++) {
             // Loop has been extended to cover self-modifying code.  If code at this memory location has been
          	// modified at runtime, construct a ProgramStatement from the current address and binary code
@@ -309,14 +309,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             	// Seems reasonable for text segment display to be accurate in cases where existing code is overwritten
             	// even when running at unlimited speed.  DPS 10-July-2013
                deleteAsTextSegmentObserver();
-               if (Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) { // && (notice.getRunSpeed() != RunSpeedPanel.UNLIMITED_SPEED || notice.getMaxSteps()==1)) {
+               if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) { // && (notice.getRunSpeed() != RunSpeedPanel.UNLIMITED_SPEED || notice.getMaxSteps()==1)) {
                   addAsTextSegmentObserver();
                }
             } 
          } 
-         else if (observable == Globals.getSettings()) { 
+         else if (observable == Main.getSettings()) { 
             deleteAsTextSegmentObserver();
-            if (Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
                addAsTextSegmentObserver();
             }
          }
@@ -386,7 +386,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             	// the MIPS program is running, and even then only in timed or step mode.  There are good reasons
             	// for that.  So we'll pretend to be Memory observable and send it a fake memory write update.
                try {
-                  Globals.getGui().getMainPane().getExecutePane().getDataSegmentWindow()
+                  Main.getEnv().getMainPane().getExecutePane().getDataSegmentWindow()
                          .update(Memory.getInstance(),new MemoryAccessNotice(AccessNotice.WRITE, address, value));
                } 
                    catch (Exception e) {
@@ -649,7 +649,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        private void reorderColumns() {
          TableColumnModel oldtcm = table.getColumnModel(); 
          TableColumnModel newtcm = new DefaultTableColumnModel(); 
-         int[] savedColumnOrder = Globals.getSettings().getTextColumnOrder();
+         int[] savedColumnOrder = Main.getSettings().getTextColumnOrder();
          // Apply ordering only if correct number of columns.
          if (savedColumnOrder.length == table.getColumnCount()) {
             for (int i = 0; i<savedColumnOrder.length; i++)
@@ -721,7 +721,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           public boolean isCellEditable(int row, int col) {
             //Note that the data/cell address is constant,
             //no matter where the cell appears onscreen.
-            if (col == BREAK_COLUMN  || (col == CODE_COLUMN && Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED))) { 
+            if (col == BREAK_COLUMN  || (col == CODE_COLUMN && Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED))) { 
                return true;
             } 
             else {
@@ -763,9 +763,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                }				
          	//  Assures that if changed during MIPS program execution, the update will
          	//  occur only between MIPS instructions.
-            synchronized (Globals.memoryAndRegistersLock) {
+            synchronized (Main.memoryAndRegistersLock) {
                try {
-                  Globals.memory.setRawWord(address,val);
+                  Main.memory.setRawWord(address,val);
                } 
                 // somehow, user was able to display out-of-range address.  Most likely to occur between
                 // stack base and Kernel.  
@@ -822,8 +822,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             Component cell = super.getTableCellRendererComponent(table, value, 
                                     isSelected, hasFocus, row, column);
             //cell.setFont(tableCellFont);
-            TextSegmentWindow textSegment = Globals.getGui().getMainPane().getExecutePane().getTextSegmentWindow();
-            Settings settings = Globals.getSettings();
+            TextSegmentWindow textSegment = Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow();
+            Settings settings = Main.getSettings();
             boolean highlighting = textSegment.getCodeHighlighting();
          	
             if (highlighting && textSegment.getIntCodeAddressAtRow(row) == highlightAddress) {
@@ -865,12 +865,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             cell.setFont(MonoRightCellRenderer.MONOSPACED_PLAIN_12POINT);
             cell.setHorizontalAlignment(SwingConstants.RIGHT);
             if (row%2==0) {
-               cell.setBackground( Globals.getSettings().getColorSettingByPosition(Settings.EVEN_ROW_BACKGROUND) );
-               cell.setForeground( Globals.getSettings().getColorSettingByPosition(Settings.EVEN_ROW_FOREGROUND) );
+               cell.setBackground( Main.getSettings().getColorSettingByPosition(Settings.EVEN_ROW_BACKGROUND) );
+               cell.setForeground( Main.getSettings().getColorSettingByPosition(Settings.EVEN_ROW_FOREGROUND) );
             } 
             else {
-               cell.setBackground( Globals.getSettings().getColorSettingByPosition(Settings.ODD_ROW_BACKGROUND) );
-               cell.setForeground( Globals.getSettings().getColorSettingByPosition(Settings.ODD_ROW_FOREGROUND) );				
+               cell.setBackground( Main.getSettings().getColorSettingByPosition(Settings.ODD_ROW_BACKGROUND) );
+               cell.setForeground( Main.getSettings().getColorSettingByPosition(Settings.ODD_ROW_FOREGROUND) );				
             }
             return cell;
          }  
@@ -1088,10 +1088,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          	// If movement is slow, this event may fire multiple times w/o
          	// actually changing the column order.  If new column order is 
          	// same as previous, do not save changes to persistent store.
-            int[] oldOrder = Globals.getSettings().getTextColumnOrder();
+            int[] oldOrder = Main.getSettings().getTextColumnOrder();
             for (int i=0; i<columnOrder.length; i++) {
                if (oldOrder[i] != columnOrder[i]) {
-                  Globals.getSettings().setTextColumnOrder(columnOrder);
+                  Main.getSettings().setTextColumnOrder(columnOrder);
                   break;
                }
             }

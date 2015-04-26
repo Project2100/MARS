@@ -2,7 +2,7 @@
 
    import java.util.Observer;
 
-   import mars.Globals;
+   import mars.Main;
    import mars.assembler.SymbolTable;
    import mars.mips.instructions.Instruction;
    import mars.util.Binary;
@@ -100,21 +100,21 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          else {
             for (int i=0; i< regFile.length; i++){
                if(regFile[i].getNumber()== num) {
-                  old = (Globals.getSettings().getBackSteppingEnabled())
-                        ? Globals.program.getBackStepper().addRegisterFileRestore(num,regFile[i].setValue(val))
+                  old = (Main.getSettings().getBackSteppingEnabled())
+                        ? Main.program.getBackStepper().addRegisterFileRestore(num,regFile[i].setValue(val))
                      	: regFile[i].setValue(val);
                   break;
                }
             }
          }
          if(num== 33){//updates the hi register
-            old = (Globals.getSettings().getBackSteppingEnabled())
-               	      ? Globals.program.getBackStepper().addRegisterFileRestore(num,hi.setValue(val))
+            old = (Main.getSettings().getBackSteppingEnabled())
+               	      ? Main.program.getBackStepper().addRegisterFileRestore(num,hi.setValue(val))
                			: hi.setValue(val);
          }
          else if(num== 34){// updates the low register
-            old = (Globals.getSettings().getBackSteppingEnabled())
-               	      ? Globals.program.getBackStepper().addRegisterFileRestore(num,lo.setValue(val))
+            old = (Main.getSettings().getBackSteppingEnabled())
+               	      ? Main.program.getBackStepper().addRegisterFileRestore(num,lo.setValue(val))
                			: lo.setValue(val);
          }
          return old;
@@ -234,7 +234,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 **/
    	 
        public static void initializeProgramCounter(boolean startAtMain) {  
-         int mainAddr = Globals.symbolTable.getAddress(SymbolTable.getStartLabel());
+         int mainAddr = Main.symbolTable.getAddress(SymbolTable.getStartLabel());
          if (startAtMain && mainAddr != SymbolTable.NOT_FOUND && (Memory.inTextSegment(mainAddr) || Memory.inKernelTextSegment(mainAddr))) {
             initializeProgramCounter(mainAddr);
          } 
@@ -253,8 +253,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public static int setProgramCounter(int value){
          int old = programCounter.getValue();
          programCounter.setValue(value);
-         if (Globals.getSettings().getBackSteppingEnabled()) {
-            Globals.program.getBackStepper().addPCRestore(old);
+         if (Main.getSettings().getBackSteppingEnabled()) {
+            Main.program.getBackStepper().addPCRestore(old);
          } 
          return old;
       }
@@ -298,7 +298,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          for(int i=0; i< regFile.length; i++){
             regFile[i].resetValue();
          }
-         initializeProgramCounter(Globals .getSettings().getStartAtMain());// replaces "programCounter.resetValue()", DPS 3/3/09
+         initializeProgramCounter(Main .getSettings().getStartAtMain());// replaces "programCounter.resetValue()", DPS 3/3/09
          hi.resetValue();
          lo.resetValue();
       }

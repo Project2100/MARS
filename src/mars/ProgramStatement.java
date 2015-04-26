@@ -106,12 +106,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          this.originalTokenList = this.strippedTokenList = null;
          this.source = "";
          this.machineStatement = this.basicAssemblyStatement = null;
-         BasicInstruction instr = Globals.instructionSet.findByBinaryCode(binaryStatement);
+         BasicInstruction instr = Main.instructionSet.findByBinaryCode(binaryStatement);
          if (instr == null) {
             this.operands = null;
             this.numOperands = 0;
             this.instruction = (binaryStatement==0) // this is a "nop" statement
-               			? (Instruction) Globals.instructionSet.matchOperator("nop").get(0)
+               			? (Instruction) Main.instructionSet.matchOperator("nop").get(0)
                				 : null;
          } 
          else {
@@ -688,8 +688,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          }
       
           public String toString() {
-            int addressBase =  (Globals.getSettings().getBooleanSetting(Settings.DISPLAY_ADDRESSES_IN_HEX)) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
-            int valueBase =  (Globals.getSettings().getBooleanSetting(Settings.DISPLAY_VALUES_IN_HEX)) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
+            int addressBase =  (Main.getSettings().getBooleanSetting(Settings.DISPLAY_ADDRESSES_IN_HEX)) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
+            int valueBase =  (Main.getSettings().getBooleanSetting(Settings.DISPLAY_VALUES_IN_HEX)) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
          	
             StringBuffer result = new StringBuffer();
             for (int i=0; i<list.size(); i++) {

@@ -1,5 +1,5 @@
    package mars.mips.hardware;
-   import mars.Globals;
+   import mars.Main;
    import java.util.*;
 
 /*
@@ -99,8 +99,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          int old = 0;
          for (int i=0; i< registers.length; i++){
             if(registers[i].getNumber()== num) {
-               old = (Globals.getSettings().getBackSteppingEnabled())
-                        ? Globals.program.getBackStepper().addCoprocessor0Restore(num,registers[i].setValue(val))
+               old = (Main.getSettings().getBackSteppingEnabled())
+                        ? Main.program.getBackStepper().addCoprocessor0Restore(num,registers[i].setValue(val))
                   		: registers[i].setValue(val);
                break;
             }

@@ -5,7 +5,6 @@
    import java.awt.*;
    import java.awt.event.*;
    import javax.swing.*;
-   import static mars.venus.VenusUI.mainFrame;
 	
 	/*
 Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
@@ -61,13 +60,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             mainUI.messagesPane.setSelectedComponent(mainUI.messagesPane.runTab);
             executePane.getTextSegmentWindow().setCodeHighlighting(true);
             try {
-               done = Globals.program.simulateStepAtPC(this);
+               done = Main.program.simulateStepAtPC(this);
             } 
                 catch (ProcessingException ev) {}
          }
          else{
             // note: this should never occur since "Step" is only enabled after successful assembly.
-            JOptionPane.showMessageDialog(mainFrame,"The program must be assembled before it can be run.");
+            JOptionPane.showMessageDialog(VenusUI.getMainFrame(),"The program must be assembled before it can be run.");
          }
       }
       
@@ -120,7 +119,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        private void processProgramArgumentsIfAny() {
          String programArguments = executePane.getTextSegmentWindow().getProgramArguments();
          if (programArguments == null || programArguments.length() == 0 ||
-		       !Globals.getSettings().getProgramArguments()) {
+		       !Main.getSettings().getProgramArguments()) {
             return;
          }
 			new ProgramArgumentList(programArguments).storeProgramArguments();

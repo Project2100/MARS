@@ -8,7 +8,7 @@
    import javax.swing.text.*;
    import javax.swing.border.*;
    import java.io.*;
-   import static mars.venus.VenusUI.mainFrame;
+   import static mars.venus.VenusUI.getMainFrame;
 	/*
 Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
 
@@ -57,9 +57,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 
    	 // launch dialog for setting and filename specification
        public void actionPerformed(ActionEvent e) {
-         initialSelected = Globals.getSettings().getExceptionHandlerEnabled();
-         initialPathname = Globals.getSettings().getExceptionHandler();
-         exceptionHandlerDialog = new JDialog(mainFrame, "Exception Handler", true);
+         initialSelected = Main.getSettings().getExceptionHandlerEnabled();
+         initialPathname = Main.getSettings().getExceptionHandler();
+         exceptionHandlerDialog = new JDialog(getMainFrame(), "Exception Handler", true);
          exceptionHandlerDialog.setContentPane(buildDialogPanel());
          exceptionHandlerDialog.setDefaultCloseOperation(
                         JDialog.DO_NOTHING_ON_CLOSE);
@@ -70,7 +70,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   }
                });
          exceptionHandlerDialog.pack();
-         exceptionHandlerDialog.setLocationRelativeTo(mainFrame);
+         exceptionHandlerDialog.setLocationRelativeTo(getMainFrame());
          exceptionHandlerDialog.setVisible(true);
       }
    		  
@@ -80,7 +80,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          contents.setBorder(new EmptyBorder(10,10,10,10));
       	// Top row - the check box for setting...
          exceptionHandlerSetting = new JCheckBox("Include this exception handler file in all assemble operations");
-         exceptionHandlerSetting.setSelected(Globals.getSettings().getExceptionHandlerEnabled());
+         exceptionHandlerSetting.setSelected(Main.getSettings().getExceptionHandlerEnabled());
          exceptionHandlerSetting.addActionListener(new ExceptionHandlerSettingAction());
          contents.add(exceptionHandlerSetting,BorderLayout.NORTH);
       	// Middle row - the button and text field for exception handler file selection
@@ -88,7 +88,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          exceptionHandlerSelectionButton = new JButton("Browse");
          exceptionHandlerSelectionButton.setEnabled(exceptionHandlerSetting.isSelected());
          exceptionHandlerSelectionButton.addActionListener(new ExceptionHandlerSelectionAction());
-         exceptionHandlerDisplay = new JTextField(Globals.getSettings().getExceptionHandler(), 30);
+         exceptionHandlerDisplay = new JTextField(Main.getSettings().getExceptionHandler(), 30);
          exceptionHandlerDisplay.setEditable(false);
          exceptionHandlerDisplay.setEnabled(exceptionHandlerSetting.isSelected());			
          specifyHandlerFile.add(exceptionHandlerSelectionButton);
@@ -129,9 +129,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
              || initialPathname==null && finalPathname!=null
          	 || initialPathname!=null && !initialPathname.equals(finalPathname)) 
          {
-            Globals.getSettings().setExceptionHandlerEnabled(finalSelected);
+            Main.getSettings().setExceptionHandlerEnabled(finalSelected);
             if (finalSelected) {
-               Globals.getSettings().setExceptionHandler(finalPathname);
+               Main.getSettings().setExceptionHandler(finalPathname);
             }
          }
       }
@@ -159,12 +159,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        private class ExceptionHandlerSelectionAction implements ActionListener {
           public void actionPerformed(ActionEvent e) {
             JFileChooser chooser = new JFileChooser();
-            String pathname = Globals.getSettings().getExceptionHandler();
+            String pathname = Main.getSettings().getExceptionHandler();
             if (pathname != null) {
                File file = new File(pathname);
                if (file.exists()) chooser.setSelectedFile(file);
             }
-            int result = chooser.showOpenDialog(mainFrame);
+            int result = chooser.showOpenDialog(getMainFrame());
             if (result == JFileChooser.APPROVE_OPTION) {
                pathname = chooser.getSelectedFile().getPath();//.replaceAll("\\\\","/");
                exceptionHandlerDisplay.setText(pathname);

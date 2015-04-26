@@ -222,7 +222,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             }
       	 
        // See if it is an instruction operator
-         if (Globals.instructionSet.matchOperator(value) != null)
+         if (Main.instructionSet.matchOperator(value) != null)
             return TokenTypes.OPERATOR;
            
        // See if it is a directive

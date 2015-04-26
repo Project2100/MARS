@@ -62,7 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    
        public Coprocessor1Window() {
          Simulator.getInstance().addObserver(this);
-		   settings = Globals.getSettings();
+		   settings = Main.getSettings();
          // Display registers in table contained in scroll pane.
          this.setLayout(new BorderLayout()); // table display will occupy entire width if widened
          table = new MyTippedJTable(new RegTableModel(setupWindow()));
@@ -153,7 +153,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public void clearWindow() {
          this.clearHighlighting();
          Coprocessor1.resetRegisters();
-         this.updateRegisters(Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase());
+         this.updateRegisters(Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase());
          Coprocessor1.clearConditionFlags();
          this.updateConditionFlagDisplay();
       }
@@ -182,7 +182,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 * Redisplay registers using current display number base (10 or 16)
    	 */
        public void updateRegisters() {
-         updateRegisters(Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase());
+         updateRegisters(Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase());
       }
    	
    	/**
@@ -269,7 +269,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             	// AddressCellRenderer class in DataSegmentWindow.java.
                this.highlighting = true;
                this.highlightCellForRegister((Register)observable);
-               Globals.getGui().getRegistersPane().setSelectedComponent(this);            
+               Main.getEnv().getRegistersPane().setSelectedComponent(this);            
             }
          }
       }
@@ -395,7 +395,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       	* value is valid, MIPS register is updated.
          */
           public void setValueAt(Object value, int row, int col) {
-            int valueBase = Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase();
+            int valueBase = Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
             float fVal;
             double dVal;
             String sVal = (String) value;
@@ -406,7 +406,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      int iVal = Binary.stringToInt(sVal);
                      //  Assures that if changed during MIPS program execution, the update will
                      //  occur only between MIPS instructions.
-                     synchronized (Globals.memoryAndRegistersLock) {
+                     synchronized (Main.memoryAndRegistersLock) {
                         Coprocessor1.updateRegister(row, iVal); 
                      }
                      data[row][col] = NumberDisplayBaseChooser.formatFloatNumber(iVal, valueBase);
@@ -416,7 +416,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      fVal = Float.parseFloat(sVal);
                      //  Assures that if changed during MIPS program execution, the update will
                      //  occur only between MIPS instructions.
-                     synchronized (Globals.memoryAndRegistersLock) {
+                     synchronized (Main.memoryAndRegistersLock) {
                         Coprocessor1.setRegisterToFloat(row, fVal); 
                      }
                      data[row][col] = NumberDisplayBaseChooser.formatNumber(fVal, valueBase);					
@@ -431,7 +431,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      long lVal =Binary.stringToLong(sVal);
                      //  Assures that if changed during MIPS program execution, the update will
                      //  occur only between MIPS instructions.
-                     synchronized (Globals.memoryAndRegistersLock) {
+                     synchronized (Main.memoryAndRegistersLock) {
                         Coprocessor1.setRegisterPairToLong(row, lVal); 
                      }
                      setDisplayAndModelValueAt(
@@ -441,7 +441,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      dVal =  Double.parseDouble(sVal);
                      //  Assures that if changed during MIPS program execution, the update will
                      //  occur only between MIPS instructions.
-                     synchronized (Globals.memoryAndRegistersLock) {
+                     synchronized (Main.memoryAndRegistersLock) {
                         Coprocessor1.setRegisterPairToDouble(row, dVal); 
                      }
                      setDisplayAndModelValueAt(

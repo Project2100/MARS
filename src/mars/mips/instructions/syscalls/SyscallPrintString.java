@@ -53,13 +53,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          char ch = 0;
          try
          {
-            ch = (char) Globals.memory.getByte(byteAddress);
+            ch = (char) Main.memory.getByte(byteAddress);
                               // won't stop until NULL byte reached!
             while (ch != 0)
             {
                SystemIO.printString(new Character(ch).toString());
                byteAddress++;
-               ch = (char) Globals.memory.getByte(byteAddress);
+               ch = (char) Main.memory.getByte(byteAddress);
             }
          } 
              catch (AddressErrorException e)

@@ -99,10 +99,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          super("Data Segment", true, false, true, true);
       	
          Simulator.getInstance().addObserver(this);
-         settings = Globals.getSettings();
+         settings = Main.getSettings();
          settings.addObserver(this);
       							
-         homeAddress = Globals.memory.dataBaseAddress;  // address for Home button
+         homeAddress = Main.memory.dataBaseAddress;  // address for Home button
          firstAddress = homeAddress;  // first address to display at any given time
          userOrKernelMode = USER_MODE;
          addressHighlighting = false;
@@ -112,8 +112,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          Toolkit tk = Toolkit.getDefaultToolkit();
          Class cs = this.getClass(); 
          try {
-            prevButton = new PrevButton(new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath+"Previous22.png"))));//"Back16.gif"))));//"Down16.gif"))));
-            nextButton = new NextButton(new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath+"Next22.png"))));//"Forward16.gif")))); //"Up16.gif"))));
+            prevButton = new PrevButton(new ImageIcon(tk.getImage(cs.getResource(Main.imagesPath+"Previous22.png"))));//"Back16.gif"))));//"Down16.gif"))));
+            nextButton = new NextButton(new ImageIcon(tk.getImage(cs.getResource(Main.imagesPath+"Next22.png"))));//"Forward16.gif")))); //"Up16.gif"))));
             //  This group of buttons was replaced by a combo box.  Keep the JButton objects for their action listeners.
             dataButton = new JButton();//".data");
             stakButton = new JButton();//"$sp");
@@ -408,14 +408,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	//   Returns the JScrollPane for the Address/Data part of the Data Segment window.
       private JScrollPane generateDataPanel(){
          dataData = new Object[NUMBER_OF_ROWS][NUMBER_OF_COLUMNS];
-         int valueBase = Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase();
-         int addressBase = Globals.getGui().getMainPane().getExecutePane().getAddressDisplayBase();
+         int valueBase = Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
+         int addressBase = Main.getEnv().getMainPane().getExecutePane().getAddressDisplayBase();
          int address = this.homeAddress;
          for(int row=0; row<NUMBER_OF_ROWS; row++){
             dataData[row][ADDRESS_COLUMN] = NumberDisplayBaseChooser.formatUnsignedInteger(address, addressBase);
             for (int column=1; column<NUMBER_OF_COLUMNS; column++) {
                try {
-                  dataData[row][column] = NumberDisplayBaseChooser.formatNumber(Globals.memory.getRawWord(address), valueBase);
+                  dataData[row][column] = NumberDisplayBaseChooser.formatNumber(Main.memory.getRawWord(address), valueBase);
                } 
                   catch (AddressErrorException aee) {
                      dataData[row][column] = NumberDisplayBaseChooser.formatNumber(0, valueBase);
@@ -488,7 +488,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        
       private int getValueDisplayFormat() {
          return (asciiDisplay) ? NumberDisplayBaseChooser.ASCII : 
-            Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase();
+            Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
       }
    	
    	/**
@@ -501,14 +501,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          if (tablePanel.getComponentCount() == 0) 
             return; // ignore if no content to change
          int valueBase = getValueDisplayFormat();
-         int addressBase = Globals.getGui().getMainPane().getExecutePane().getAddressDisplayBase();
+         int addressBase = Main.getEnv().getMainPane().getExecutePane().getAddressDisplayBase();
          int address = firstAddr;
          TableModel dataModel = dataTable.getModel();
          for (int row=0; row<NUMBER_OF_ROWS; row++) {
             ((DataTableModel)dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatUnsignedInteger(address, addressBase),row,ADDRESS_COLUMN);
             for (int column=1; column<NUMBER_OF_COLUMNS; column++) {
                try {
-                  ((DataTableModel)dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(Globals.memory.getWordNoNotify(address), valueBase),row,column);
+                  ((DataTableModel)dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(Main.memory.getWordNoNotify(address), valueBase),row,column);
                } 
                   catch (AddressErrorException aee) {
                      // Bit of a hack here.  Memory will throw an exception if you try to read directly from text segment when the
@@ -517,15 +517,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   	// temporarily enabling the setting as "non persistent" so it won't write through to the registry.
                      if (Memory.inTextSegment(address)) {
                         int displayValue = 0;
-                        if (!Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
-                           Globals.getSettings().setBooleanSettingNonPersistent(Settings.SELF_MODIFYING_CODE_ENABLED, true);
+                        if (!Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+                           Main.getSettings().setBooleanSettingNonPersistent(Settings.SELF_MODIFYING_CODE_ENABLED, true);
                            try {
-                              displayValue = Globals.memory.getWordNoNotify(address);
+                              displayValue = Main.memory.getWordNoNotify(address);
                            } 
                               catch (AddressErrorException e) { 
                               // Still got an exception?  Doesn't seem possible but if we drop through it will write default value 0.
                               }
-                           Globals.getSettings().setBooleanSettingNonPersistent(Settings.SELF_MODIFYING_CODE_ENABLED, false);
+                           Main.getSettings().setBooleanSettingNonPersistent(Settings.SELF_MODIFYING_CODE_ENABLED, false);
                         }
                         ((DataTableModel)dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(displayValue, valueBase),row,column);
                      } 
@@ -554,7 +554,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          }
          int row = offset/BYTES_PER_ROW;
          int column = (offset % BYTES_PER_ROW)/BYTES_PER_VALUE + 1; // column 0 reserved for address
-         int valueBase = Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase();
+         int valueBase = Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
          ((DataTableModel)dataTable.getModel()).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(value, valueBase),
                     row,column);
       }
@@ -566,7 +566,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       public void updateDataAddresses() {
          if (tablePanel.getComponentCount() == 0) 
             return; // ignore if no content to change
-         int addressBase = Globals.getGui().getMainPane().getExecutePane().getAddressDisplayBase();
+         int addressBase = Main.getEnv().getMainPane().getExecutePane().getAddressDisplayBase();
          int address = this.firstAddress;
          String formattedAddress;
          for(int i=0; i<NUMBER_OF_ROWS; i++) {
@@ -602,7 +602,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 */   
    	
       public void resetValues(){
-         int valueBase = Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase();
+         int valueBase = Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
          TableModel dataModel = dataTable.getModel();
          for (int row=0; row<NUMBER_OF_ROWS; row++) {
             for (int column=1; column<NUMBER_OF_COLUMNS; column++) {
@@ -658,19 +658,19 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          globButton.setToolTipText("View range around global pointer");
          stakButton.setToolTipText("View range around stack pointer");
          heapButton.setToolTipText("View range around heap base address "+
-                         Binary.intToHexString(Globals.memory.heapBaseAddress));
+                         Binary.intToHexString(Main.memory.heapBaseAddress));
          kernButton.setToolTipText("View range around kernel data base address "+
-                         Binary.intToHexString(Globals.memory.kernelDataBaseAddress));
+                         Binary.intToHexString(Main.memory.kernelDataBaseAddress));
          extnButton.setToolTipText("View range around static global base address "+
-                         Binary.intToHexString(Globals.memory.externBaseAddress));
+                         Binary.intToHexString(Main.memory.externBaseAddress));
          mmioButton.setToolTipText("View range around MMIO base address "+
-                         Binary.intToHexString(Globals.memory.memoryMapBaseAddress));
+                         Binary.intToHexString(Main.memory.memoryMapBaseAddress));
          textButton.setToolTipText("View range around program code "+
-                         Binary.intToHexString(Globals.memory.textBaseAddress));
+                         Binary.intToHexString(Main.memory.textBaseAddress));
          prevButton.setToolTipText("View next lower address range; hold down for rapid fire");
          nextButton.setToolTipText("View next higher address range; hold down for rapid fire");
          dataButton.setToolTipText("View range around static data segment base address "+
-                         Binary.intToHexString(Globals.memory.dataBaseAddress));
+                         Binary.intToHexString(Main.memory.dataBaseAddress));
       
       	// add the action listeners to maintain button state and table contents
       	// Currently there is no memory upper bound so next button always enabled.
@@ -680,7 +680,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   public void actionPerformed(ActionEvent ae) {
                      userOrKernelMode = USER_MODE;
                   	// get $gp global pointer, but guard against it having value below data segment
-                     firstAddress = Math.max(Globals.memory.dataSegmentBaseAddress,RegisterFile.getValue(RegisterFile.GLOBAL_POINTER_REGISTER)); 
+                     firstAddress = Math.max(Main.memory.dataSegmentBaseAddress,RegisterFile.getValue(RegisterFile.GLOBAL_POINTER_REGISTER)); 
                   	// updateModelForMemoryRange requires argument to be multiple of 4
                   	// but for cleaner display we'll make it multiple of 32 (last nibble is 0).  
                   	// This makes it easier to mentally calculate address from row address + column offset.
@@ -696,10 +696,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   public void actionPerformed(ActionEvent ae) {
                      userOrKernelMode = USER_MODE;
                   	// get $sp stack pointer, but guard against it having value below data segment
-                     firstAddress = Math.max(Globals.memory.dataSegmentBaseAddress,RegisterFile.getValue(RegisterFile.STACK_POINTER_REGISTER)); 
+                     firstAddress = Math.max(Main.memory.dataSegmentBaseAddress,RegisterFile.getValue(RegisterFile.STACK_POINTER_REGISTER)); 
                      // See comment above for gloButton...
                      firstAddress = firstAddress - (firstAddress % BYTES_PER_ROW);
-                     homeAddress = Globals.memory.stackBaseAddress;
+                     homeAddress = Main.memory.stackBaseAddress;
                      firstAddress = setFirstAddressAndPrevNextButtonEnableStatus(firstAddress);
                      updateModelForMemoryRange(firstAddress);
                   }
@@ -709,7 +709,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                new ActionListener() {
                   public void actionPerformed(ActionEvent ae) {
                      userOrKernelMode = USER_MODE;
-                     homeAddress = Globals.memory.heapBaseAddress;
+                     homeAddress = Main.memory.heapBaseAddress;
                      firstAddress = setFirstAddressAndPrevNextButtonEnableStatus(homeAddress);
                      updateModelForMemoryRange(firstAddress);
                   }
@@ -719,7 +719,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                new ActionListener() {
                   public void actionPerformed(ActionEvent ae) {
                      userOrKernelMode = USER_MODE;
-                     homeAddress = Globals.memory.externBaseAddress;
+                     homeAddress = Main.memory.externBaseAddress;
                      firstAddress = setFirstAddressAndPrevNextButtonEnableStatus(homeAddress);
                      updateModelForMemoryRange(firstAddress);
                   }
@@ -729,7 +729,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                new ActionListener() {
                   public void actionPerformed(ActionEvent ae) {
                      userOrKernelMode = KERNEL_MODE;
-                     homeAddress = Globals.memory.kernelDataBaseAddress;
+                     homeAddress = Main.memory.kernelDataBaseAddress;
                      firstAddress = homeAddress;
                      firstAddress = setFirstAddressAndPrevNextButtonEnableStatus(firstAddress);
                      updateModelForMemoryRange(firstAddress);
@@ -740,7 +740,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                new ActionListener() {
                   public void actionPerformed(ActionEvent ae) {
                      userOrKernelMode = KERNEL_MODE;
-                     homeAddress = Globals.memory.memoryMapBaseAddress;
+                     homeAddress = Main.memory.memoryMapBaseAddress;
                      firstAddress = homeAddress;
                      firstAddress = setFirstAddressAndPrevNextButtonEnableStatus(firstAddress);
                      updateModelForMemoryRange(firstAddress);
@@ -751,7 +751,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                new ActionListener() {
                   public void actionPerformed(ActionEvent ae) {
                      userOrKernelMode = USER_MODE;
-                     homeAddress = Globals.memory.textBaseAddress;
+                     homeAddress = Main.memory.textBaseAddress;
                      firstAddress = homeAddress;
                      firstAddress = setFirstAddressAndPrevNextButtonEnableStatus(firstAddress);
                      updateModelForMemoryRange(firstAddress);
@@ -762,7 +762,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                new ActionListener() {
                   public void actionPerformed(ActionEvent ae) {
                      userOrKernelMode = USER_MODE;
-                     homeAddress = Globals.memory.dataBaseAddress;
+                     homeAddress = Main.memory.dataBaseAddress;
                      firstAddress = homeAddress;
                      firstAddress = setFirstAddressAndPrevNextButtonEnableStatus(firstAddress);
                      updateModelForMemoryRange(firstAddress);
@@ -787,12 +787,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	// PrevButton and NextButton are enabled/disabled appropriately.
    	//
       private int setFirstAddressAndPrevNextButtonEnableStatus(int lowAddress) {
-         int lowLimit = (userOrKernelMode==USER_MODE) ? Math.min(Math.min(Globals.memory.textBaseAddress,
-            													 Globals.memory.dataSegmentBaseAddress),
-            																		Globals.memory.dataBaseAddress)
-                                                      : Globals.memory.kernelDataBaseAddress;
-         int highLimit= (userOrKernelMode==USER_MODE) ? Globals.memory.userHighAddress
-                                                      : Globals.memory.kernelHighAddress;
+         int lowLimit = (userOrKernelMode==USER_MODE) ? Math.min(Math.min(Main.memory.textBaseAddress,
+            													 Main.memory.dataSegmentBaseAddress),
+            																		Main.memory.dataBaseAddress)
+                                                      : Main.memory.kernelDataBaseAddress;
+         int highLimit= (userOrKernelMode==USER_MODE) ? Main.memory.userHighAddress
+                                                      : Main.memory.kernelHighAddress;
          if (lowAddress <= lowLimit) {
             lowAddress = lowLimit;
             prevButton.setEnabled(false);
@@ -961,9 +961,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                }
          	//  Assures that if changed during MIPS program execution, the update will
          	//  occur only between MIPS instructions.
-            synchronized (Globals.memoryAndRegistersLock) {
+            synchronized (Main.memoryAndRegistersLock) {
                try {
-                  Globals.memory.setRawWord(address,val);
+                  Main.memory.setRawWord(address,val);
                } 
                 // somehow, user was able to display out-of-range address.  Most likely to occur between
                 // stack base and Kernel.  Also text segment with self-modifying-code setting off.
@@ -971,7 +971,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      return;
                   }
             }// end synchronized block
-            int valueBase = Globals.getGui().getMainPane().getExecutePane().getValueDisplayBase();
+            int valueBase = Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
             data[row][col] = NumberDisplayBaseChooser.formatNumber(val, valueBase); 
             fireTableCellUpdated(row, col);
             return;

@@ -357,7 +357,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    // Allocates blocks if necessary.
        public int set(int address, int value, int length) throws AddressErrorException {
          int oldValue = 0;
-         if (Globals.debug) System.out.println("memory["+address+"] set to "+value+"("+length+" bytes)");
+         if (Main.debug) System.out.println("memory["+address+"] set to "+value+"("+length+" bytes)");
          int relativeByteAddress;
          if (inDataSegment(address)) {
            // in data segment.  Will write one byte at a time, w/o regard to boundaries.
@@ -374,7 +374,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
            // Burch Mod (Jan 2013): replace throw with call to setStatement 
            // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
          
-            if (Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
                ProgramStatement oldStatement = getStatementNoNotify(address);
                if (oldStatement != null) {
                   oldValue = oldStatement.getBinaryStatement();
@@ -443,7 +443,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          else if (inTextSegment(address)) {	
            // Burch Mod (Jan 2013): replace throw with call to setStatement 
            // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
-            if (Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
                ProgramStatement oldStatement = getStatementNoNotify(address);
                if (oldStatement != null) {
                   oldValue = oldStatement.getBinaryStatement();
@@ -478,8 +478,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                Exceptions.ADDRESS_EXCEPTION_STORE,	address);
          }
          notifyAnyObservers(AccessNotice.WRITE, address, WORD_LENGTH_BYTES, value);
-         if (Globals.getSettings().getBackSteppingEnabled()) {
-            Globals.program.getBackStepper().addMemoryRestoreRawWord(address,oldValue);
+         if (Main.getSettings().getBackSteppingEnabled()) {
+            Main.program.getBackStepper().addMemoryRestoreRawWord(address,oldValue);
          }
          return oldValue;
       }
@@ -500,8 +500,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                "store address not aligned on word boundary ",
                Exceptions.ADDRESS_EXCEPTION_STORE,address);
          }
-         return (Globals.getSettings().getBackSteppingEnabled())
-            ? Globals.program.getBackStepper().addMemoryRestoreWord(address,set(address, value, WORD_LENGTH_BYTES))
+         return (Main.getSettings().getBackSteppingEnabled())
+            ? Main.program.getBackStepper().addMemoryRestoreWord(address,set(address, value, WORD_LENGTH_BYTES))
             : set(address, value, WORD_LENGTH_BYTES);
       }
    
@@ -521,8 +521,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             throw new AddressErrorException("store address not aligned on halfword boundary ",
                Exceptions.ADDRESS_EXCEPTION_STORE, address);
          }
-         return (Globals.getSettings().getBackSteppingEnabled())
-            ? Globals.program.getBackStepper().addMemoryRestoreHalf(address,set(address,value,2))
+         return (Main.getSettings().getBackSteppingEnabled())
+            ? Main.program.getBackStepper().addMemoryRestoreHalf(address,set(address,value,2))
             : set(address, value, 2);
       }
    
@@ -536,8 +536,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
      **/
      
        public int setByte(int address, int value) throws AddressErrorException {
-         return (Globals.getSettings().getBackSteppingEnabled())
-            ? Globals.program.getBackStepper().addMemoryRestoreByte(address,set(address,value,1))
+         return (Main.getSettings().getBackSteppingEnabled())
+            ? Main.program.getBackStepper().addMemoryRestoreByte(address,set(address,value,1))
             : set(address, value, 1);
       }
    
@@ -576,7 +576,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                "store address to text segment out of range or not aligned to word boundary ",
                Exceptions.ADDRESS_EXCEPTION_STORE, address);
          }
-         if (Globals.debug) System.out.println("memory["+address+"] set to "+statement.getBinaryStatement());
+         if (Main.debug) System.out.println("memory["+address+"] set to "+statement.getBinaryStatement());
          if (inTextSegment(address)) {
             storeProgramStatement(address, statement, textBaseAddress, textBlockTable);
          } 
@@ -626,7 +626,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          else if (inTextSegment(address)) {
            // Burch Mod (Jan 2013): replace throw with calls to getStatementNoNotify & getBinaryStatement 
            // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
-            if (Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
                ProgramStatement stmt = getStatementNoNotify(address);
                value = stmt == null ? 0 : stmt.getBinaryStatement();
             } 
@@ -698,7 +698,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          else if (inTextSegment(address)) {
            // Burch Mod (Jan 2013): replace throw with calls to getStatementNoNotify & getBinaryStatement 
            // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
-            if (Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
                ProgramStatement stmt = getStatementNoNotify(address);
                value = stmt == null ? 0 : stmt.getBinaryStatement();
             } 
@@ -936,7 +936,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                "fetch address for text segment not aligned to word boundary ",
                Exceptions.ADDRESS_EXCEPTION_LOAD, address);
          }
-         if (!Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)
+         if (!Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)
           && !(inTextSegment(address) || inKernelTextSegment(address))) {
             throw new AddressErrorException(
                "fetch address for text segment out of range ",
@@ -1221,7 +1221,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    // The "|| Globals.getGui()==null" is a hack added 19 July 2012 DPS.  IF MIPS simulation
    // is from command mode, Globals.program is null but still want ability to observe.
        private void notifyAnyObservers(int type, int address, int length, int value) {
-         if ((Globals.program != null || Globals.getGui()==null) && this.observables.size() > 0) {
+         if ((Main.program != null || Main.getEnv()==null) && this.observables.size() > 0) {
             Iterator it = this.observables.iterator();
             MemoryObservable mo;
             while (it.hasNext()) {

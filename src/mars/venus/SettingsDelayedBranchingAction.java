@@ -55,10 +55,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
    		 
        public void actionPerformed(ActionEvent e) {
-         Globals.getSettings().setDelayedBranchingEnabled(
+         Main.getSettings().setDelayedBranchingEnabled(
                ((JCheckBoxMenuItem) e.getSource()).isSelected());
 			// 25 June 2007 Re-assemble if the situation demands it to maintain consistency.
-         if (Globals.getGui() != null  && 
+         if (Main.getEnv() != null  && 
               (FileStatus.get() == FileStatus.RUNNABLE ||
          	   FileStatus.get() == FileStatus.RUNNING ||
             	FileStatus.get() == FileStatus.TERMINATED)
@@ -68,7 +68,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             if (FileStatus.get() == FileStatus.RUNNING) {
                Simulator.getInstance().stopExecution(this);
             }
-            Globals.getGui().getRunAssembleAction().actionPerformed(null);
+            Main.getEnv().getRunAssembleAction().actionPerformed(null);
          } 
       }
    	   	

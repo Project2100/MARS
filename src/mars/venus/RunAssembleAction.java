@@ -69,33 +69,33 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          Component editPane = mainUI.getMainPane().getEditPane();
          ExecutePane executePane = mainUI.getMainPane().getExecutePane();
          RegistersPane registersPane = mainUI.getRegistersPane();
-         extendedAssemblerEnabled = Globals.getSettings().getExtendedAssemblerEnabled();
-         warningsAreErrors = Globals.getSettings().getWarningsAreErrors();
+         extendedAssemblerEnabled = Main.getSettings().getExtendedAssemblerEnabled();
+         warningsAreErrors = Main.getSettings().getWarningsAreErrors();
          if(FileStatus.getFile()!= null){  
             if (FileStatus.get() == FileStatus.EDITED) {
                mainUI.editor.save();
             }
             try{
-               Globals.program = new MIPSprogram();
+               Main.program = new MIPSprogram();
                ArrayList filesToAssemble;
-               if (Globals.getSettings().getAssembleAllEnabled()) {// setting calls for multiple file assembly 
+               if (Main.getSettings().getAssembleAllEnabled()) {// setting calls for multiple file assembly 
                   filesToAssemble = FilenameFinder.getFilenameList(
-                               new File(FileStatus.getName()).getParent(), Globals.fileExtensions);
+                               new File(FileStatus.getName()).getParent(), Main.fileExtensions);
                } 
                else {
                   filesToAssemble = new ArrayList();
                   filesToAssemble.add(FileStatus.getName());  
                }
                String exceptionHandler = null;
-               if (Globals.getSettings().getExceptionHandlerEnabled() &&
-                   Globals.getSettings().getExceptionHandler() != null &&
-                   Globals.getSettings().getExceptionHandler().length() > 0) {
-                  exceptionHandler = Globals.getSettings().getExceptionHandler();
+               if (Main.getSettings().getExceptionHandlerEnabled() &&
+                   Main.getSettings().getExceptionHandler() != null &&
+                   Main.getSettings().getExceptionHandler().length() > 0) {
+                  exceptionHandler = Main.getSettings().getExceptionHandler();
                }
-               MIPSprogramsToAssemble = Globals.program.prepareFilesForAssembly(filesToAssemble, FileStatus.getFile().getPath(), exceptionHandler);					
+               MIPSprogramsToAssemble = Main.program.prepareFilesForAssembly(filesToAssemble, FileStatus.getFile().getPath(), exceptionHandler);					
                mainUI.messagesPane.postMarsMessage(buildFileNameList(name+": assembling ", MIPSprogramsToAssemble));
                // added logic to receive any warnings and output them.... DPS 11/28/06
-               ErrorList warnings = Globals.program.assemble(MIPSprogramsToAssemble, extendedAssemblerEnabled,
+               ErrorList warnings = Main.program.assemble(MIPSprogramsToAssemble, extendedAssemblerEnabled,
                                                              warningsAreErrors);
                if (warnings.warningsOccurred()) {
                   mainUI.messagesPane.postMarsMessage(warnings.generateWarningReport());
@@ -139,14 +139,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 							   continue;
 							}
                      if (!em.isWarning() || warningsAreErrors) { 
-                        Globals.getGui().getMessagesPane().selectErrorMessage(em.getFilename(), em.getLine(), em.getPosition());
+                        Main.getEnv().getMessagesPane().selectErrorMessage(em.getFilename(), em.getLine(), em.getPosition());
                         // Bug workaround: Line selection does not work correctly for the JEditTextArea editor
                      	// when the file is opened then automatically assembled (assemble-on-open setting).
                      	// Automatic assemble happens in EditTabbedPane's openFile() method, by invoking
                      	// this method (actionPerformed) explicitly with null argument.  Thus e!=null test.
                      	// DPS 9-Aug-2010
                         if (e != null) {
-                           Globals.getGui().getMessagesPane().selectEditorTextLine(em.getFilename(), em.getLine(), em.getPosition());
+                           Main.getEnv().getMessagesPane().selectEditorTextLine(em.getFilename(), em.getLine(), em.getPosition());
                         }
                         break;
                      }

@@ -6,7 +6,7 @@
 
    import mars.ErrorList;
    import mars.ErrorMessage;
-   import mars.Globals;
+   import mars.Main;
    import mars.MIPSprogram;
    import mars.ProcessingException;
    import mars.ProgramStatement;
@@ -191,11 +191,11 @@
          externAddress = Memory.externBaseAddress;
          currentFileDataSegmentForwardReferences = new DataSegmentForwardReferences();
          accumulatedDataSegmentForwardReferences = new DataSegmentForwardReferences();
-         Globals.symbolTable.clear();
-         Globals.memory.clear();
+         Main.symbolTable.clear();
+         Main.memory.clear();
          this.machineList = new ArrayList();
          this.errors = new ErrorList(); 
-         if (Globals.debug)
+         if (Main.debug)
             System.out.println("Assembler first pass begins:");
       // PROCESS THE FIRST ASSEMBLY PASS FOR ALL SOURCE FILES BEFORE PROCEEDING
       // TO SECOND PASS. THIS ASSURES ALL SYMBOL TABLES ARE CORRECTLY BUILT.
@@ -269,14 +269,14 @@
       // Have processed all source files. Attempt to resolve any remaining forward label
       // references from global symbol table. Those that remain unresolved are undefined
       // and require error message.
-         accumulatedDataSegmentForwardReferences.resolve(Globals.symbolTable);
+         accumulatedDataSegmentForwardReferences.resolve(Main.symbolTable);
          accumulatedDataSegmentForwardReferences.generateErrorMessages(errors);
       
       // Throw collection of errors accumulated through the first pass.
          if (errors.errorsOccurred()) {
             throw new ProcessingException(errors);
          }
-         if (Globals.debug)
+         if (Main.debug)
             System.out.println("Assembler second pass begins");
       // SECOND PASS OF ASSEMBLER GENERATES BASIC ASSEMBLER THEN MACHINE CODE.
       // Generates basic assembler statements...
@@ -350,7 +350,7 @@
                   
                   // All substitutions have been made so we have generated
                   // a valid basic instruction!
-                     if (Globals.debug)
+                     if (Main.debug)
                         System.out.println("PSEUDO generated: " + instruction);
                   // For generated instruction: tokenize, build program
                   // statement, add to list.
@@ -372,7 +372,7 @@
               	
             } // end of assembler second pass.
          }
-         if (Globals.debug)
+         if (Main.debug)
             System.out.println("Code generation begins");
       ///////////// THIRD MAJOR STEP IS PRODUCE MACHINE CODE FROM ASSEMBLY //////////
       // Generates machine code statements from the list of basic assembler statements
@@ -383,10 +383,10 @@
                break;
             statement = (ProgramStatement) this.machineList.get(i);
             statement.buildMachineStatementFromBasicStatement(errors);
-            if (Globals.debug)
+            if (Main.debug)
                System.out.println(statement);
             try {
-               Globals.memory.setStatement(statement.getAddress(), statement);
+               Main.memory.setStatement(statement.getAddress(), statement);
             } 
                catch (AddressErrorException e) {
                   Token t = statement.getOriginalTokenList().get(0);
@@ -426,7 +426,7 @@
                errors.add(new ErrorMessage(ps2.getSourceMIPSprogram(), ps2.getSourceLine(), 0,
                   "Duplicate text segment address: "
                   		+ mars.venus.NumberDisplayBaseChooser.formatUnsignedInteger(ps2
-                  				.getAddress(), (Globals.getSettings()
+                  				.getAddress(), (Main.getSettings()
                   				.getDisplayAddressesInHex()) ? 16 : 10)
                   		+ " already occupied by " + ps1.getSourceFile() + " line "
                   		+ ps1.getSourceLine() + " (caused by use of "
@@ -622,7 +622,7 @@
    // alternate compact translation.
       private boolean compactTranslationCanBeApplied(ProgramStatement statement) {
          return (statement.getInstruction() instanceof ExtendedInstruction
-            && Globals.memory.usingCompactMemoryConfiguration() && ((ExtendedInstruction) statement
+            && Main.memory.usingCompactMemoryConfiguration() && ((ExtendedInstruction) statement
             	.getInstruction()).hasCompactTranslation());
       }
    
@@ -694,7 +694,7 @@
       private void executeDirective(TokenList tokens) {
          Token token = tokens.get(0);
          Directives direct = Directives.matchDirective(token.getValue());
-         if (Globals.debug)
+         if (Main.debug)
             System.out.println("line " + token.getSourceLine() + " is directive " + direct);
          if (direct == null) {
             errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(), token
@@ -849,8 +849,8 @@
             }
             int size = Binary.stringToInt(tokens.get(2).getValue());
          // If label already in global symtab, do nothing. If not, add it right now.
-            if (Globals.symbolTable.getAddress(tokens.get(1).getValue()) == SymbolTable.NOT_FOUND) {
-               Globals.symbolTable.addSymbol(tokens.get(1), this.externAddress,
+            if (Main.symbolTable.getAddress(tokens.get(1).getValue()) == SymbolTable.NOT_FOUND) {
+               Main.symbolTable.addSymbol(tokens.get(1), this.externAddress,
                   Symbol.DATA_SYMBOL, errors);
                this.externAddress += size;
             }
@@ -905,14 +905,14 @@
                   		+ "\" declared global label but not defined."));
             } 
             else {
-               if (Globals.symbolTable.getAddress(label.getValue()) != SymbolTable.NOT_FOUND) {
+               if (Main.symbolTable.getAddress(label.getValue()) != SymbolTable.NOT_FOUND) {
                   errors.add(new ErrorMessage(fileCurrentlyBeingAssembled, label.getSourceLine(),
                      label.getStartPos(), "\"" + label.getValue()
                      		+ "\" already defined as global in a different file."));
                } 
                else {
                   fileCurrentlyBeingAssembled.getLocalSymbolTable().removeSymbol(label);
-                  Globals.symbolTable.addSymbol(label, symtabEntry.getAddress(),
+                  Main.symbolTable.addSymbol(label, symtabEntry.getAddress(),
                      symtabEntry.getType(), errors);
                }
             }
@@ -953,7 +953,7 @@
                   + "\" is not a recognized operator"));
             return null;
          }
-         ArrayList inst = Globals.instructionSet.matchOperator(token.getValue());
+         ArrayList inst = Main.instructionSet.matchOperator(token.getValue());
          if (inst == null) { // This should NEVER happen...
             this.errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
                token.getStartPos(), "Internal Assembler error: \"" + token.getValue()
@@ -1099,7 +1099,7 @@
             ********/
             else {
                try {
-                  Globals.memory.set(this.textAddress.get(), value, lengthInBytes);
+                  Main.memory.set(this.textAddress.get(), value, lengthInBytes);
                } 
                   catch (AddressErrorException e) {
                      errors.add(new ErrorMessage(token.getSourceMIPSprogram(),
@@ -1242,7 +1242,7 @@
                      }
                   }
                   try {
-                     Globals.memory.set(this.dataAddress.get(), (int) theChar,
+                     Main.memory.set(this.dataAddress.get(), (int) theChar,
                         DataTypes.CHAR_SIZE);
                   } 
                      catch (AddressErrorException e) {
@@ -1254,7 +1254,7 @@
                }
                if (direct == Directives.ASCIIZ) {
                   try {
-                     Globals.memory.set(this.dataAddress.get(), 0, DataTypes.CHAR_SIZE);
+                     Main.memory.set(this.dataAddress.get(), 0, DataTypes.CHAR_SIZE);
                   } 
                      catch (AddressErrorException e) {
                         errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token
@@ -1290,7 +1290,7 @@
             this.dataAddress.set(this.alignToBoundary(this.dataAddress.get(), lengthInBytes));
          }
          try {
-            Globals.memory.set(this.dataAddress.get(), value, lengthInBytes);
+            Main.memory.set(this.dataAddress.get(), value, lengthInBytes);
          } 
             catch (AddressErrorException e) {
                errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(), token
@@ -1314,7 +1314,7 @@
             this.dataAddress.set(this.alignToBoundary(this.dataAddress.get(), lengthInBytes));
          }
          try {
-            Globals.memory.setDouble(this.dataAddress.get(), value);
+            Main.memory.setDouble(this.dataAddress.get(), value);
          } 
             catch (AddressErrorException e) {
                errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(), token
@@ -1474,7 +1474,7 @@
                if (labelAddress != SymbolTable.NOT_FOUND) {
                // patch address has to be valid b/c we already stored there...
                   try {
-                     Globals.memory.set(entry.patchAddress, labelAddress, entry.length);
+                     Main.memory.set(entry.patchAddress, labelAddress, entry.length);
                   } 
                      catch (AddressErrorException aee) {
                      }

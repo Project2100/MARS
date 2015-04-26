@@ -32,7 +32,7 @@ import javax.swing.Timer;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import mars.Globals;
+import mars.Main;
 
 
 
@@ -502,20 +502,16 @@ private int datapatTypeUsed;
 	 try {
 		 BufferedImage im;
 		 if(datapatTypeUsed == register){
-			 im =  ImageIO.read( 
-				 getClass().getResource(Globals.imagesPath+"register.png") );
+			 im =  ImageIO.read(getClass().getResource(Main.imagesPath+"register.png") );
 		 }
 		 else if(datapatTypeUsed == control){
-			 im =  ImageIO.read( 
-					 getClass().getResource(Globals.imagesPath+"control.png") );
+			 im =  ImageIO.read(getClass().getResource(Main.imagesPath+"control.png") );
 			 }
 		 else if(datapatTypeUsed == aluControl){
-			 im =  ImageIO.read( 
-				 getClass().getResource(Globals.imagesPath+"ALUcontrol.png") );
+			 im =  ImageIO.read(getClass().getResource(Main.imagesPath+"ALUcontrol.png") );
 		 }
 		 else{
-			 im =  ImageIO.read( 
-					 getClass().getResource(Globals.imagesPath+"alu.png") );
+			 im =  ImageIO.read(getClass().getResource(Main.imagesPath+"alu.png") );
 		 }
 		 
 		 int transparency = im.getColorModel().getTransparency();
@@ -528,7 +524,7 @@ private int datapatTypeUsed;
 	 } 
 	 catch(IOException e) {
 		 System.out.println("Load Image error for " +
-				 getClass().getResource(Globals.imagesPath+"register.png") + ":\n" + e); 
+				 getClass().getResource(Main.imagesPath+"register.png") + ":\n" + e); 
 	 }
  } 
 

@@ -48,8 +48,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    		 
          public void actionPerformed(ActionEvent e) {
 		   boolean isHex = ((JCheckBoxMenuItem) e.getSource()).isSelected(); 
-		   Globals.getGui().getMainPane().getExecutePane().getAddressDisplayBaseChooser().setSelected(isHex);
-			Globals.getSettings().setDisplayAddressesInHex(isHex);
+		   Main.getEnv().getMainPane().getExecutePane().getAddressDisplayBaseChooser().setSelected(isHex);
+			Main.getSettings().setDisplayAddressesInHex(isHex);
       }
    	   	
    }

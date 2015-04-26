@@ -168,12 +168,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 */
        public void setTitle(String path, String name, int status) {
          if (status == FileStatus.NO_FILE || name==null || name.length()==0) {
-            VenusUI.mainFrame.setTitle(mainUIbaseTitle);
+            VenusUI.getMainFrame().setTitle(mainUIbaseTitle);
          } 
          else {
             String edited = (status==FileStatus.NEW_EDITED || status==FileStatus.EDITED) ? "*" : " ";
             String titleName = (status==FileStatus.NEW_EDITED || status==FileStatus.NEW_NOT_EDITED) ? name : path;
-            VenusUI.mainFrame.setTitle(titleName + edited + " - " + mainUIbaseTitle);
+            VenusUI.getMainFrame().setTitle(titleName + edited + " - " + mainUIbaseTitle);
             editTabbedPane.setTitleAt(editTabbedPane.getSelectedIndex(), name + edited);
          }
       }
