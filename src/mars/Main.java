@@ -1,11 +1,14 @@
 package mars;
 
+import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import mars.mips.instructions.syscalls.*;
 import mars.mips.instructions.*;
 import mars.mips.hardware.*;
@@ -47,14 +50,19 @@ import mars.util.*;
  * @version August 2003
  */
 public class Main {
-    
+
+    /**
+     * Application logger, central point for exception reporting
+     */
     public static final Logger logger = Logger.getLogger(Main.class.getName());
-    
-    public static final Thread.UncaughtExceptionHandler exHandler = (Thread t, Throwable e)
-            -> Main.logger.log(Level.SEVERE, "Uncaught exception in thread: " + t.getName(), e);
+
+    /**
+     * This lambda will be used as the default handler for uncaught exceptions
+     */
+    public static final Thread.UncaughtExceptionHandler exHandler = (thread, exception)
+            -> Main.logger.log(Level.SEVERE, "Uncaught exception in thread: " + thread.getName(), exception);
 
     // List these first because they are referenced by methods called at initialization.
-
     private static String configPropertiesFile = "Config";
     private static String syscallPropertiesFile = "Syscall";
 
@@ -107,7 +115,7 @@ public class Main {
     /* Flag that indicates whether or not instructionSet has been initialized. */
     private static boolean initialized = false;
     /* The GUI being used (if any) with this simulator. */
-    static VenusUI gui = null;
+    private static VenusUI gui = null;
     /**
      * The current MARS version number. Can't wait for "initialize()" call to
      * get it.
@@ -162,11 +170,10 @@ public class Main {
         return "Pete Sanderson and Kenneth Vollmar";
     }
 
-    public static void setGui(VenusUI g) {
-        gui = g;
-    }
-
-    public static VenusUI getEnv() {
+//    public static void setGui(VenusUI g) {
+//        gui = g;
+//    }
+    public static VenusUI getGUI() {
         return gui;
     }
 
@@ -175,8 +182,7 @@ public class Main {
     }
 
     /**
-     * Method called at system initialization to create global data
-     * structures.
+     * Method called at system initialization to create global data structures.
      */
     public static void initialize() {
         if (!initialized) {
@@ -213,7 +219,7 @@ public class Main {
         return (anp == null) ? "." : ((anp.equals("space")) ? " " : anp);
     }
 
-   	// Read ASCII strings for codes 0-255, from properties file. If string
+    // Read ASCII strings for codes 0-255, from properties file. If string
     // value is "null", substitute value of ASCII_NON_PRINT.  If string is
     // "space", substitute string containing one space character.
     public static String[] getAsciiStrings() {
@@ -233,7 +239,7 @@ public class Main {
         return lets;
     }
 
-      // Read and return integer property value for given file and property name.
+    // Read and return integer property value for given file and property name.
     // Default value is returned if property file or name not found.
     private static int getIntegerProperty(String propertiesFile, String propertyName, int defaultValue) {
         int limit = defaultValue;  // just in case no entry is found
@@ -246,7 +252,7 @@ public class Main {
         return limit;
     }
 
-   	// Read assembly language file extensions from properties file.  Resulting
+    // Read assembly language file extensions from properties file.  Resulting
     // string is tokenized into array list (assume StringTokenizer default delimiters).
     private static ArrayList getFileExtensions() {
         ArrayList extensionsList = new ArrayList();
@@ -309,9 +315,39 @@ public class Main {
 
     public static void main(String[] args) {
         initialize();
-        
-        if (args.length == 0)
-            VenusUI.launchIDE();
+
+        if (args.length == 0) {
+            // Puts MARS menu on Mac OS menu bar
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
+
+            // Calling GUI related functionality outside EDT!
+            //----------------------------------------------------------------------
+            // Putting this call inside EDT will cause both the splash and the main
+            // frame to show at the same time, effectively forfeiting the splash's
+            // purpose; for now, calling externally isn't harmful
+            //
+            // Andrea Proietto, 15/04/28 21:37
+            MarsSplashScreen.showSplash(2000);
+
+            EventQueue.invokeLater(() -> {
+
+                Thread.setDefaultUncaughtExceptionHandler(exHandler);
+                try {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                }
+                catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+                    Main.logger.log(Level.WARNING, "Could not set system LAF", ex);
+                }
+
+                gui = new VenusUI();
+
+                FileStatus.reset();
+                // The following has side effect of establishing menu state
+                FileStatus.set(FileStatus.NO_FILE);
+
+                getGUI().mainFrame.setVisible(true);
+            });
+        }
         else
             new MarsLaunch(args);
     }

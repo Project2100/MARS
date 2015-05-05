@@ -74,7 +74,7 @@
          DEFAULTS.caretColor = Color.black; // Color.red;
          DEFAULTS.selectionColor = new Color(0xccccff);
          DEFAULTS.lineHighlightColor = new Color(0xeeeeee);//0xe0e0e0);
-         DEFAULTS.lineHighlight = mars.Main.getSettings().getBooleanSetting(Settings.EDITOR_CURRENT_LINE_HIGHLIGHTING);
+         DEFAULTS.lineHighlight = mars.Main.getSettings().getBool(Settings.EDITOR_CURRENT_LINE_HIGHLIGHTING);
          DEFAULTS.bracketHighlightColor = Color.black;
          DEFAULTS.bracketHighlight = false; // assembly language doesn't need this.
          DEFAULTS.eolMarkerColor = new Color(0x009999);

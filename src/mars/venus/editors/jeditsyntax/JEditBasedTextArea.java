@@ -52,7 +52,6 @@
                   else { 
                      undoManager.addEdit(e.getEdit());
                      editPane.updateUndoState();
-                     editPane.updateRedoState();
                   }
                }
             };
@@ -322,7 +321,6 @@
          compoundEdit.end();
          undoManager.addEdit( compoundEdit );
          editPane.updateUndoState();
-         editPane.updateRedoState();
          isCompoundEdit = false;
          sourceCode.setCaretPosition(nextPosn + replace.length());
          if (doFindText(find, caseSensitive) == TEXT_NOT_FOUND) {
@@ -375,7 +373,6 @@
             compoundEdit.end();
             undoManager.addEdit( compoundEdit );
             editPane.updateUndoState();
-            editPane.updateRedoState();
          }
          return replaceCount;
       }

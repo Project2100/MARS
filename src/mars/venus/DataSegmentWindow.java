@@ -408,8 +408,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	//   Returns the JScrollPane for the Address/Data part of the Data Segment window.
       private JScrollPane generateDataPanel(){
          dataData = new Object[NUMBER_OF_ROWS][NUMBER_OF_COLUMNS];
-         int valueBase = Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
-         int addressBase = Main.getEnv().getMainPane().getExecutePane().getAddressDisplayBase();
+         int valueBase = (Main.getGUI().executeTab).getValueDisplayBase();
+         int addressBase = (Main.getGUI().executeTab).getAddressDisplayBase();
          int address = this.homeAddress;
          for(int row=0; row<NUMBER_OF_ROWS; row++){
             dataData[row][ADDRESS_COLUMN] = NumberDisplayBaseChooser.formatUnsignedInteger(address, addressBase);
@@ -488,7 +488,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        
       private int getValueDisplayFormat() {
          return (asciiDisplay) ? NumberDisplayBaseChooser.ASCII : 
-            Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
+            (Main.getGUI().executeTab).getValueDisplayBase();
       }
    	
    	/**
@@ -501,7 +501,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          if (tablePanel.getComponentCount() == 0) 
             return; // ignore if no content to change
          int valueBase = getValueDisplayFormat();
-         int addressBase = Main.getEnv().getMainPane().getExecutePane().getAddressDisplayBase();
+         int addressBase = (Main.getGUI().executeTab).getAddressDisplayBase();
          int address = firstAddr;
          TableModel dataModel = dataTable.getModel();
          for (int row=0; row<NUMBER_OF_ROWS; row++) {
@@ -517,7 +517,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   	// temporarily enabling the setting as "non persistent" so it won't write through to the registry.
                      if (Memory.inTextSegment(address)) {
                         int displayValue = 0;
-                        if (!Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+                        if (!Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) {
                            Main.getSettings().setBooleanSettingNonPersistent(Settings.SELF_MODIFYING_CODE_ENABLED, true);
                            try {
                               displayValue = Main.memory.getWordNoNotify(address);
@@ -554,7 +554,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          }
          int row = offset/BYTES_PER_ROW;
          int column = (offset % BYTES_PER_ROW)/BYTES_PER_VALUE + 1; // column 0 reserved for address
-         int valueBase = Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
+         int valueBase = (Main.getGUI().executeTab).getValueDisplayBase();
          ((DataTableModel)dataTable.getModel()).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(value, valueBase),
                     row,column);
       }
@@ -566,7 +566,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       public void updateDataAddresses() {
          if (tablePanel.getComponentCount() == 0) 
             return; // ignore if no content to change
-         int addressBase = Main.getEnv().getMainPane().getExecutePane().getAddressDisplayBase();
+         int addressBase = (Main.getGUI().executeTab).getAddressDisplayBase();
          int address = this.firstAddress;
          String formattedAddress;
          for(int i=0; i<NUMBER_OF_ROWS; i++) {
@@ -602,7 +602,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 */   
    	
       public void resetValues(){
-         int valueBase = Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
+         int valueBase = (Main.getGUI().executeTab).getValueDisplayBase();
          TableModel dataModel = dataTable.getModel();
          for (int row=0; row<NUMBER_OF_ROWS; row++) {
             for (int column=1; column<NUMBER_OF_COLUMNS; column++) {
@@ -639,7 +639,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          heapButton.setEnabled(true);
          extnButton.setEnabled(true);
          mmioButton.setEnabled(true);
-         textButton.setEnabled(settings.getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED));
+         textButton.setEnabled(settings.getBool(Settings.SELF_MODIFYING_CODE_ENABLED));
          kernButton.setEnabled(true);
          prevButton.setEnabled(true);
          nextButton.setEnabled(true);
@@ -971,7 +971,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                      return;
                   }
             }// end synchronized block
-            int valueBase = Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
+            int valueBase = (Main.getGUI().executeTab).getValueDisplayBase();
             data[row][col] = NumberDisplayBaseChooser.formatNumber(val, valueBase); 
             fireTableCellUpdated(row, col);
             return;

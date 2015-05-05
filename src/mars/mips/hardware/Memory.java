@@ -374,7 +374,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
            // Burch Mod (Jan 2013): replace throw with call to setStatement 
            // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
          
-            if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) {
                ProgramStatement oldStatement = getStatementNoNotify(address);
                if (oldStatement != null) {
                   oldValue = oldStatement.getBinaryStatement();
@@ -443,7 +443,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          else if (inTextSegment(address)) {	
            // Burch Mod (Jan 2013): replace throw with call to setStatement 
            // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
-            if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) {
                ProgramStatement oldStatement = getStatementNoNotify(address);
                if (oldStatement != null) {
                   oldValue = oldStatement.getBinaryStatement();
@@ -626,7 +626,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          else if (inTextSegment(address)) {
            // Burch Mod (Jan 2013): replace throw with calls to getStatementNoNotify & getBinaryStatement 
            // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
-            if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) {
                ProgramStatement stmt = getStatementNoNotify(address);
                value = stmt == null ? 0 : stmt.getBinaryStatement();
             } 
@@ -698,7 +698,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          else if (inTextSegment(address)) {
            // Burch Mod (Jan 2013): replace throw with calls to getStatementNoNotify & getBinaryStatement 
            // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
-            if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) {
                ProgramStatement stmt = getStatementNoNotify(address);
                value = stmt == null ? 0 : stmt.getBinaryStatement();
             } 
@@ -936,7 +936,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                "fetch address for text segment not aligned to word boundary ",
                Exceptions.ADDRESS_EXCEPTION_LOAD, address);
          }
-         if (!Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)
+         if (!Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)
           && !(inTextSegment(address) || inKernelTextSegment(address))) {
             throw new AddressErrorException(
                "fetch address for text segment out of range ",
@@ -1221,7 +1221,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    // The "|| Globals.getGui()==null" is a hack added 19 July 2012 DPS.  IF MIPS simulation
    // is from command mode, Globals.program is null but still want ability to observe.
        private void notifyAnyObservers(int type, int address, int length, int value) {
-         if ((Main.program != null || Main.getEnv()==null) && this.observables.size() > 0) {
+         if ((Main.program != null || Main.getGUI()==null) && this.observables.size() > 0) {
             Iterator it = this.observables.iterator();
             MemoryObservable mo;
             while (it.hasNext()) {

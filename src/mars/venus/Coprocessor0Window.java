@@ -101,7 +101,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public void clearWindow() {
          this.clearHighlighting();
          Coprocessor0.resetRegisters();
-         this.updateRegisters(Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase());
+         this.updateRegisters((Main.getGUI().executeTab).getValueDisplayBase());
       }
     
    	/**
@@ -128,7 +128,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 *  Update register display using current display base (10 or 16)
    	 */
        public void updateRegisters() {
-         this.updateRegisters(Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase());
+         this.updateRegisters((Main.getGUI().executeTab).getValueDisplayBase());
       }
    	
    	/**
@@ -191,7 +191,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             	// AddressCellRenderer class in DataSegmentWindow.java.
                this.highlighting = true;
                this.highlightCellForRegister((Register)observable);
-               Main.getEnv().getRegistersPane().setSelectedComponent(this);
+                (Main.getGUI().registersPane).setSelectedComponent(this);
             }
          }
       }
@@ -317,7 +317,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             synchronized (Main.memoryAndRegistersLock) {
                Coprocessor0.updateRegister(registers[row].getNumber(), val);
             }
-            int valueBase = Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
+            int valueBase = (Main.getGUI().executeTab).getValueDisplayBase();
             data[row][col] = NumberDisplayBaseChooser.formatNumber(val, valueBase); 
             fireTableCellUpdated(row, col);
             return;

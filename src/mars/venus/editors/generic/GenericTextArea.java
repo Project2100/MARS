@@ -86,7 +86,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   else {
                      undoManager.addEdit(e.getEdit());
                      editPane.updateUndoState();
-                     editPane.updateRedoState();
                   }
                }
             };
@@ -316,7 +315,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          compoundEdit.end();
          undoManager.addEdit( compoundEdit );
          editPane.updateUndoState();
-         editPane.updateRedoState();
          isCompoundEdit = false;
          sourceCode.setCaretPosition(nextPosn + replace.length());
          if (doFindText(find, caseSensitive) == TEXT_NOT_FOUND) {
@@ -367,7 +365,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             compoundEdit.end();
             undoManager.addEdit( compoundEdit );
             editPane.updateUndoState();
-            editPane.updateRedoState();
          }
          return replaceCount;
       }

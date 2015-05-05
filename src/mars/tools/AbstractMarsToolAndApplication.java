@@ -9,7 +9,6 @@
    import mars.*;
    import mars.util.*;
    import mars.mips.hardware.*;
-   import static mars.venus.VenusUI.getMainFrame;
 
 /*
 Copyright (c) 2003-2008,  Pete Sanderson and Kenneth Vollmar
@@ -180,7 +179,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    
        public void action() {
          this.isBeingUsedAsAMarsTool = true;
-         dialog = new JDialog(getMainFrame(), this.title);
+         dialog = new JDialog(Main.getGUI().mainFrame, this.title);
       	// assure the dialog goes away if user clicks the X
          dialog.addWindowListener(
                 new WindowAdapter() {
@@ -199,7 +198,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          initializePostGUI();
          dialog.setContentPane(contentPane);
          dialog.pack();      
-         dialog.setLocationRelativeTo(getMainFrame());
+         dialog.setLocationRelativeTo(Main.getGUI().mainFrame);
          dialog.setVisible(true);
       }
    	

@@ -49,11 +49,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    		 */  
        public void actionPerformed(ActionEvent e){
          name = this.getValue(Action.NAME).toString();
-         executePane = mainUI.getMainPane().getExecutePane();
+         executePane = mainUI.executeTab;
          boolean done = false;
          if(!FileStatus.isAssembled()){
                      // note: this should never occur since backstepping is only enabled after successful assembly.
-            JOptionPane.showMessageDialog(VenusUI.getMainFrame(),"The program must be assembled before it can be run.");
+            JOptionPane.showMessageDialog(Main.getGUI().mainFrame,"The program must be assembled before it can be run.");
             return;
          }
          mainUI.setStarted(true);
@@ -63,15 +63,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          if (Main.getSettings().getBackSteppingEnabled()) {
             boolean inDelaySlot = Main.program.getBackStepper().inDelaySlot(); // Added 25 June 2007
 				Memory.getInstance().addObserver(executePane.getDataSegmentWindow());
-				RegisterFile.addRegistersObserver(executePane.getRegistersWindow());
-				Coprocessor0.addRegistersObserver(executePane.getCoprocessor0Window());
-				Coprocessor1.addRegistersObserver(executePane.getCoprocessor1Window());
+				RegisterFile.addRegistersObserver(Main.getGUI().registersTab);
+				Coprocessor0.addRegistersObserver(Main.getGUI().coprocessor0Tab);
+				Coprocessor1.addRegistersObserver(Main.getGUI().coprocessor1Tab);
             Main.program.getBackStepper().backStep();
 				Memory.getInstance().deleteObserver(executePane.getDataSegmentWindow());
-				RegisterFile.deleteRegistersObserver(executePane.getRegistersWindow());
-            executePane.getRegistersWindow().updateRegisters();
-            executePane.getCoprocessor1Window().updateRegisters();
-            executePane.getCoprocessor0Window().updateRegisters();
+				RegisterFile.deleteRegistersObserver(Main.getGUI().registersTab);
+            (Main.getGUI().registersTab).updateRegisters();
+            (Main.getGUI().coprocessor1Tab).updateRegisters();
+            (Main.getGUI().coprocessor0Tab).updateRegisters();
             executePane.getDataSegmentWindow().updateValues();
             executePane.getTextSegmentWindow().highlightStepAtPC(inDelaySlot); // Argument aded 25 June 2007
             FileStatus.set(FileStatus.RUNNABLE);

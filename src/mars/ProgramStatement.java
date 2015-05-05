@@ -688,8 +688,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          }
       
           public String toString() {
-            int addressBase =  (Main.getSettings().getBooleanSetting(Settings.DISPLAY_ADDRESSES_IN_HEX)) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
-            int valueBase =  (Main.getSettings().getBooleanSetting(Settings.DISPLAY_VALUES_IN_HEX)) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
+            int addressBase =  (Main.getSettings().getBool(Settings.DISPLAY_ADDRESSES_IN_HEX)) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
+            int valueBase =  (Main.getSettings().getBool(Settings.DISPLAY_VALUES_IN_HEX)) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
          	
             StringBuffer result = new StringBuffer();
             for (int i=0; i<list.size(); i++) {

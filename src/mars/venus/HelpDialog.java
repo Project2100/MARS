@@ -9,7 +9,6 @@
    import javax.swing.*;
    import javax.swing.event.*;
    import javax.swing.text.html.*;
-   import static mars.venus.VenusUI.getMainFrame;
 	
 	/*
 Copyright (c) 2003-2008,  Pete Sanderson and Kenneth Vollmar
@@ -42,30 +41,24 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     /**
     * Action  for the Help -> Help menu item
     */   			
-    public class HelpHelpAction extends GuiAction {
-       public  HelpHelpAction(String name, Icon icon, String descrip,
-                             Integer mnemonic, KeyStroke accel, VenusUI gui) {
-         super(name, icon, descrip, mnemonic, accel, gui);
-      }
+    final class HelpDialog extends JDialog {
    	
    	// ideally read or computed from config file...
-       private Dimension getSize() {
+       private Dimension getDimensionSize() {
          return new Dimension(800,600);
       }
 
       // Light gray background color for alternating lines of the instruction lists
-      static Color altBackgroundColor = new Color(0xEE,0xEE,0xEE);  
+      private final Color altBackgroundColor = new Color(0xEE,0xEE,0xEE);  
 		
-		/**
-		 *  Separates Instruction name descriptor from detailed (operation) description 
-		 *  in help string.
-		 */
-		public static final String descriptionDetailSeparator = ":";
 		   	
    	/**
    	 * Displays tabs with categories of information
    	 */	  
-       public void actionPerformed(ActionEvent e) {
+       public HelpDialog() {
+         // Create non-modal dialog. Based on java.sun.com "How to Make Dialogs", DialogDemo.java		
+         super(Main.getGUI().mainFrame, "MARS "+Main.version+" Help");
+         
          JTabbedPane tabbedPane = new JTabbedPane();
          tabbedPane.addTab("MIPS", createMipsHelpInfoPanel());
          tabbedPane.addTab("MARS", createMarsHelpInfoPanel());
@@ -73,25 +66,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          tabbedPane.addTab("Bugs/Comments", createHTMLHelpPanel("BugReportingHelp.html"));   
          tabbedPane.addTab("Acknowledgements", createHTMLHelpPanel("Acknowledgements.html"));
          tabbedPane.addTab("Instruction Set Song", createHTMLHelpPanel("MIPSInstructionSetSong.html"));
-         // Create non-modal dialog. Based on java.sun.com "How to Make Dialogs", DialogDemo.java		
-         final JDialog dialog = new JDialog(getMainFrame(), "MARS "+Main.version+" Help");
-      	// assure the dialog goes away if user clicks the X
-         dialog.addWindowListener(
-                new WindowAdapter() {
-                   public void windowClosing(WindowEvent e) {
-                     dialog.setVisible(false);
-                     dialog.dispose();
-                  }
-               });
+         
+         
          //Add a "close" button to the non-modal help dialog.
          JButton closeButton = new JButton("Close");
-         closeButton.addActionListener(
-                new ActionListener() {
-                   public void actionPerformed(ActionEvent e) {
-                     dialog.setVisible(false);
-                     dialog.dispose();
-                  }
-               });
+         closeButton.addActionListener((ActionEvent e) -> dispose());
          JPanel closePanel = new JPanel();
          closePanel.setLayout(new BoxLayout(closePanel,BoxLayout.LINE_AXIS));
          closePanel.add(Box.createHorizontalGlue());
@@ -104,11 +83,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          contentPane.add(Box.createRigidArea(new Dimension(0,5)));
          contentPane.add(closePanel);
          contentPane.setOpaque(true);
-         dialog.setContentPane(contentPane);      
-         //Show it.
-         dialog.setSize(this.getSize());
-         dialog.setLocationRelativeTo(getMainFrame());
-         dialog.setVisible(true);
+         setContentPane(contentPane);    
+         
+         setSize(this.getDimensionSize());
+         setLocationRelativeTo(Main.getGUI().mainFrame);
       
       //////////////////////////////////////////////////////////////////
       }
@@ -265,9 +243,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          tabbedPane.addTab("Syscalls", createHTMLHelpPanel("SyscallHelp.html"));
          tabbedPane.addTab("Exceptions", createHTMLHelpPanel("ExceptionsHelp.html"));
          tabbedPane.addTab("Macros", createHTMLHelpPanel("MacrosHelp.html"));
-         operandsScrollPane.setPreferredSize(new Dimension((int)this.getSize().getWidth(), (int) (this.getSize().getHeight()*.2)));
+         operandsScrollPane.setPreferredSize(new Dimension((int)this.getDimensionSize().getWidth(), (int) (this.getDimensionSize().getHeight()*.2)));
          operandsScrollPane.getVerticalScrollBar().setUnitIncrement(10);
-         tabbedPane.setPreferredSize(new Dimension((int)this.getSize().getWidth(), (int) (this.getSize().getHeight()*.6)));
+         tabbedPane.setPreferredSize(new Dimension((int)this.getDimensionSize().getWidth(), (int) (this.getDimensionSize().getHeight()*.6)));
          JSplitPane splitsville = new JSplitPane(JSplitPane.VERTICAL_SPLIT, operandsScrollPane, tabbedPane);
          splitsville.setOneTouchExpandable(true);
          splitsville.resetToPreferredSizes();
@@ -376,9 +354,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   doc.processHTMLFrameHyperlinkEvent(evt); 
                } 
                else {
-                  webpageDisplay = new JDialog(getMainFrame(), "Primitive HTML Viewer");
+                  webpageDisplay = new JDialog(Main.getGUI().mainFrame, "Primitive HTML Viewer");
                   webpageDisplay.setLayout(new BorderLayout());
-                  webpageDisplay.setLocation(getMainFrame().getSize().width/6, getMainFrame().getSize().height/6);
+                  webpageDisplay.setLocation(Main.getGUI().mainFrame.getSize().width/6, Main.getGUI().mainFrame.getSize().height/6);
                   JEditorPane webpagePane;
                   try { 
                      webpagePane = new JEditorPane(e.getURL());
@@ -408,7 +386,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                               }
                            }		
                         });
-                  webpagePane.setPreferredSize(new Dimension(getMainFrame().getSize().width*2/3, getMainFrame().getSize().height*2/3));
+                  webpagePane.setPreferredSize(new Dimension(Main.getGUI().mainFrame.getSize().width*2/3, Main.getGUI().mainFrame.getSize().height*2/3));
                   webpagePane.setEditable(false);
                   webpagePane.setCaretPosition(0);
                   JScrollPane webpageScrollPane = new JScrollPane(webpagePane, 

@@ -10,7 +10,6 @@
    import java.awt.event.*;
    import javax.swing.*;
    import javax.swing.table.*;
-   import javax.swing.border.*;
    
 	/*
 Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -51,7 +50,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       private JPanel labelPanel;      // holds J
       private JCheckBox dataLabels, textLabels;
       private ArrayList listOfLabelsForSymbolTable;
-      private LabelsWindow labelsWindow;
       private static final int MAX_DISPLAYED_CHARS = 24;
       private static final int PREFERRED_NAME_COLUMN_WIDTH = 60;
       private static final int PREFERRED_ADDRESS_COLUMN_WIDTH = 60;
@@ -132,7 +130,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             }
          columnNames = sortColumnHeadings[sortState]; 
          tableSortComparator = tableSortingComparators[sortState];
-         labelsWindow = this;
          contentPane = this.getContentPane();
          labelPanel = new JPanel(new GridLayout(1,2,10,0));
          JPanel features = new JPanel();
@@ -275,10 +272,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                }
          	// Scroll to this address, either in Text Segment display or Data Segment display
             if (Memory.inTextSegment(address) || Memory.inKernelTextSegment(address)) {
-               Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow().selectStepAtAddress(address);
+                (Main.getGUI().executeTab).getTextSegmentWindow().selectStepAtAddress(address);
             } 
             else { 
-               Main.getEnv().getMainPane().getExecutePane().getDataSegmentWindow().selectCellForAddress(address);
+                (Main.getGUI().executeTab).getDataSegmentWindow().selectCellForAddress(address);
             }
          }
       }
@@ -321,7 +318,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             SymbolTable symbolTable = (myMIPSprogram == null)
                                       ? Main.symbolTable
                							  : myMIPSprogram.getLocalSymbolTable();
-            int addressBase = Main.getEnv().getMainPane().getExecutePane().getAddressDisplayBase();
+            int addressBase = (Main.getGUI().executeTab).getAddressDisplayBase();
             if (textLabels.isSelected() && dataLabels.isSelected()) {
                symbols = symbolTable.getAllSymbols();
             } 
@@ -357,7 +354,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           public void updateLabelAddresses() {
             if (labelPanel.getComponentCount() == 0) 
                return; // ignore if no content to change
-            int addressBase = Main.getEnv().getMainPane().getExecutePane().getAddressDisplayBase();
+            int addressBase = (Main.getGUI().executeTab).getAddressDisplayBase();
             int address;
             String formattedAddress;
             int numSymbols = (labelData==null) ? 0 : labelData.length;
@@ -485,7 +482,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           /////////////////////////////////////////////////////////////////////
           // When user clicks on table column header, system will sort the
           // table based on that column then redraw it.
-             private class SymbolTableHeaderMouseListener implements MouseListener {
+             private class SymbolTableHeaderMouseListener extends MouseAdapter {
+                @Override
                 public void mouseClicked(MouseEvent e) {
                   Point p = e.getPoint();
                   int index = columnModel.getColumnIndexAtX(p.x);
@@ -495,13 +493,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   columnNames = sortColumnHeadings[sortState];   
                   Main.getSettings().setLabelSortState(new Integer(sortState).toString());
                   setupTable();
-                  Main.getEnv().getMainPane().getExecutePane().setLabelWindowVisibility(false);
-                  Main.getEnv().getMainPane().getExecutePane().setLabelWindowVisibility(true);		
+                  LabelsWindow.this.validate();
                }
-                public void mouseEntered(MouseEvent e) {}
-                public void mouseExited(MouseEvent e) {}
-                public void mousePressed(MouseEvent e) {}
-                public void mouseReleased(MouseEvent e) {}
             }
          }
       }

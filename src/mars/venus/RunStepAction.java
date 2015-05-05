@@ -50,7 +50,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 			 */  
        public void actionPerformed(ActionEvent e){
          name = this.getValue(Action.NAME).toString();
-         executePane = mainUI.getMainPane().getExecutePane();
+         executePane = mainUI.executeTab;
          boolean done = false;
          if(FileStatus.isAssembled()){
 			   if (!mainUI.getStarted()) {  // DPS 17-July-2008
@@ -66,16 +66,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          }
          else{
             // note: this should never occur since "Step" is only enabled after successful assembly.
-            JOptionPane.showMessageDialog(VenusUI.getMainFrame(),"The program must be assembled before it can be run.");
+            JOptionPane.showMessageDialog(Main.getGUI().mainFrame,"The program must be assembled before it can be run.");
          }
       }
       
    	// When step is completed, control returns here (from execution thread, indirectly) 
    	// to update the GUI.
        public void stepped(boolean done, int reason, ProcessingException pe) {
-         executePane.getRegistersWindow().updateRegisters();
-         executePane.getCoprocessor1Window().updateRegisters();
-         executePane.getCoprocessor0Window().updateRegisters();
+         (Main.getGUI().registersTab).updateRegisters();
+         (Main.getGUI().coprocessor1Tab).updateRegisters();
+         (Main.getGUI().coprocessor0Tab).updateRegisters();
          executePane.getDataSegmentWindow().updateValues();
          if (!done) {
             executePane.getTextSegmentWindow().highlightStepAtPC();
@@ -87,22 +87,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             FileStatus.set(FileStatus.TERMINATED);
          }
          if (done && pe == null) {
-            mainUI.getMessagesPane().postMarsMessage(
+            (mainUI.messagesPane).postMarsMessage(
                              "\n"+name+": execution "+
 									  ((reason==Simulator.CLIFF_TERMINATION) ? "terminated due to null instruction."
 									                                         : "completed successfully.")+"\n\n");
-            mainUI.getMessagesPane().postRunMessage(
+            (mainUI.messagesPane).postRunMessage(
                              "\n-- program is finished running "+
 									  ((reason==Simulator.CLIFF_TERMINATION)? "(dropped off bottom)" : "") +" --\n\n");
-            mainUI.getMessagesPane().selectRunMessageTab();
+            (mainUI.messagesPane).selectRunMessageTab();
          }
          if (pe !=null) {
             RunGoAction.resetMaxSteps();
-            mainUI.getMessagesPane().postMarsMessage(
+            (mainUI.messagesPane).postMarsMessage(
                                 pe.errors().generateErrorReport());
-            mainUI.getMessagesPane().postMarsMessage(
+            (mainUI.messagesPane).postMarsMessage(
                                 "\n"+name+": execution terminated with errors.\n\n");
-            mainUI.getRegistersPane().setSelectedComponent(executePane.getCoprocessor0Window());
+            (mainUI.registersPane).setSelectedComponent(Main.getGUI().coprocessor0Tab);
             FileStatus.set(FileStatus.TERMINATED); // should be redundant.
 								executePane.getTextSegmentWindow().setCodeHighlighting(true);
 				executePane.getTextSegmentWindow().unhighlightAllSteps();

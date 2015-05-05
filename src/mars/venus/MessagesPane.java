@@ -226,18 +226,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 *  @param column Column number for error message
    	 */   
        public void selectEditorTextLine(String fileName, int line, int column) {
-         EditTabbedPane editTabbedPane = (EditTabbedPane) Main.getEnv().getMainPane().getEditTabbedPane();      
+         EditTabbedPane editTabbedPane = Main.getGUI().editTabbedPane;      
          EditPane editPane, currentPane = null;
          editPane = editTabbedPane.getEditPaneForFile(new java.io.File(fileName).getPath());
          if (editPane != null) {
-            if (editPane != editTabbedPane.getCurrentEditTab()) {
+            if (editPane != editTabbedPane.getSelectedComponent()) {
                editTabbedPane.setCurrentEditTab(editPane);
             }
             currentPane = editPane;		
          } 
          else {	// file is not open.  Try to open it.
             if (editTabbedPane.openFile(new java.io.File(fileName))) {
-               currentPane = editTabbedPane.getCurrentEditTab();
+               currentPane = editTabbedPane.getSelectedComponent();
             }
          }
       	// If editPane == null, it means the desired file was not open.  Line selection
@@ -350,7 +350,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          String input;
          JOptionPane pane = new JOptionPane(prompt,JOptionPane.QUESTION_MESSAGE,JOptionPane.DEFAULT_OPTION); 
          pane.setWantsInput(true);
-         JDialog dialog = pane.createDialog(VenusUI.getMainFrame(), "MIPS Keyboard Input"); 
+         JDialog dialog = pane.createDialog(Main.getGUI().mainFrame, "MIPS Keyboard Input"); 
          dialog.setVisible(true); 
          input = (String) pane.getInputValue();
          this.postRunMessage(Main.userInputAlert+input+"\n");

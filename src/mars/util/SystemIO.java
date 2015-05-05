@@ -78,7 +78,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public static int readInteger(int serviceNumber)
       {
          String input = "0";
-         if (Main.getEnv() == null)
+         if (Main.getGUI() == null)
          {
             try
             {  
@@ -89,12 +89,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          } 
          else
          {
-            if (Main.getSettings().getBooleanSetting(Settings.POPUP_SYSCALL_INPUT)) {
-               input = Main.getEnv().getMessagesPane().getInputString(
+            if (Main.getSettings().getBool(Settings.POPUP_SYSCALL_INPUT)) {
+               input = (Main.getGUI().messagesPane).getInputString(
                     "Enter an integer value (syscall "+serviceNumber+")");
             } 
             else {
-               input = Main.getEnv().getMessagesPane().getInputString(-1);
+               input = (Main.getGUI().messagesPane).getInputString(-1);
             }
          }
       
@@ -113,7 +113,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public static float readFloat(int serviceNumber)
       {
          String input = "0";
-         if (Main.getEnv() == null)
+         if (Main.getGUI() == null)
          {
             try
             {
@@ -124,12 +124,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          } 
          else
          {
-            if (Main.getSettings().getBooleanSetting(Settings.POPUP_SYSCALL_INPUT)) {
-               input = Main.getEnv().getMessagesPane().getInputString(
+            if (Main.getSettings().getBool(Settings.POPUP_SYSCALL_INPUT)) {
+               input = (Main.getGUI().messagesPane).getInputString(
                     "Enter a float value (syscall "+serviceNumber+")");
             } 
             else {
-               input = Main.getEnv().getMessagesPane().getInputString(-1);
+               input = (Main.getGUI().messagesPane).getInputString(-1);
             }
          }
          return new Float(input.trim()).floatValue();
@@ -147,7 +147,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public static double readDouble(int serviceNumber)
       {
          String input = "0";
-         if (Main.getEnv() == null)
+         if (Main.getGUI() == null)
          {
             try
             {
@@ -158,12 +158,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          } 
          else
          {
-            if (Main.getSettings().getBooleanSetting(Settings.POPUP_SYSCALL_INPUT)) {
-               input = Main.getEnv().getMessagesPane().getInputString(
+            if (Main.getSettings().getBool(Settings.POPUP_SYSCALL_INPUT)) {
+               input = (Main.getGUI().messagesPane).getInputString(
                     "Enter a double value (syscall "+serviceNumber+")");
             } 
             else {
-               input = Main.getEnv().getMessagesPane().getInputString(-1);
+               input = (Main.getGUI().messagesPane).getInputString(-1);
             }
          }
          return new Double(input.trim()).doubleValue();
@@ -176,13 +176,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
      */
        public static void printString(String string)
       {
-         if (Main.getEnv() == null)
+         if (Main.getGUI() == null)
          {
             System.out.print(string);
          } 
          else
          {
-            Main.getEnv().getMessagesPane().postRunMessage(string);
+            (Main.getGUI().messagesPane).postRunMessage(string);
          }
       
       }
@@ -197,7 +197,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public static String readString(int serviceNumber, int maxLength)
       {
          String input = "";
-         if (Main.getEnv() == null)
+         if (Main.getGUI() == null)
          {
             try
             {
@@ -208,13 +208,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          } 
          else
          {
-            if (Main.getSettings().getBooleanSetting(Settings.POPUP_SYSCALL_INPUT)) {
-               input = Main.getEnv().getMessagesPane().getInputString(
+            if (Main.getSettings().getBool(Settings.POPUP_SYSCALL_INPUT)) {
+               input = (Main.getGUI().messagesPane).getInputString(
                     "Enter a string of maximum length " + maxLength
                     + " (syscall "+serviceNumber+")");            
             } 
             else {
-               input = Main.getEnv().getMessagesPane().getInputString(maxLength);
+               input = (Main.getGUI().messagesPane).getInputString(maxLength);
                if (input.endsWith("\n")) {
                   input = input.substring(0, input.length() - 1);
                }
@@ -240,7 +240,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       {
          String input = "0";
          int returnValue = 0;
-         if (Main.getEnv() == null)
+         if (Main.getGUI() == null)
          {
             try
             {
@@ -251,12 +251,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          } 
          else
          {
-            if (Main.getSettings().getBooleanSetting(Settings.POPUP_SYSCALL_INPUT)) {
-               input = Main.getEnv().getMessagesPane().getInputString(
+            if (Main.getSettings().getBool(Settings.POPUP_SYSCALL_INPUT)) {
+               input = (Main.getGUI().messagesPane).getInputString(
                     "Enter a character value (syscall "+serviceNumber+")");				
             } 
             else {			
-               input = Main.getEnv().getMessagesPane().getInputString(1);
+               input = (Main.getGUI().messagesPane).getInputString(1);
             }
          }
          // The whole try-catch is not really necessary in this case since I'm
@@ -288,9 +288,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       {
        /////////////// DPS 8-Jan-2013  ////////////////////////////////////////////////////
        /// Write to STDOUT or STDERR file descriptor while using IDE - write to Messages pane. 
-         if ((fd==STDOUT || fd==STDERR) && Main.getEnv() != null) {
+         if ((fd==STDOUT || fd==STDERR) && Main.getGUI() != null) {
             String data = new String(myBuffer);
-            Main.getEnv().getMessagesPane().postRunMessage(data);
+            (Main.getGUI().messagesPane).postRunMessage(data);
             return data.length();
          }
        ///////////////////////////////////////////////////////////////////////////////////
@@ -354,8 +354,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          int retValue = -1;  
        /////////////// DPS 8-Jan-2013  //////////////////////////////////////////////////
        /// Read from STDIN file descriptor while using IDE - get input from Messages pane. 
-         if (fd==STDIN && Main.getEnv() != null) {
-            String input = Main.getEnv().getMessagesPane().getInputString(lengthRequested);
+         if (fd==STDIN && Main.getGUI() != null) {
+            String input = (Main.getGUI().messagesPane).getInputString(lengthRequested);
             byte[] bytesRead = input.getBytes();;
             for (int i=0; i < myBuffer.length; i++) {
                myBuffer[i] = (i < bytesRead.length) ? bytesRead[i] : 0 ;

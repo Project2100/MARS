@@ -153,7 +153,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public void clearWindow() {
          this.clearHighlighting();
          Coprocessor1.resetRegisters();
-         this.updateRegisters(Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase());
+         this.updateRegisters((Main.getGUI().executeTab).getValueDisplayBase());
          Coprocessor1.clearConditionFlags();
          this.updateConditionFlagDisplay();
       }
@@ -182,7 +182,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 * Redisplay registers using current display number base (10 or 16)
    	 */
        public void updateRegisters() {
-         updateRegisters(Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase());
+         updateRegisters((Main.getGUI().executeTab).getValueDisplayBase());
       }
    	
    	/**
@@ -269,7 +269,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             	// AddressCellRenderer class in DataSegmentWindow.java.
                this.highlighting = true;
                this.highlightCellForRegister((Register)observable);
-               Main.getEnv().getRegistersPane().setSelectedComponent(this);            
+                (Main.getGUI().registersPane).setSelectedComponent(this);            
             }
          }
       }
@@ -395,7 +395,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       	* value is valid, MIPS register is updated.
          */
           public void setValueAt(Object value, int row, int col) {
-            int valueBase = Main.getEnv().getMainPane().getExecutePane().getValueDisplayBase();
+            int valueBase = (Main.getGUI().executeTab).getValueDisplayBase();
             float fVal;
             double dVal;
             String sVal = (String) value;

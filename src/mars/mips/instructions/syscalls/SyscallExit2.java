@@ -52,7 +52,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    * return value is ignored.
    */
        public void simulate(ProgramStatement statement) throws ProcessingException {
-         if (Main.getEnv()==null) {
+         if (Main.getGUI()==null) {
             Main.exitCode = RegisterFile.getValue(4);
          }
          throw new ProcessingException(); // empty error list

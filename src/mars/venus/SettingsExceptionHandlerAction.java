@@ -8,7 +8,6 @@
    import javax.swing.text.*;
    import javax.swing.border.*;
    import java.io.*;
-   import static mars.venus.VenusUI.getMainFrame;
 	/*
 Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
 
@@ -59,7 +58,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public void actionPerformed(ActionEvent e) {
          initialSelected = Main.getSettings().getExceptionHandlerEnabled();
          initialPathname = Main.getSettings().getExceptionHandler();
-         exceptionHandlerDialog = new JDialog(getMainFrame(), "Exception Handler", true);
+         exceptionHandlerDialog = new JDialog(Main.getGUI().mainFrame, "Exception Handler", true);
          exceptionHandlerDialog.setContentPane(buildDialogPanel());
          exceptionHandlerDialog.setDefaultCloseOperation(
                         JDialog.DO_NOTHING_ON_CLOSE);
@@ -70,7 +69,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   }
                });
          exceptionHandlerDialog.pack();
-         exceptionHandlerDialog.setLocationRelativeTo(getMainFrame());
+         exceptionHandlerDialog.setLocationRelativeTo(Main.getGUI().mainFrame);
          exceptionHandlerDialog.setVisible(true);
       }
    		  
@@ -164,7 +163,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                File file = new File(pathname);
                if (file.exists()) chooser.setSelectedFile(file);
             }
-            int result = chooser.showOpenDialog(getMainFrame());
+            int result = chooser.showOpenDialog(Main.getGUI().mainFrame);
             if (result == JFileChooser.APPROVE_OPTION) {
                pathname = chooser.getSelectedFile().getPath();//.replaceAll("\\\\","/");
                exceptionHandlerDisplay.setText(pathname);

@@ -270,7 +270,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           char[] pad = new char[10 - t.length()];
           Arrays.fill(pad, '0');
           pad[1] = 'x';
-          if (d == 0) return new String(pad);
 
           return new String(pad) + t;
       }

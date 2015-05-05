@@ -1,55 +1,59 @@
-   package mars.venus;
-   import mars.simulator.*;
-	import mars.*;
-   import java.util.*;
-   import java.awt.*;
-   import java.awt.event.*;
-   import javax.swing.*;
-   import java.io.*;
-	
-	/*
-Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
+package mars.venus;
 
-Developed by Pete Sanderson (psanderson@otterbein.edu)
-and Kenneth Vollmar (kenvollmar@missouristate.edu)
+import java.awt.event.ActionEvent;
+import javax.swing.Icon;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.KeyStroke;
+import mars.Main;
+import mars.Settings;
 
-Permission is hereby granted, free of charge, to any person obtaining 
-a copy of this software and associated documentation files (the 
-"Software"), to deal in the Software without restriction, including 
-without limitation the rights to use, copy, modify, merge, publish, 
-distribute, sublicense, and/or sell copies of the Software, and to 
-permit persons to whom the Software is furnished to do so, subject 
-to the following conditions:
+/*
+ Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
 
-The above copyright notice and this permission notice shall be 
-included in all copies or substantial portions of the Software.
+ Developed by Pete Sanderson (psanderson@otterbein.edu)
+ and Kenneth Vollmar (kenvollmar@missouristate.edu)
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
-ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
-CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ Permission is hereby granted, free of charge, to any person obtaining 
+ a copy of this software and associated documentation files (the 
+ "Software"), to deal in the Software without restriction, including 
+ without limitation the rights to use, copy, modify, merge, publish, 
+ distribute, sublicense, and/or sell copies of the Software, and to 
+ permit persons to whom the Software is furnished to do so, subject 
+ to the following conditions:
 
-(MIT license, http://www.opensource.org/licenses/mit-license.html)
+ The above copyright notice and this permission notice shall be 
+ included in all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
+ ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+ CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+ (MIT license, http://www.opensource.org/licenses/mit-license.html)
  */
-	
-   /**
-    * Action class for the Settings menu item to control display of Labels window (symbol table).
-    */
-    public class SettingsLabelAction extends GuiAction  {
-   	
-   
-       public SettingsLabelAction(String name, Icon icon, String descrip,
-                             Integer mnemonic, KeyStroke accel, VenusUI gui) {
-         super(name, icon, descrip, mnemonic, accel, gui);
-      }
-   		 
-       public void actionPerformed(ActionEvent e) {
-		   boolean visibility = ((JCheckBoxMenuItem) e.getSource()).isSelected();
-		   Main.getEnv().getMainPane().getExecutePane().setLabelWindowVisibility(visibility);
-         Main.getSettings().setLabelWindowVisibility(visibility);
-      }
-   	   	
-   }
+/**
+ * Action class for the Settings menu item to control display of Labels window
+ * (symbol table).
+ */
+public class SettingsLabelAction extends GuiAction {
+
+    public SettingsLabelAction(String name, Icon icon, String descrip,
+            Integer mnemonic, KeyStroke accel, VenusUI gui) {
+        super(name, icon, descrip, mnemonic, accel, gui);
+    }
+
+    /**
+     * Show or hide the label window (symbol table). If visible, it is displayed
+     * to the right of the text segment and the latter is shrunk accordingly.
+     */
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        boolean visibility = ((JCheckBoxMenuItem) e.getSource()).isSelected();
+        Main.getGUI().executeTab.labelValues.setVisible(visibility);
+        Main.getSettings().setBool(Settings.LABEL_WINDOW_VISIBILITY, visibility);
+    }
+
+}

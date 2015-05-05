@@ -51,7 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
    		 
        public void actionPerformed(ActionEvent e) {
-         Main.getSettings().setBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED,
+         Main.getSettings().setBool(Settings.SELF_MODIFYING_CODE_ENABLED,
                ((JCheckBoxMenuItem) e.getSource()).isSelected());
       }
    	   	

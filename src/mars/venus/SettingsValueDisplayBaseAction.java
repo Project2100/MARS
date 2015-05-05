@@ -48,7 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    		 
        public void actionPerformed(ActionEvent e) {
 		   boolean isHex = ((JCheckBoxMenuItem) e.getSource()).isSelected(); 
-		   Main.getEnv().getMainPane().getExecutePane().getValueDisplayBaseChooser().setSelected(isHex);
+		   (mainUI.executeTab).getValueDisplayBaseChooser().setSelected(isHex);
 			Main.getSettings().setDisplayValuesInHex(isHex);
       }
    	   	

@@ -17,7 +17,6 @@ import mars.Main;
 import mars.mips.dump.DumpFormat;
 import mars.mips.dump.DumpFormatLoader;
 import mars.mips.hardware.AddressErrorException;
-import static mars.venus.VenusUI.getMainFrame;
 
 /*
 Copyright (c) 2003-2008,  Pete Sanderson and Kenneth Vollmar
@@ -51,12 +50,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * @author Project2100
  */
-public class DumpMemoryDialog extends JDialog {
+final class DumpMemoryDialog extends JDialog {
 
     private static final String title = "Dump Memory To File";
 
     public DumpMemoryDialog(String[] segmentListArray, int[] segmentListBaseArray, int[] segmentListHighArray) {
-        super(getMainFrame(), title, true);
+        super(Main.getGUI().mainFrame, title, true);
 
         JComboBox<String> segmentListSelector = new JComboBox<>(segmentListArray);
         segmentListSelector.setSelectedIndex(0);
@@ -133,7 +132,7 @@ public class DumpMemoryDialog extends JDialog {
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         setResizable(false);
         pack();
-        setLocationRelativeTo(getMainFrame());
+        setLocationRelativeTo(Main.getGUI().mainFrame);
     }
 
     // User has clicked "Dump" button, so launch a file chooser then get
@@ -141,15 +140,15 @@ public class DumpMemoryDialog extends JDialog {
     private boolean performDump(int firstAddress, int lastAddress, DumpFormat format) {
         File theFile;
         boolean operationOK = false;
-        JFileChooser saveDialog = new JFileChooser(Main.getEnv().getEditor().getCurrentSaveDirectory());
+        JFileChooser saveDialog = new JFileChooser(Main.getGUI().getEditor().getCurrentSaveDirectory());
         saveDialog.setDialogTitle(title);
         while (!operationOK) {
-            int decision = saveDialog.showSaveDialog(getMainFrame());
+            int decision = saveDialog.showSaveDialog(Main.getGUI().mainFrame);
             if (decision != JFileChooser.APPROVE_OPTION) return false;
             theFile = saveDialog.getSelectedFile();
             operationOK = true;
             if (theFile.exists()) {
-                int overwrite = JOptionPane.showConfirmDialog(getMainFrame(), "File " + theFile.getName() + " already exists.  Do you wish to overwrite it?", "Overwrite existing file?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+                int overwrite = JOptionPane.showConfirmDialog(Main.getGUI().mainFrame, "File " + theFile.getName() + " already exists.  Do you wish to overwrite it?", "Overwrite existing file?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
                 switch (overwrite) {
                     case JOptionPane.YES_OPTION:
                         operationOK = true;

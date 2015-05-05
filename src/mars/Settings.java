@@ -1,8 +1,6 @@
    package mars;
-   import mars.*;
    import mars.util.*;
    import mars.venus.editors.jeditsyntax.*;
-   import java.io.*;
    import java.util.*;
    import java.util.prefs.*;
    import java.awt.Color;
@@ -413,7 +411,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 *  @return corresponding boolean setting.  
    	 *  @throws IllegalArgumentException if identifier is invalid.
    	 */
-       public boolean getBooleanSetting(int id) {
+       public boolean getBool(int id) {
          if (id >=0 && id < booleanSettingsValues.length) {
             return booleanSettingsValues[id];
          } 
@@ -784,7 +782,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 *  @param value boolean value to store
    	 *  @throws IllegalArgumentException if identifier is not valid.
    	 */
-       public void setBooleanSetting(int id, boolean value) {
+       public void setBool(int id, boolean value) {
          if (id >=0 && id < booleanSettingsValues.length) {
             internalSetBooleanSetting(id, value);
          } 

@@ -56,8 +56,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public NumberDisplayBaseChooser(String text, boolean displayInHex) {
          super(text, displayInHex);
          base = getBase(displayInHex);
-         addItemListener(
-                new  ItemListener() {
+         addItemListener(new  ItemListener() {
                    public void itemStateChanged(ItemEvent ie) {
                      NumberDisplayBaseChooser choose = (NumberDisplayBaseChooser)ie.getItem();
                      if (ie.getStateChange() == ItemEvent.SELECTED) {
@@ -76,7 +75,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                         }
                      }
                   	// Better to use notify, but I am tired...
-                     Main.getEnv().getMainPane().getExecutePane().numberDisplayBaseChanged(choose);
+                     (Main.getGUI().executeTab).numberDisplayBaseChanged(choose);
                   }
                });
       }

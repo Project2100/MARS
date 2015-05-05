@@ -105,7 +105,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	  *  Should convert the lines of code over to the table rows and columns.
    	  **/
        public  void setupTable(){
-         int addressBase = Main.getEnv().getMainPane().getExecutePane().getAddressDisplayBase();
+         int addressBase = (Main.getGUI().executeTab).getAddressDisplayBase();
          codeHighlighting = true;
          breakpointsEnabled = true;
          ArrayList sourceStatementList = Main.program.getMachineList();
@@ -192,7 +192,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          } 
       	 
          deleteAsTextSegmentObserver();
-         if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+         if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) {
             addAsTextSegmentObserver();
          }
       }
@@ -249,7 +249,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public void updateCodeAddresses() {
          if (contentPane.getComponentCount() == 0) 
             return; // ignore if no content to change
-         int addressBase = Main.getEnv().getMainPane().getExecutePane().getAddressDisplayBase();
+         int addressBase = (Main.getGUI().executeTab).getAddressDisplayBase();
          int address;
          String formattedAddress;
          for (int i=0; i<intAddresses.length; i++) {
@@ -309,14 +309,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             	// Seems reasonable for text segment display to be accurate in cases where existing code is overwritten
             	// even when running at unlimited speed.  DPS 10-July-2013
                deleteAsTextSegmentObserver();
-               if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) { // && (notice.getRunSpeed() != RunSpeedPanel.UNLIMITED_SPEED || notice.getMaxSteps()==1)) {
+               if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) { // && (notice.getRunSpeed() != RunSpeedPanel.UNLIMITED_SPEED || notice.getMaxSteps()==1)) {
                   addAsTextSegmentObserver();
                }
             } 
          } 
          else if (observable == Main.getSettings()) { 
             deleteAsTextSegmentObserver();
-            if (Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) {
                addAsTextSegmentObserver();
             }
          }
@@ -386,7 +386,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             	// the MIPS program is running, and even then only in timed or step mode.  There are good reasons
             	// for that.  So we'll pretend to be Memory observable and send it a fake memory write update.
                try {
-                  Main.getEnv().getMainPane().getExecutePane().getDataSegmentWindow()
+                    (Main.getGUI().executeTab).getDataSegmentWindow()
                          .update(Memory.getInstance(),new MemoryAccessNotice(AccessNotice.WRITE, address, value));
                } 
                    catch (Exception e) {
@@ -721,7 +721,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           public boolean isCellEditable(int row, int col) {
             //Note that the data/cell address is constant,
             //no matter where the cell appears onscreen.
-            if (col == BREAK_COLUMN  || (col == CODE_COLUMN && Main.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED))) { 
+            if (col == BREAK_COLUMN  || (col == CODE_COLUMN && Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED))) { 
                return true;
             } 
             else {
@@ -822,7 +822,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             Component cell = super.getTableCellRendererComponent(table, value, 
                                     isSelected, hasFocus, row, column);
             //cell.setFont(tableCellFont);
-            TextSegmentWindow textSegment = Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow();
+            TextSegmentWindow textSegment = (Main.getGUI().executeTab).getTextSegmentWindow();
             Settings settings = Main.getSettings();
             boolean highlighting = textSegment.getCodeHighlighting();
          	

@@ -34,6 +34,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	  *  tool tip item.
 	  */
     public class PopupHelpItem {
+    /**
+     *  Separates Instruction name descriptor from detailed (operation) description
+     *  in help string.
+     */
+    public static final String descriptionDetailSeparator = ":";
       private String tokenText;
       private String example;
       private String description;
@@ -55,7 +60,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 			if (exact) {
 			  this.description = description;
 			} else {
-			  int detailPosition = description.indexOf(mars.venus.HelpHelpAction.descriptionDetailSeparator);
+			  int detailPosition = description.indexOf(descriptionDetailSeparator);
 			  this.description = (detailPosition == -1) ? description : description.substring(0,detailPosition);
 			}
          this.exampleLength = this.example.length();

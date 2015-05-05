@@ -7,7 +7,6 @@
    import java.util.*;
    import javax.swing.JOptionPane;
    import mars.util.*;
-import static mars.venus.VenusUI.getMainFrame;
 
 /**
  * Demo of Mars tool capability.    Ken Vollmar, 27 Oct 2006  KenVollmar@missouristate.edu
@@ -156,7 +155,7 @@ import static mars.venus.VenusUI.getMainFrame;
             // final JFrame frame = new JFrame("ScavengerHunt");
             // Recommended by Pete Sanderson, 2 Nov. 2006, so that the Tool window and
             // MARS window can be on the screen at the same time.
-            final JDialog dialog = new JDialog(getMainFrame(),"ScavengerHunt");
+            final JDialog dialog = new JDialog(Main.getGUI().mainFrame,"ScavengerHunt");
          
             // System.out.println("ScavengerHuntRunnable.constructor: starting....");
          

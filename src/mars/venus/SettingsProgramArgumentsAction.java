@@ -52,9 +52,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		   boolean selected = ((JCheckBoxMenuItem)e.getSource()).isSelected();
 		   Main.getSettings().setProgramArguments(selected);
 			if (selected) {
-			   Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow().addProgramArgumentsPanel();
+			   (mainUI.executeTab).getTextSegmentWindow().addProgramArgumentsPanel();
 			} else {
-			   Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow().removeProgramArgumentsPanel();			
+			   (mainUI.executeTab).getTextSegmentWindow().removeProgramArgumentsPanel();			
 			}
       }
    	   	

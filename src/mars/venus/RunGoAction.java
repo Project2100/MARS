@@ -8,7 +8,6 @@
    import java.awt.event.*;
    import javax.swing.*;
    import java.io.*;
-   import static mars.venus.VenusUI.getMainFrame;
 	
 	/*
 Copyright (c) 2003-2007,  Pete Sanderson and Kenneth Vollmar
@@ -58,7 +57,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    		  */
        public void actionPerformed(ActionEvent e) {
          name = this.getValue(Action.NAME).toString();
-         executePane = mainUI.getMainPane().getExecutePane();
+         executePane = mainUI.executeTab;
          if(FileStatus.isAssembled()){
 			   if (!mainUI.getStarted()) {
                processProgramArgumentsIfAny();  // DPS 17-July-2008
@@ -69,7 +68,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             	
                mainUI.messagesPane.postMarsMessage(
                        name+": running "+FileStatus.getFile().getName()+"\n\n");
-               mainUI.getMessagesPane().selectRunMessageTab();
+                (mainUI.messagesPane).selectRunMessageTab();
                executePane.getTextSegmentWindow().setCodeHighlighting(false);
                executePane.getTextSegmentWindow().unhighlightAllSteps();
             	//FileStatus.set(FileStatus.RUNNING);
@@ -83,12 +82,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             }            
             else{
                // This should never occur because at termination the Go and Step buttons are disabled.
-               JOptionPane.showMessageDialog(getMainFrame(),"reset "+mainUI.getReset()+" started "+mainUI.getStarted());//"You must reset before you can execute the program again.");                 
+               JOptionPane.showMessageDialog(Main.getGUI().mainFrame,"reset "+mainUI.getReset()+" started "+mainUI.getStarted());//"You must reset before you can execute the program again.");                 
             }
          }
          else{
             // note: this should never occur since "Go" is only enabled after successful assembly.
-            JOptionPane.showMessageDialog(getMainFrame(),"The program must be assembled before it can be run.");
+            JOptionPane.showMessageDialog(Main.getGUI().mainFrame,"The program must be assembled before it can be run.");
          }		
       }
       
@@ -113,12 +112,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             mainUI.messagesPane.postMarsMessage(
                        name+": execution paused by user: "+FileStatus.getFile().getName()+"\n\n");			
          }
-         mainUI.getMessagesPane().selectMarsMessageTab();
+         (mainUI.messagesPane).selectMarsMessageTab();
          executePane.getTextSegmentWindow().setCodeHighlighting(true);
          executePane.getTextSegmentWindow().highlightStepAtPC();
-         executePane.getRegistersWindow().updateRegisters();
-         executePane.getCoprocessor1Window().updateRegisters();
-         executePane.getCoprocessor0Window().updateRegisters();
+         (Main.getGUI().registersTab).updateRegisters();
+         (Main.getGUI().coprocessor1Tab).updateRegisters();
+         (Main.getGUI().coprocessor0Tab).updateRegisters();
          executePane.getDataSegmentWindow().updateValues();
          FileStatus.set(FileStatus.RUNNABLE);
          mainUI.setReset(false);
@@ -133,49 +132,49 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	  
        public void stopped(ProcessingException pe, int reason) {
          // show final register and data segment values.
-         executePane.getRegistersWindow().updateRegisters();
-         executePane.getCoprocessor1Window().updateRegisters();
-         executePane.getCoprocessor0Window().updateRegisters();
+         (Main.getGUI().registersTab).updateRegisters();
+         (Main.getGUI().coprocessor1Tab).updateRegisters();
+         (Main.getGUI().coprocessor0Tab).updateRegisters();
          executePane.getDataSegmentWindow().updateValues();
          FileStatus.set(FileStatus.TERMINATED);
          SystemIO.resetFiles(); // close any files opened in MIPS program
       	// Bring coprocessor 0 to the front if terminated due to exception.
          if (pe != null) {
-            mainUI.getRegistersPane().setSelectedComponent(executePane.getCoprocessor0Window());
+            (mainUI.registersPane).setSelectedComponent(Main.getGUI().coprocessor0Tab);
             executePane.getTextSegmentWindow().setCodeHighlighting(true);
             executePane.getTextSegmentWindow().unhighlightAllSteps();
             executePane.getTextSegmentWindow().highlightStepAtAddress(RegisterFile.getProgramCounter()-4);
          }
          switch (reason) {
             case Simulator.NORMAL_TERMINATION : 
-               mainUI.getMessagesPane().postMarsMessage(
+               (mainUI.messagesPane).postMarsMessage(
                              "\n"+name+": execution completed successfully.\n\n");
-               mainUI.getMessagesPane().postRunMessage(
+               (mainUI.messagesPane).postRunMessage(
                              "\n-- program is finished running --\n\n");
-               mainUI.getMessagesPane().selectRunMessageTab();
+               (mainUI.messagesPane).selectRunMessageTab();
                break;
             case Simulator.CLIFF_TERMINATION : 
-               mainUI.getMessagesPane().postMarsMessage(
+               (mainUI.messagesPane).postMarsMessage(
                              "\n"+name+": execution terminated by null instruction.\n\n");
-               mainUI.getMessagesPane().postRunMessage(
+               (mainUI.messagesPane).postRunMessage(
                              "\n-- program is finished running (dropped off bottom) --\n\n");
-               mainUI.getMessagesPane().selectRunMessageTab();
+               (mainUI.messagesPane).selectRunMessageTab();
                break;
             case Simulator.EXCEPTION :
-               mainUI.getMessagesPane().postMarsMessage(
+               (mainUI.messagesPane).postMarsMessage(
                                 pe.errors().generateErrorReport());
-               mainUI.getMessagesPane().postMarsMessage(
+               (mainUI.messagesPane).postMarsMessage(
                                 "\n"+name+": execution terminated with errors.\n\n");
                break;
             case Simulator.PAUSE_OR_STOP :
-               mainUI.getMessagesPane().postMarsMessage(
+               (mainUI.messagesPane).postMarsMessage(
                              "\n"+name+": execution terminated by user.\n\n");
-               mainUI.getMessagesPane().selectMarsMessageTab();
+               (mainUI.messagesPane).selectMarsMessageTab();
                break;
             case Simulator.MAX_STEPS :
-               mainUI.getMessagesPane().postMarsMessage(
+               (mainUI.messagesPane).postMarsMessage(
                              "\n"+name+": execution step limit of "+maxSteps+" exceeded.\n\n");
-               mainUI.getMessagesPane().selectMarsMessageTab();
+               (mainUI.messagesPane).selectMarsMessageTab();
                break;
             case Simulator.BREAKPOINT : // should never get here
                break;

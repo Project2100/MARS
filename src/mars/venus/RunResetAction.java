@@ -50,7 +50,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public void actionPerformed(ActionEvent e){
          RunGoAction.resetMaxSteps();
          String name = this.getValue(Action.NAME).toString();
-         ExecutePane executePane = mainUI.getMainPane().getExecutePane();
+         ExecutePane executePane = mainUI.executeTab;
          // The difficult part here is resetting the data segment.  Two approaches are:
       	// 1. After each assembly, get a deep copy of the Globals.memory array 
       	//    containing data segment.  Then replace it upon reset.
@@ -65,7 +65,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 												 RunAssembleAction.getWarningsAreErrors());
          } 
              catch (ProcessingException pe) {
-				 mainUI.getMessagesPane().postMarsMessage(
+				 (mainUI.messagesPane).postMarsMessage(
 				   //pe.errors().generateErrorReport());
                "Unable to reset.  Please close file then re-open and re-assemble.\n");
                return;
@@ -74,18 +74,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          Coprocessor1.resetRegisters();
          Coprocessor0.resetRegisters();
 
-			executePane.getRegistersWindow().clearHighlighting();
-         executePane.getRegistersWindow().updateRegisters();
-			executePane.getCoprocessor1Window().clearHighlighting();
-         executePane.getCoprocessor1Window().updateRegisters();
-         executePane.getCoprocessor0Window().clearHighlighting();
-			executePane.getCoprocessor0Window().updateRegisters();
+			(Main.getGUI().registersTab).clearHighlighting();
+         (Main.getGUI().registersTab).updateRegisters();
+			(Main.getGUI().coprocessor1Tab).clearHighlighting();
+         (Main.getGUI().coprocessor1Tab).updateRegisters();
+         (Main.getGUI().coprocessor0Tab).clearHighlighting();
+			(Main.getGUI().coprocessor0Tab).updateRegisters();
 			executePane.getDataSegmentWindow().highlightCellForAddress(Memory.dataBaseAddress); 
          executePane.getDataSegmentWindow().clearHighlighting();
 			executePane.getTextSegmentWindow().resetModifiedSourceCode();
          executePane.getTextSegmentWindow().setCodeHighlighting(true);
          executePane.getTextSegmentWindow().highlightStepAtPC();
-         mainUI.getRegistersPane().setSelectedComponent(executePane.getRegistersWindow());
+         (mainUI.registersPane).setSelectedComponent(Main.getGUI().registersTab);
          FileStatus.set(FileStatus.RUNNABLE);
          mainUI.setReset(true);
          mainUI.setStarted(false);
@@ -93,7 +93,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          // Aug. 24, 2005 Ken Vollmar
          SystemIO.resetFiles( );  // Ensure that I/O "file descriptors" are initialized for a new program run
       
-         mainUI.getMessagesPane().postRunMessage(
+         (mainUI.messagesPane).postRunMessage(
                              "\n"+name+": reset completed.\n\n");
       }
    }

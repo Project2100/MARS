@@ -48,13 +48,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public RunClearBreakpointsAction(String name, Icon icon, String descrip,
                              Integer mnemonic, KeyStroke accel, VenusUI gui) {
          super(name, icon, descrip, mnemonic, accel, gui);
-         gui.getMainPane().getExecutePane().getTextSegmentWindow().registerTableModelListener(this);
+         (gui.executeTab).getTextSegmentWindow().registerTableModelListener(this);
       }
    	 /**
 		  *  When this option is selected, tell text segment window to clear breakpoints in its table model.
 		  */
        public void actionPerformed(ActionEvent e) {
-         Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow().clearAllBreakpoints();
+         (mainUI.executeTab).getTextSegmentWindow().clearAllBreakpoints();
 		}
    	
 		 /**
@@ -64,8 +64,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		  *  accordingly.
 		  */
        public void tableChanged(TableModelEvent e) {
-         setEnabled(
-            Main.getEnv().getMainPane().getExecutePane().getTextSegmentWindow().getBreakpointCount()>0);
+         setEnabled((mainUI.executeTab).getTextSegmentWindow().getBreakpointCount()>0);
       }
    	   	
    }

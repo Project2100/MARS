@@ -68,7 +68,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	  *  editor settings.
    	  */
        public void actionPerformed(ActionEvent e) {
-         configDialog = new MemoryConfigurationDialog(VenusUI.getMainFrame(), "MIPS Memory Configuration", true );
+         configDialog = new MemoryConfigurationDialog(Main.getGUI().mainFrame, "MIPS Memory Configuration", true );
          configDialog.setVisible(true);
       }
    	
@@ -225,9 +225,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           private void performApply() {
             if (MemoryConfigurations.setCurrentConfiguration(this.selectedConfigurationButton.getConfiguration())) {
                Main.getSettings().setMemoryConfiguration(this.selectedConfigurationButton.getConfiguration().getConfigurationIdentifier());
-               Main.getEnv().getRegistersPane().getRegistersWindow().clearHighlighting();
-               Main.getEnv().getRegistersPane().getRegistersWindow().updateRegisters();
-               Main.getEnv().getMainPane().getExecutePane().getDataSegmentWindow().updateBaseAddressComboBox();
+                (mainUI.registersTab).clearHighlighting();
+                (mainUI.registersTab).updateRegisters();
+                (mainUI.executeTab).getDataSegmentWindow().updateBaseAddressComboBox();
                    // 21 July 2009 Re-assemble if the situation demands it to maintain consistency.
                if (FileStatus.get() == FileStatus.RUNNABLE ||
                    FileStatus.get() == FileStatus.RUNNING ||
@@ -237,7 +237,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   if (FileStatus.get() == FileStatus.RUNNING) {
                      Simulator.getInstance().stopExecution(thisAction);
                   }
-                  Main.getEnv().getRunAssembleAction().actionPerformed(null);
+                  Main.getGUI().getRunAssembleAction().actionPerformed(null);
                }
             }
          }

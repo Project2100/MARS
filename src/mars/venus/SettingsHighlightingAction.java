@@ -1,16 +1,9 @@
    package mars.venus;
-   import mars.simulator.*;
    import mars.*;
-   import mars.util.*;
-   import java.util.*;
    import java.awt.*;
    import java.awt.event.*;
    import javax.swing.*;
-   import javax.swing.text.*;
    import javax.swing.border.*;
-   import javax.swing.event.*;
-   import java.io.*;
-   import static mars.venus.VenusUI.getMainFrame;
 	
 	/*
 Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -118,7 +111,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	  *  editor settings.
    	  */
        public void actionPerformed(ActionEvent e) {
-         highlightDialog = new JDialog(getMainFrame(), "Runtime Table Highlighting Colors and Fonts", true);
+         highlightDialog = new JDialog(Main.getGUI().mainFrame, "Runtime Table Highlighting Colors and Fonts", true);
          highlightDialog.setContentPane(buildDialogPanel());
          highlightDialog.setDefaultCloseOperation(
                         JDialog.DO_NOTHING_ON_CLOSE);
@@ -129,7 +122,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   }
                });
          highlightDialog.pack();
-         highlightDialog.setLocationRelativeTo(getMainFrame());
+         highlightDialog.setLocationRelativeTo(Main.getGUI().mainFrame);
          highlightDialog.setVisible(true);
       }
    		  
@@ -354,10 +347,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          }
          settings.setDataSegmentHighlighting(currentDataHighlightSetting);
          settings.setRegistersHighlighting(currentRegisterHighlightSetting);
-         ExecutePane executePane = Main.getEnv().getMainPane().getExecutePane();
-         executePane.getRegistersWindow().refresh();
-         executePane.getCoprocessor0Window().refresh();
-         executePane.getCoprocessor1Window().refresh();
+         ExecutePane executePane = mainUI.executeTab;
+         (Main.getGUI().registersTab).refresh();
+         (Main.getGUI().coprocessor0Tab).refresh();
+         (Main.getGUI().coprocessor1Tab).refresh();
          // If a successful assembly has occured, the various panes will be populated with tables
       	// and we want to apply the new settings.  If it has NOT occurred, there are no tables
       	// in the Data and Text segment windows so we don't want to disturb them.  
