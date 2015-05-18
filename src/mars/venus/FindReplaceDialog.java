@@ -181,13 +181,13 @@ final class FindReplaceDialog extends JDialog {
     //
     //  Private methods to carry out the button actions
     //  Performs a find.  The operation starts at the current cursor position
-    //  which is not known to this object but is maintained by the EditPane
+    //  which is not known to this object but is maintained by the EditTab
     //  object.  The operation will wrap around when it reaches the end of the 
     //  document.  If found, the matching text is selected.
     private void performFind() {
         resultsLabel.setText("");
         if (findInputField.getText().length() > 0) {
-            EditPane editPane = Main.getGUI().editTabbedPane.getSelectedComponent();
+            EditTab editPane = Main.getGUI().editTabbedPane.getSelectedComponent();
             // Being cautious. Should not be null because find/replace tool button disabled if no file open
             if (editPane != null) {
                 searchString = findInputField.getText();
@@ -210,7 +210,7 @@ final class FindReplaceDialog extends JDialog {
     private void performReplace() {
         resultsLabel.setText("");
         if (findInputField.getText().length() > 0) {
-            EditPane editPane = Main.getGUI().editTabbedPane.getSelectedComponent();
+            EditTab editPane = Main.getGUI().editTabbedPane.getSelectedComponent();
             // Being cautious. Should not be null b/c find/replace tool button disabled if no file open
             if (editPane != null) {
                 searchString = findInputField.getText();
@@ -244,7 +244,7 @@ final class FindReplaceDialog extends JDialog {
     private void performReplaceAll() {
         resultsLabel.setText("");
         if (findInputField.getText().length() > 0) {
-            EditPane editPane = Main.getGUI().editTabbedPane.getSelectedComponent();
+            EditTab editPane = Main.getGUI().editTabbedPane.getSelectedComponent();
             // Being cautious. Should not be null b/c find/replace tool button disabled if no file open
             if (editPane != null) {
                 searchString = findInputField.getText();

@@ -2,7 +2,7 @@
 
    import mars.venus.editors.jeditsyntax.tokenmarker.*; 
    import mars.venus.editors.MARSTextEditingArea; 
-   import mars.venus.EditPane;
+   import mars.venus.EditTab;
    import mars.*;
    import java.awt.*;
    import javax.swing.event.*;
@@ -24,7 +24,7 @@
 	 
     public class JEditBasedTextArea extends JEditTextArea implements MARSTextEditingArea, CaretListener {
      
-      private EditPane editPane;
+      private EditTab editPane;
       private UndoManager undoManager;
       private UndoableEditListener undoableEditListener;
       private boolean isCompoundEdit = false;
@@ -34,7 +34,7 @@
        
     
      
-       public JEditBasedTextArea(EditPane editPain, JComponent lineNumbers) {
+       public JEditBasedTextArea(EditTab editPain, JComponent lineNumbers) {
          super(lineNumbers);
          this.editPane = editPain;
          this.undoManager = new UndoManager();

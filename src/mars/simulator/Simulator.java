@@ -60,7 +60,7 @@ public class Simulator extends Observable {
     private SimThread simulatorThread;
     private static Simulator simulator = null;  // Singleton object
 
-    // Others can set this true to indicate external interrupt.  Initially used
+    // Others can setStatus this true to indicate external interrupt.  Initially used
     // to simulate keyboard and display interrupts.  The device is identified
     // by the address of its MMIO control register.  keyboard 0xFFFF0000 and
     // display 0xFFFF0008.  DPS 23 July 2008.
@@ -293,7 +293,7 @@ public class Simulator extends Observable {
                 // Next statement is a hack.  Previous statement sets EPC register to ProgramCounter-4
                 // because it assumes the bad address comes from an operand so the ProgramCounter has already been
                 // incremented.  In this case, bad address is the instruction fetch itself so Program Counter has
-                // not yet been incremented.  We'll set the EPC directly here.  DPS 8-July-2013
+                // not yet been incremented.  We'll setStatus the EPC directly here.  DPS 8-July-2013
                 Coprocessor0.updateRegister(Coprocessor0.EPC, RegisterFile.getProgramCounter());
                 this.constructReturnReason = EXCEPTION;
                 this.done = true;
@@ -371,7 +371,7 @@ public class Simulator extends Observable {
                         else {
                             // See if an exception handler is present.  Assume this is the case
                             // if and only if memory location Memory.exceptionHandlerAddress
-                            // (e.g. 0x80000180) contains an instruction.  If so, then set the
+                            // (e.g. 0x80000180) contains an instruction.  If so, then setStatus the
                             // program counter there and continue.  Otherwise terminate the
                             // MIPS program with appropriate error message.
                             ProgramStatement exceptionHandler = null;
@@ -402,7 +402,7 @@ public class Simulator extends Observable {
                 else if (DelayedBranch.isRegistered())
                     DelayedBranch.trigger();//////////////////////////////////////////////////////////////////////
 
-                // Volatile variable initialized false but can be set true by the main thread.
+                // Volatile variable initialized false but can be setStatus true by the main thread.
                 // Used to stop or pause a running MIPS program.  See stopSimulation() above.
                 if (stop == true) {
                     this.constructReturnReason = PAUSE_OR_STOP;
@@ -429,13 +429,13 @@ public class Simulator extends Observable {
                     }
                 }
 
-                // schedule GUI update only if: there is in fact a GUI! AND
+                // schedule GUI simUpdate only if: there is in fact a GUI! AND
                 //                              using Run,  not Step (maxSteps > 1) AND
                 //                              running slowly enough for GUI to keep up
                 //if (Globals.getGui() != null && maxSteps != 1 &&             
                 if (Main.getGUI() != null && maxSteps != 1
                         && RunSpeedPanel.getInstance().getRunSpeed() < RunSpeedPanel.UNLIMITED_SPEED)
-                    EventQueue.invokeLater(Main.getGUI()::update);
+                    EventQueue.invokeLater(Main.getGUI()::simUpdate);
                 if (Main.getGUI() != null || Main.runSpeedPanelExists) // OR added by DPS 24 July 2008 to enable speed control by stand-alone tool
                     if (maxSteps != 1
                             && RunSpeedPanel.getInstance().getRunSpeed() < RunSpeedPanel.UNLIMITED_SPEED)
@@ -456,7 +456,7 @@ public class Simulator extends Observable {
                     // Next statement is a hack.  Previous statement sets EPC register to ProgramCounter-4
                     // because it assumes the bad address comes from an operand so the ProgramCounter has already been
                     // incremented.  In this case, bad address is the instruction fetch itself so Program Counter has
-                    // not yet been incremented.  We'll set the EPC directly here.  DPS 8-July-2013
+                    // not yet been incremented.  We'll setStatus the EPC directly here.  DPS 8-July-2013
                     Coprocessor0.updateRegister(Coprocessor0.EPC, RegisterFile.getProgramCounter());
                     this.constructReturnReason = EXCEPTION;
                     this.done = true;
@@ -483,15 +483,15 @@ public class Simulator extends Observable {
 
         /**
          * This method is invoked by the SwingWorker when the "construct" method
-         * returns. It will update the GUI appropriately. According to Sun's
-         * documentation, it is run in the main thread so should work OK with
-         * Swing components (which are not thread-safe).
-         *
-         * Its action depends on what caused the return from construct() and
-         * what action led to the call of construct() in the first place.
+         * returns. It will simUpdate the GUI appropriately. According to Sun's
+ documentation, it is run in the main thread so should work OK with
+ Swing components (which are not thread-safe).
+
+ Its action depends on what caused the return from construct() and
+ what action led to the call of construct() in the first place.
          */
         public void finished() {
-            // If running from the command-line, then there is no GUI to update.
+            // If running from the command-line, then there is no GUI to simUpdate.
             if (Main.getGUI() == null)
                 return;
             String starterName = (String) starter.getValue(AbstractAction.NAME);

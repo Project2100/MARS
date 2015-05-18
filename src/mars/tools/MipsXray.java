@@ -65,7 +65,7 @@ import mars.mips.hardware.Memory;
 import mars.mips.hardware.MemoryAccessNotice;
 import mars.mips.instructions.BasicInstruction;
 import mars.mips.instructions.BasicInstructionFormat;
-import mars.venus.RunAssembleAction;
+//import mars.venus.RunAssembleAction;
 import mars.venus.RunBackstepAction;
 import mars.venus.RunStepAction;
 import mars.venus.VenusUI;
@@ -295,11 +295,11 @@ public class MipsXray extends AbstractMarsToolAndApplication{
            Toolkit tk = Toolkit.getDefaultToolkit();
            Class cs = this.getClass();
            try{
-               runAssembleAction = new RunAssembleAction("Assemble",  
-                       new ImageIcon(tk.getImage(cs.getResource(Main.imagesPath+"Assemble22.png"))),
-   							  "Assemble the current file and clear breakpoints", new Integer(KeyEvent.VK_A),
-   							  KeyStroke.getKeyStroke( KeyEvent.VK_F3, 0), 
-   							  mainUI);			
+//               runAssembleAction = new RunAssembleAction("Assemble",  
+//                       new ImageIcon(tk.getImage(cs.getResource(Main.imagesPath+"Assemble22.png"))),
+//   							  "Assemble the current file and clear breakpoints", new Integer(KeyEvent.VK_A),
+//   							  KeyStroke.getKeyStroke( KeyEvent.VK_F3, 0), 
+//   							  mainUI);			
 
                runStepAction = new RunStepAction("Step", 
                        new ImageIcon(tk.getImage(cs.getResource(Main.imagesPath+"StepForward22.png"))),

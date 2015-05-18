@@ -38,10 +38,10 @@ import java.lang.reflect.*;
  */
 public class DumpFormatLoader {
 
-    private static final String CLASS_PREFIX = "mars.mips.dump.";
-    private static final String DUMP_DIRECTORY_PATH = "mars/mips/dump";
-    private static final String SYSCALL_INTERFACE = "DumpFormat.class";
-    private static final String CLASS_EXTENSION = "class";
+    private final String CLASS_PREFIX = "mars.mips.dump.";
+    private final String DUMP_DIRECTORY_PATH = "mars/mips/dump";
+    private final String SYSCALL_INTERFACE = "DumpFormat.class";
+    private final String CLASS_EXTENSION = "class";
 
     private static ArrayList<DumpFormat> formatList = null;
 
@@ -61,25 +61,16 @@ public class DumpFormatLoader {
             // grab all class files in the dump directory
             ArrayList<String> candidates = FilenameFinder.getFilenameList(this.getClass().getClassLoader(),
                     DUMP_DIRECTORY_PATH, CLASS_EXTENSION);
-//
-//            try {
-//                Enumeration<URL> classes = DumpFormatLoader.class.getClassLoader().getResources(DUMP_DIRECTORY_PATH);
-//                while (classes.hasMoreElements()) {
-//                    Path currentClass = Paths.get(classes.nextElement().toURI());
-//                }
-//            }
-//            catch (IOException | URISyntaxException ex) {
-//                Main.logger.log(Level.SEVERE, null, ex);
-//            }
 
             for (String filename : candidates)
                 try {
                     // grab the class, make sure it implements DumpFormat, instantiate, add to list
                     Class clas = Class.forName(CLASS_PREFIX + filename.substring(0, filename.indexOf(CLASS_EXTENSION) - 1));
+                    
                     if (DumpFormat.class.isAssignableFrom(clas)
-                            && !Modifier.isAbstract(clas.getModifiers())
-                            && !Modifier.isInterface(clas.getModifiers()))
-                        formatList.add((DumpFormat) clas.newInstance());
+                            && !clas.isInterface()
+                            && !Modifier.isAbstract(clas.getModifiers()))
+                        formatList.add(   (DumpFormat) clas.newInstance());
                 }
                 catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                     System.out.println("Error instantiating DumpFormat from file " + filename + ": " + e);
@@ -97,7 +88,6 @@ public class DumpFormatLoader {
     }
 
     public static DumpFormat fromCommandDescriptor(String targetDescriptor) {
-
         for (DumpFormat format : formatList)
             if (format.getCommandDescriptor().equals(targetDescriptor))
                 return format;

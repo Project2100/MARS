@@ -9,11 +9,14 @@ import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Icon;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import mars.Main;
+import mars.Settings;
 import mars.mips.hardware.AddressErrorException;
 import mars.mips.hardware.Memory;
+import mars.simulator.Simulator;
 import mars.util.Binary;
 import mars.util.MemoryDump;
 
@@ -147,23 +150,30 @@ class GuiAction extends AbstractAction {
      * changes the user may have specified there, such as number of copies.
      */
     void print(ActionEvent event) {
-        EditPane editPane = Main.getGUI().editTabbedPane.getSelectedComponent();
-        if (editPane == null) return;
+        EditTab tab = Main.getGUI().editTabbedPane.getSelectedComponent();
+        if (tab == null) return;
         int fontsize = 10;  // fixed at 10 point
         double margins = .5; // all margins (left,right,top,bottom) fixed at .5"
 
-        int lineNumberDigits = Integer.toString(editPane.getSourceLineCount()).length();
+        int lineNumberDigits = Integer.toString(tab.getSourceLineCount()).length();
         String line;
         String lineNumberString = "";
         int lineNumber = 0;
 
-        try (BufferedReader in = new BufferedReader(new StringReader(editPane.getSource()));
-                HardcopyWriter printer = new HardcopyWriter(Main.getGUI().mainFrame, editPane.getFilename(),
+        try (BufferedReader in = new BufferedReader(new StringReader(tab.getSource()));
+                HardcopyWriter printer = new HardcopyWriter(Main.getGUI().mainFrame, tab.getFilename(),
                         fontsize, margins, margins, margins, margins)) {
 
+//            Iterator<String> lineNumbers = Stream.iterate(1, i -> i + 1)
+//                    .map(i->Integer.toString(i)+": ")
+//                    .limit(tab.getSourceLineCount()).iterator();
+//
+//            Arrays.stream(tab.getSource().split(System.lineSeparator(), -1))
+//                    .map(lin -> lineNumbers.next() + lin + System.lineSeparator())
+//                    .forEach(lin -> printer.write(lin.toCharArray(), 0, lin.length()));
             line = in.readLine();
             while (line != null) {
-                if (editPane.showingLineNumbers()) {
+                if (tab.showingLineNumbers()) {
                     lineNumber++;
                     lineNumberString = Integer.toString(lineNumber) + ": ";
                     while (lineNumberString.length() < lineNumberDigits)
@@ -178,7 +188,7 @@ class GuiAction extends AbstractAction {
             // TODO
         }
         catch (IOException ex) {
-            Main.logger.log(Level.WARNING, "Exception while printing file " + editPane.getFilename(), ex);
+            Main.logger.log(Level.WARNING, "Exception while printing file " + tab.getFilename(), ex);
         }
     }
 
@@ -199,19 +209,13 @@ class GuiAction extends AbstractAction {
      * "Text Component Features"
      */
     void undo(ActionEvent event) {
-        EditPane editPane = Main.getGUI().editTabbedPane.getSelectedComponent();
-        if (editPane != null) {
-            editPane.undo();
-            Main.getGUI().updateUndoManager(editPane.getUndoManager());
-        }
+        EditTab tab = Main.getGUI().editTabbedPane.getSelectedComponent();
+        if (tab != null) tab.undo();
     }
 
     void redo(ActionEvent event) {
-        EditPane editPane = Main.getGUI().editTabbedPane.getSelectedComponent();
-        if (editPane != null) {
-            editPane.redo();
-            Main.getGUI().updateUndoManager(editPane.getUndoManager());
-        }
+        EditTab tab = Main.getGUI().editTabbedPane.getSelectedComponent();
+        if (tab != null) tab.redo();
     }
 
     void selectAll(ActionEvent event) {
@@ -271,19 +275,106 @@ class GuiAction extends AbstractAction {
         new DumpMemoryDialog(segNames, segBaseAddresses, segHighAddresses).setVisible(true);
     }
 
-    void help(ActionEvent event) {
-        new HelpDialog().setVisible(true);
-    }
-   
-    void editorSettings(ActionEvent event) {
-        new EditorFontDialog().setVisible(true);
-    }
-    
     void toggleBreakpoints(ActionEvent event) {
         Main.getGUI().executeTab.getTextSegmentWindow().toggleBreakpoints();
     }
 
-    static void editOrExecute(ActionEvent event) {
-        Main.getGUI().updateToolbar(event);
+    void toggleWarningsAreErrors(ActionEvent e) {
+        Main.getSettings().setBool(Settings.WARNINGS_ARE_ERRORS, ((JCheckBoxMenuItem) e.getSource()).isSelected());
+    }
+
+    void togglePopupInput(ActionEvent e) {
+        boolean usePopup = ((JCheckBoxMenuItem) e.getSource()).isSelected();
+        Main.getSettings().setBool(Settings.POPUP_SYSCALL_INPUT, usePopup);
+    }
+
+    void toggleProgramArguments(ActionEvent e) {
+        boolean selected = ((JCheckBoxMenuItem) e.getSource()).isSelected();
+        Main.getSettings().setBool(Settings.PROGRAM_ARGUMENTS, selected);
+        if (selected)
+            Main.getGUI().executeTab.getTextSegmentWindow().addProgramArgumentsPanel();
+        else
+            Main.getGUI().executeTab.getTextSegmentWindow().removeProgramArgumentsPanel();
+    }
+
+    void toggleSelfModifyingCode(ActionEvent e) {
+        Main.getSettings().setBool(Settings.SELF_MODIFYING_CODE_ENABLED,
+                ((JCheckBoxMenuItem) e.getSource()).isSelected());
+    }
+
+    void toggleExtendedInstructionSet(ActionEvent e) {
+        Main.getSettings().setBool(Settings.EXTENDED_ASSEMBLER_ENABLED, ((JCheckBoxMenuItem) e.getSource()).isSelected());
+    }
+
+    /**
+     * Show or hide the label window (symbol table). If visible, it is displayed
+     * to the right of the text segment and the latter is shrunk accordingly.
+     */
+    void toggleLabelWindow(ActionEvent e) {
+        boolean visibility = ((JCheckBoxMenuItem) e.getSource()).isSelected();
+        Main.getGUI().executeTab.labelValues.setVisible(visibility);
+        Main.getSettings().setBool(Settings.LABEL_WINDOW_VISIBILITY, visibility);
+    }
+
+    void toggleStartAtMain(ActionEvent e) {
+        Main.getSettings().setBool(Settings.START_AT_MAIN, ((JCheckBoxMenuItem) e.getSource()).isSelected());
+    }
+
+    void toggleDelayedBranching(ActionEvent e) {
+        Main.getSettings().setBool(Settings.DELAYED_BRANCHING_ENABLED,
+                ((JCheckBoxMenuItem) e.getSource()).isSelected());
+        // 25 June 2007 Re-assemble if the situation demands it to maintain consistency.
+        if (Main.getGUI() != null
+                && (VenusUI.getStatus() == VenusUI.RUNNABLE
+                || VenusUI.getStatus() == VenusUI.RUNNING
+                || VenusUI.getStatus() == VenusUI.TERMINATED)) {
+            // Stop execution if executing -- should NEVER happen because this 
+            // Action's widget is disabled during MIPS execution.
+            if (VenusUI.getStatus() == VenusUI.RUNNING)
+                Simulator.getInstance().stopExecution(this);
+            ExecuteAction.assemble(false);
+        }
+    }
+
+    void toggleAssembleOnOpen(ActionEvent e) {
+        Main.getSettings().setBool(Settings.ASSEMBLE_ON_OPEN_ENABLED,
+                ((JCheckBoxMenuItem) e.getSource()).isSelected());
+    }
+
+    void toggleAssembleAll(ActionEvent e) {
+        Main.getSettings().setBool(Settings.ASSEMBLE_ALL_ENABLED,
+                ((JCheckBoxMenuItem) e.getSource()).isSelected());
+    }
+
+    void toggleValueDisplayBase(ActionEvent e) {
+        boolean isHex = ((JCheckBoxMenuItem) e.getSource()).isSelected();
+        Main.getGUI().executeTab.getValueDisplayBaseChooser().setSelected(isHex);
+        Main.getSettings().setBool(Settings.DISPLAY_VALUES_IN_HEX, isHex);
+    }
+
+    void toggleAddressDisplayBase(ActionEvent e) {
+        boolean isHex = ((JCheckBoxMenuItem) e.getSource()).isSelected();
+        Main.getGUI().executeTab.getAddressDisplayBaseChooser().setSelected(isHex);
+        Main.getSettings().setBool(Settings.DISPLAY_ADDRESSES_IN_HEX, isHex);
+    }
+
+    void editorSettings(ActionEvent event) {
+        new EditorFontDialog().setVisible(true);
+    }
+
+    void highlightingSettings(ActionEvent event) {
+        new HighlightingDialog().setVisible(true);
+    }
+
+    void exceptionHandlerSettings(ActionEvent event) {
+        new ExceptionHandlerDialog().setVisible(true);
+    }
+    
+    void memoryConfigurationSettings(ActionEvent e) {
+        new MemoryConfigurationDialog(this).setVisible(true);
+    }
+
+    void help(ActionEvent event) {
+        new HelpDialog().setVisible(true);
     }
 }

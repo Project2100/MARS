@@ -140,7 +140,7 @@ final class DumpMemoryDialog extends JDialog {
     private boolean performDump(int firstAddress, int lastAddress, DumpFormat format) {
         File theFile;
         boolean operationOK = false;
-        JFileChooser saveDialog = new JFileChooser(Main.getGUI().getEditor().getCurrentSaveDirectory());
+        JFileChooser saveDialog = new JFileChooser(Main.getGUI().editTabbedPane.getCurrentSaveDirectory());
         saveDialog.setDialogTitle(title);
         while (!operationOK) {
             int decision = saveDialog.showSaveDialog(Main.getGUI().mainFrame);

@@ -4,7 +4,6 @@ import javax.swing.JDesktopPane;
 import mars.Main;
 import mars.Settings;
 
-
 /*
  Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
 
@@ -37,7 +36,7 @@ import mars.Settings;
  * pane.
  *
  * @author Sanderson and Team JSpim
-	*
+ *
  */
 public class ExecutePane extends JDesktopPane {
 
@@ -59,7 +58,7 @@ public class ExecutePane extends JDesktopPane {
      * @param cop0Regs window containing Coprocessor 0 register set
      */
     public ExecutePane(RegistersWindow regs, Coprocessor1Window cop1Regs, Coprocessor0Window cop0Regs) {
-      	// Although these are displayed in Data Segment, they apply to all three internal
+        // Although these are displayed in Data Segment, they apply to all three internal
         // windows within the Execute pane.  So they will be housed here.
         addressDisplayBase = new NumberDisplayBaseChooser("Hexadecimal Addresses",
                 Main.getSettings().getDisplayAddressesInHex());
@@ -128,6 +127,7 @@ public class ExecutePane extends JDesktopPane {
 
     /**
      * Access the text segment window.
+     * @return 
      */
     public TextSegmentWindow getTextSegmentWindow() {
         return textSegment;
@@ -135,6 +135,7 @@ public class ExecutePane extends JDesktopPane {
 
     /**
      * Access the data segment window.
+     * @return 
      */
     public DataSegmentWindow getDataSegmentWindow() {
         return dataSegment;
@@ -142,6 +143,7 @@ public class ExecutePane extends JDesktopPane {
 
     /**
      * Access the label values window.
+     * @return 
      */
     public LabelsWindow getLabelsWindow() {
         return labelValues;
@@ -150,6 +152,7 @@ public class ExecutePane extends JDesktopPane {
     /**
      * Retrieve the number system base for displaying values (mem/register
      * contents)
+     * @return 
      */
     public int getValueDisplayBase() {
         return valueDisplayBase.getBase();
@@ -157,6 +160,7 @@ public class ExecutePane extends JDesktopPane {
 
     /**
      * Retrieve the number system base for displaying memory addresses
+     * @return 
      */
     public int getAddressDisplayBase() {
         return addressDisplayBase.getBase();

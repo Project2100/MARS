@@ -1,3 +1,13 @@
+####1.4
+
+GENERAL:
+! Moderate restructuring of the couple EditTabbedPane-EditPane-Editor,
+  close buttons added to tabs
+! Merge of Assemble-Reset actions, under the name "ExecuteAction"
+! Assimilated all settingsActions in GuiAction, all dialogs extracted
+! Remains of FileStatus merged into VenusUI, preparing to refactor general GUI
+  status
+
 ####1.3
 
 GENERAL:

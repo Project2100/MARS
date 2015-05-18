@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package mars.venus;
 
 import java.awt.BorderLayout;
@@ -32,11 +27,7 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.text.Caret;
 import mars.Main;
 import mars.Settings;
@@ -44,16 +35,38 @@ import mars.venus.editors.jeditsyntax.SyntaxStyle;
 import mars.venus.editors.jeditsyntax.SyntaxUtilities;
 import mars.venus.editors.jeditsyntax.tokenmarker.MIPSTokenMarker;
 
-/**
- *
- * @author Project2100
+/*
+Copyright (c) 2003-2010,  Pete Sanderson and Kenneth Vollmar
+
+Developed by Pete Sanderson (psanderson@otterbein.edu)
+and Kenneth Vollmar (kenvollmar@missouristate.edu)
+
+Permission is hereby granted, free of charge, to any person obtaining 
+a copy of this software and associated documentation files (the 
+"Software"), to deal in the Software without restriction, including 
+without limitation the rights to use, copy, modify, merge, publish, 
+distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject 
+to the following conditions:
+
+The above copyright notice and this permission notice shall be 
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
+ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+(MIT license, http://www.opensource.org/licenses/mit-license.html)
  */
+
 final class EditorFontDialog extends AbstractFontSettingDialog {
 
     private static final int gridVGap = 2;
     private static final int gridHGap = 2;
-    private static final Border ColorSelectButtonEnabledBorder = new BevelBorder(BevelBorder.RAISED, Color.WHITE, Color.GRAY);
-    private static final Border ColorSelectButtonDisabledBorder = new LineBorder(Color.GRAY, 2);
 
     private static final String GENERIC_TOOL_TIP_TEXT = "Use generic editor (original MARS editor, similar to Notepad) instead of language-aware styled editor";
 
@@ -74,6 +87,10 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
         "Generates instruction guide popup after first letter of potential instruction is typed",
         "Generates instruction guide popup after second letter of potential instruction is typed"
     };
+    public static final int MAX_TAB_SIZE = 32;
+    public static final int MIN_BLINK_RATE = 0; // no flashing
+    public static final int MIN_TAB_SIZE = 1;
+    public static final int MAX_BLINK_RATE = 1000; // once per second
 
     private JButton[] foregroundButtons;
     private JLabel[] samples;
@@ -131,23 +148,23 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
     protected Component buildControlPanel() {
         Box controlPanel = Box.createHorizontalBox();
         JButton okButton = new JButton("Apply and Close");
-        okButton.setToolTipText(SettingsHighlightingAction.CLOSE_TOOL_TIP_TEXT);
+        okButton.setToolTipText(HighlightingDialog.CLOSE_TOOL_TIP_TEXT);
         okButton.addActionListener((ActionEvent e) -> {
             performApply();
             closeDialog();
         });
         JButton applyButton = new JButton("Apply");
-        applyButton.setToolTipText(SettingsHighlightingAction.APPLY_TOOL_TIP_TEXT);
+        applyButton.setToolTipText(HighlightingDialog.APPLY_TOOL_TIP_TEXT);
         applyButton.addActionListener((ActionEvent e) -> {
             performApply();
         });
         JButton cancelButton = new JButton("Cancel");
-        cancelButton.setToolTipText(SettingsHighlightingAction.CANCEL_TOOL_TIP_TEXT);
+        cancelButton.setToolTipText(HighlightingDialog.CANCEL_TOOL_TIP_TEXT);
         cancelButton.addActionListener((ActionEvent e) -> {
             closeDialog();
         });
         JButton resetButton = new JButton("Reset");
-        resetButton.setToolTipText(SettingsHighlightingAction.RESET_TOOL_TIP_TEXT);
+        resetButton.setToolTipText(HighlightingDialog.RESET_TOOL_TIP_TEXT);
         resetButton.addActionListener((ActionEvent e) -> {
             reset();
         });
@@ -235,13 +252,13 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
 
         // Tab size selector
         initialEditorTabSize = Main.getSettings().getEditorTabSize();
-        tabSizeSelector = new JSlider(Editor.MIN_TAB_SIZE, Editor.MAX_TAB_SIZE, initialEditorTabSize);
-        tabSizeSelector.setToolTipText("Use slider to select tab size from " + Editor.MIN_TAB_SIZE + " to " + Editor.MAX_TAB_SIZE + ".");
+        tabSizeSelector = new JSlider(MIN_TAB_SIZE, MAX_TAB_SIZE, initialEditorTabSize);
+        tabSizeSelector.setToolTipText("Use slider to select tab size from " + MIN_TAB_SIZE + " to " + MAX_TAB_SIZE + ".");
         tabSizeSelector.addChangeListener((ChangeEvent e) -> {
             Integer value = new Integer(((JSlider) e.getSource()).getValue());
             tabSizeSpinSelector.setValue(value);
         });
-        SpinnerNumberModel tabSizeSpinnerModel = new SpinnerNumberModel(initialEditorTabSize, Editor.MIN_TAB_SIZE, Editor.MAX_TAB_SIZE, 1);
+        SpinnerNumberModel tabSizeSpinnerModel = new SpinnerNumberModel(initialEditorTabSize, MIN_TAB_SIZE, MAX_TAB_SIZE, 1);
         tabSizeSpinSelector = new JSpinner(tabSizeSpinnerModel);
         tabSizeSpinSelector.setToolTipText(TAB_SIZE_TOOL_TIP_TEXT);
         tabSizeSpinSelector.addChangeListener((ChangeEvent e) -> {
@@ -270,7 +287,7 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
         blinkCaret = blinkSample.getCaret();
         blinkCaret.setBlinkRate(initialCaretBlinkRate);
         blinkCaret.setVisible(true);
-        SpinnerNumberModel blinkRateSpinnerModel = new SpinnerNumberModel(initialCaretBlinkRate, Editor.MIN_BLINK_RATE, Editor.MAX_BLINK_RATE, 100);
+        SpinnerNumberModel blinkRateSpinnerModel = new SpinnerNumberModel(initialCaretBlinkRate, MIN_BLINK_RATE, MAX_BLINK_RATE, 100);
         blinkRateSpinSelector = new JSpinner(blinkRateSpinnerModel);
         blinkRateSpinSelector.setToolTipText(BLINK_SPINNER_TOOL_TIP_TEXT);
         blinkRateSpinSelector.addChangeListener((ChangeEvent e) -> {

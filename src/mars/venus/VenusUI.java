@@ -5,15 +5,32 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
 import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.util.logging.Level;
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.WindowConstants;
 import javax.swing.undo.UndoManager;
 import mars.Main;
 import mars.Settings;
@@ -45,8 +62,7 @@ import mars.mips.dump.DumpFormatLoader;
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
  (MIT license, http://www.opensource.org/licenses/mit-license.html)
-*/
-
+ */
 /**
  * Top level container for Venus GUI.
  *
@@ -57,32 +73,26 @@ import mars.mips.dump.DumpFormatLoader;
  * here primarily so both can share the Action objects.
  */
 public class VenusUI {
+    
 
     public final JFrame mainFrame;
     final JMenuBar menuBar;
-    private final JToolBar toolBar;
-    private final JPanel mainPane;
-    final EditTabbedPane editTabbedPane;
+    final JToolBar toolBar;
+    final JPanel mainPane;
+    final EditPane editTabbedPane;
     public final ExecutePane executeTab;
     final JTabbedPane registersPane;
     final RegistersWindow registersTab;
     public final Coprocessor1Window coprocessor1Tab;
     final Coprocessor0Window coprocessor0Tab;
-    
     public final MessagesPane messagesPane;
 
-    private static int menuState = FileStatus.NO_FILE;
-
-    // PLEASE PUT THESE TWO (& THEIR METHODS) SOMEWHERE THEY BELONG, NOT HERE
-    private static boolean reset = true; // registers/memory reset for execution
-    private static boolean started = false;  // started execution
-    Editor editor;
 
     // components of the menubar
     private JMenu file, run, help, edit, settings;
     private JMenuItem fileNew, fileOpen, fileClose, fileCloseAll, fileSave, fileSaveAs, fileSaveAll, fileDumpMemory, filePrint, fileExit;
     private JMenuItem editUndo, editRedo, editCut, editCopy, editPaste, editFindReplace, editSelectAll;
-    private JMenuItem runGo, runStep, runBackstep, runReset, runAssemble, runStop, runPause, runClearBreakpoints, runToggleBreakpoints;
+    private JMenuItem runGo, runStep, runBackstep, runReset, runStop, runPause, runClearBreakpoints, runToggleBreakpoints;
     private JCheckBoxMenuItem settingsLabel, settingsPopupInput, settingsValueDisplayBase, settingsAddressDisplayBase,
             settingsExtended, settingsAssembleOnOpen, settingsAssembleAll, settingsWarningsAreErrors, settingsStartAtMain,
             settingsDelayedBranching, settingsProgramArguments, settingsSelfModifyingCode;
@@ -90,45 +100,53 @@ public class VenusUI {
     private JMenuItem helpHelp;
 
     // components of the toolbar
-    private JButton marsMode, adjustInternalFrames;
-    private JButton Undo, Redo, Cut, Copy, Paste, FindReplace, SelectAll;
-    private JButton New, Open, Save, SaveAs, SaveAll, DumpMemory, Print;
-    private JButton Run, Assemble, Reset, Step, Backstep, Stop, Pause;
-    private JButton Help;
+    private final JButton marsMode;
+    private final JButton Undo, Redo, Cut, Copy, Paste, FindReplace, SelectAll;
+    private final JButton New, Open, Save, SaveAs, /*SaveAll,*/ Print;
+    private final JButton Run, Reset, Step, Backstep, Stop, Pause;
+    private final JButton adjustInternalFrames, DumpMemory;
+    private final JButton Help;
 
     // The "action" objects, which include action listeners.  One of each will be created then
     // shared between a menu item and its corresponding toolbar button.  This is a very cool
     // technique because it relates the button and menu item so closely
     private GuiAction fileNewAction, fileOpenAction, fileCloseAction, fileCloseAllAction, fileSaveAction,
             fileSaveAsAction, fileSaveAllAction, filePrintAction, fileExitAction;
-    
+
     private GuiAction editCutAction, editCopyAction, editPasteAction, editUndoAction, editRedoAction,
             editFindReplaceAction, editSelectAllAction;
-    
-    private Action runAssembleAction, runGoAction, runStepAction, runBackstepAction, runResetAction,
+
+    private Action runGoAction, runStepAction, runBackstepAction, runResetAction,
             runStopAction, runPauseAction, runClearBreakpointsAction, runToggleBreakpointsAction, fileDumpMemoryAction;
     private Action settingsLabelAction, settingsPopupInputAction, settingsValueDisplayBaseAction, settingsAddressDisplayBaseAction,
             settingsExtendedAction, settingsAssembleOnOpenAction, settingsAssembleAllAction,
             settingsWarningsAreErrorsAction, settingsStartAtMainAction, settingsProgramArgumentsAction,
             settingsDelayedBranchingAction, settingsExceptionHandlerAction, settingsEditorAction,
             settingsHighlightingAction, settingsMemoryConfigurationAction, settingsSelfModifyingCodeAction;
-    private Action helpHelpAction, helpAboutAction;
+    private Action helpHelpAction;
 
     void updateUndoManager() {
-        EditPane pane = editTabbedPane.getSelectedComponent();
-        if (pane!=null) updateUndoManager(pane.getUndoManager());
+        EditTab pane = editTabbedPane.getSelectedComponent();
+        if (pane != null) updateUndoManager(pane.getUndoManager());
     }
-    
+
     void updateUndoManager(UndoManager manager) {
         editUndoAction.setEnabled(manager.canUndo());
         editRedoAction.setEnabled(manager.canRedo());
     }
-    
+
     /**
      * Constructor for the Class. Sets up a window object for the UI
      */
     public VenusUI() {
-        Toolkit toolkit=Toolkit.getDefaultToolkit();
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        }
+        catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+            Main.logger.log(Level.WARNING, "Could not set system LAF", ex);
+        }
+        
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
 
         double screenWidth = toolkit.getScreenSize().getWidth();
         double screenHeight = toolkit.getScreenSize().getHeight();
@@ -145,18 +163,17 @@ public class VenusUI {
         Dimension registersPanePreferredSize = new Dimension((int) (screenWidth * registersWidthPct), (int) (screenHeight * registersHeightPct));
 
         // the "restore" size (window control button that toggles with maximize)
-        // I want to keep it large, with enough room for user to get handles
+        // I want to keep it large, with enough room for user to getStatus handles
         //this.setSize((int)(screenWidth*.8),(int)(screenHeight*.8));
+        mainFrame = new JFrame("MARS " + Main.version);
+        reset();
 
-        mainFrame=new JFrame("MARS " + Main.version);
-        editor = new Editor(mainFrame.getTitle());
-        
         //  image courtesy of NASA/JPL.
-        Image icon=toolkit.getImage(VenusUI.class.getResource(
+        Image icon = toolkit.getImage(VenusUI.class.getResource(
                 Main.imagesPath + "Mars_Icon_2_512x512x32.png"));
         mainFrame.setIconImage(icon);
 
-      	// Everything in frame will be arranged on JPanel "center", which is only frame component.
+        // Everything in frame will be arranged on JPanel "center", which is only frame component.
         // "center" has BorderLayout and 2 major components:
         //   -- panel (jp) on North with 2 components
         //      1. toolbar
@@ -169,40 +186,36 @@ public class VenusUI {
         // I should probably run this breakdown out to full detail.  The components are created
         // roughly in bottom-up order; some are created in component constructors and thus are
         // not visible here.
-
         registersTab = new RegistersWindow();
         coprocessor1Tab = new Coprocessor1Window();
         coprocessor0Tab = new Coprocessor0Window();
-        
-        
-        registersPane = new JTabbedPane();
-        
+
         registersTab.setVisible(true);
         coprocessor1Tab.setVisible(true);
         coprocessor0Tab.setVisible(true);
+
+        registersPane = new JTabbedPane();
         registersPane.addTab("Registers", registersTab);
         registersPane.addTab("Coproc 1", coprocessor1Tab);
         registersPane.addTab("Coproc 0", coprocessor0Tab);
         registersPane.setToolTipTextAt(0, "CPU registers");
         registersPane.setToolTipTextAt(1, "Coprocessor 1 (floating point unit) registers");
-        registersPane.setToolTipTextAt(2, "selected Coprocessor 0 (exceptions and interrupts) registers");
-        
-        
+        registersPane.setToolTipTextAt(2, "Coprocessor 0 (exceptions and interrupts) registers");
+
         registersPane.setPreferredSize(registersPanePreferredSize);
-        
-        mainPane= new JPanel();
-        mainPane.setPreferredSize(mainPanePreferredSize);
-        
-        editTabbedPane = new EditTabbedPane(editor);
+
+        editTabbedPane = new EditPane(mainFrame.getTitle());
         editTabbedPane.setPreferredSize(mainPanePreferredSize);
-        
+
         executeTab = new ExecutePane(registersTab, coprocessor1Tab, coprocessor0Tab);
         executeTab.setPreferredSize(mainPanePreferredSize);
-        
+
+        mainPane = new JPanel();
+        mainPane.setPreferredSize(mainPanePreferredSize);
         mainPane.add(editTabbedPane);
-        
+
         /* Listener has one specific purpose: when Execute tab is selected for the 
-         * first time, set the bounds of its internal frames by invoking the
+         * first time, setStatus the bounds of its internal frames by invoking the
          * setWindowsBounds() method.  Once this occurs, listener removes itself!
          * We do NOT want to reset bounds each time Execute tab is selected.
          * See ExecutePane.setWindowsBounds documentation for more details.
@@ -217,7 +230,7 @@ public class VenusUI {
                 }
             }
         });
-        
+
         messagesPane = new MessagesPane();
         messagesPane.setPreferredSize(messagesPanePreferredSize);
         JSplitPane splitter = new JSplitPane(JSplitPane.VERTICAL_SPLIT, mainPane, messagesPane);
@@ -227,11 +240,11 @@ public class VenusUI {
         horizonSplitter.setOneTouchExpandable(true);
         horizonSplitter.resetToPreferredSizes();
 
-        // due to dependencies, do not set up menu/toolbar until now.
+        // due to dependencies, do not setStatus up menu/toolbar until now.
         createActionObjects(this, toolkit);
-        
+
         menuBar = new JMenuBar();
-        setUpMenuBar(toolkit, icon);
+        setUpMenuBar(toolkit, icon, new DumpFormatLoader().loadDumpFormats().size());
         mainFrame.setJMenuBar(menuBar);
 
         /*
@@ -239,8 +252,6 @@ public class VenusUI {
          * shared between toolbar icon and corresponding menu item).
          */
         toolBar = new JToolBar();
-
-        new DumpFormatLoader().loadDumpFormats();
 
         New = new JButton(fileNewAction);
         New.setText("");
@@ -270,8 +281,6 @@ public class VenusUI {
 
         Run = new JButton(runGoAction);
         Run.setText("");
-//        Assemble = new JButton(runAssembleAction);
-//        Assemble.setText("");
         Step = new JButton(runStepAction);
         Step.setText("");
         Backstep = new JButton(runBackstepAction);
@@ -290,10 +299,9 @@ public class VenusUI {
         adjustInternalFrames = new JButton("Adjust");
         adjustInternalFrames.addActionListener((event) -> executeTab.setWindowBounds());
 
-        
         marsMode = new JButton(new ImageIcon(Toolkit.getDefaultToolkit().getImage(VenusUI.class.getResource(Main.imagesPath + "Assemble22.png"))));
         marsMode.setText("Execute");
-        marsMode.addActionListener(GuiAction::editOrExecute);
+        marsMode.addActionListener((event) -> toggleGUIMode());
 
         toolBar.add(marsMode);
         toolBar.add(new JToolBar.Separator());
@@ -332,13 +340,15 @@ public class VenusUI {
             }
         });
 
-      	// The following will handle the windowClosing event properly in the 
+        // The following will handle the windowClosing event properly in the 
         // situation where user Cancels out of "save edits?" dialog.  By default,
         // the GUI frame will be hidden but I want it to do nothing.
         mainFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        
+
         mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         mainFrame.pack();
+        setMenuStateInitial();
+        mainFrame.setVisible(true);
     }
 
     /*
@@ -385,8 +395,7 @@ public class VenusUI {
             fileExitAction = new GuiAction("Exit", null,
                     "Exit Mars", KeyEvent.VK_X,
                     null, GuiAction::exit);
-            
-            
+
             editUndoAction = new GuiAction("Undo",
                     new ImageIcon(toolkit.getImage(c.getResource(Main.imagesPath + "Undo22.png"))),
                     "Undo last edit", KeyEvent.VK_U,
@@ -422,13 +431,7 @@ public class VenusUI {
                     "Select All", KeyEvent.VK_A,
                     KeyStroke.getKeyStroke(KeyEvent.VK_A, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()),
                     GuiAction::selectAll);
-            
-            
-            runAssembleAction = new RunAssembleAction("Assemble",
-                    new ImageIcon(toolkit.getImage(c.getResource(Main.imagesPath + "Assemble22.png"))),
-                    "Assemble the current file and clear breakpoints", KeyEvent.VK_A,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0),
-                    mainUI);
+
             runGoAction = new RunGoAction("Go",
                     new ImageIcon(toolkit.getImage(c.getResource(Main.imagesPath + "Play22.png"))),
                     "Run the current program", KeyEvent.VK_G,
@@ -454,7 +457,7 @@ public class VenusUI {
                     "Stop the currently running program", KeyEvent.VK_S,
                     KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0),
                     mainUI);
-            runResetAction = new RunResetAction("Reset",
+            runResetAction = new ExecuteAction("Reset",
                     new ImageIcon(toolkit.getImage(c.getResource(Main.imagesPath + "Reset22.png"))),
                     "Reset MIPS memory and registers", KeyEvent.VK_R,
                     KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0),
@@ -469,96 +472,95 @@ public class VenusUI {
                     "Disable/enable all breakpoints without clearing (can also click Bkpt column header)", KeyEvent.VK_T,
                     KeyStroke.getKeyStroke(KeyEvent.VK_T, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()),
                     GuiAction::toggleBreakpoints);
-            
-            
+
             fileDumpMemoryAction = new GuiAction("Dump Memory ...",
                     new ImageIcon(toolkit.getImage(c.getResource(Main.imagesPath + "Dump22.png"))),
                     "Dump machine code or data in an available format", KeyEvent.VK_D,
                     KeyStroke.getKeyStroke(KeyEvent.VK_D, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()),
                     GuiAction::dumpMemory);
-            
-            
-            settingsLabelAction = new SettingsLabelAction("Show Labels Window (symbol table)",
+
+            settingsLabelAction = new GuiAction("Show Labels Window (symbol table)",
                     null,
                     "Toggle visibility of Labels window (symbol table) in the Execute tab",
                     null, null,
-                    mainUI);
-            settingsPopupInputAction = new SettingsPopupInputAction("Popup dialog for input syscalls (5,6,7,8,12)",
+                    GuiAction::toggleLabelWindow);
+            settingsPopupInputAction = new GuiAction("Popup dialog for input syscalls (5,6,7,8,12)",
                     null,
                     "If set, use popup dialog for input syscalls (5,6,7,8,12) instead of cursor in Run I/O window",
                     null, null,
-                    mainUI);
-
-            settingsValueDisplayBaseAction = new SettingsValueDisplayBaseAction("Values displayed in hexadecimal",
+                    GuiAction::togglePopupInput);
+            settingsValueDisplayBaseAction = new GuiAction("Values displayed in hexadecimal",
                     null,
                     "Toggle between hexadecimal and decimal display of memory/register values",
                     null, null,
-                    mainUI);
-            settingsAddressDisplayBaseAction = new SettingsAddressDisplayBaseAction("Addresses displayed in hexadecimal",
+                    GuiAction::toggleValueDisplayBase);
+            settingsAddressDisplayBaseAction = new GuiAction("Addresses displayed in hexadecimal",
                     null,
                     "Toggle between hexadecimal and decimal display of memory addresses",
                     null, null,
-                    mainUI);
-            settingsExtendedAction = new SettingsExtendedAction("Permit extended (pseudo) instructions and formats",
+                    GuiAction::toggleAddressDisplayBase);
+            settingsExtendedAction = new GuiAction("Permit extended (pseudo) instructions and formats",
                     null,
                     "If set, MIPS extended (pseudo) instructions are formats are permitted.",
                     null, null,
-                    mainUI);
-            settingsAssembleOnOpenAction = new SettingsAssembleOnOpenAction("Assemble file upon opening",
+                    GuiAction::toggleExtendedInstructionSet);
+            settingsAssembleOnOpenAction = new GuiAction("Assemble file upon opening",
                     null,
                     "If set, a file will be automatically assembled as soon as it is opened.  File Open dialog will show most recently opened file.",
                     null, null,
-                    mainUI);
-            settingsAssembleAllAction = new SettingsAssembleAllAction("Assemble all files in directory",
+                    GuiAction::toggleAssembleOnOpen);
+            settingsAssembleAllAction = new GuiAction("Assemble all files in directory",
                     null,
                     "If set, all files in current directory will be assembled when Assemble operation is selected.",
                     null, null,
-                    mainUI);
-            settingsWarningsAreErrorsAction = new SettingsWarningsAreErrorsAction("Assembler warnings are considered errors",
+                    GuiAction::toggleAssembleAll);
+            settingsWarningsAreErrorsAction = new GuiAction("Assembler warnings are considered errors",
                     null,
                     "If set, assembler warnings will be interpreted as errors and prevent successful assembly.",
                     null, null,
-                    mainUI);
-            settingsStartAtMainAction = new SettingsStartAtMainAction("Initialize Program Counter to global 'main' if defined",
+                    GuiAction::toggleWarningsAreErrors);
+            settingsStartAtMainAction = new GuiAction("Initialize Program Counter to global 'main' if defined",
                     null,
                     "If set, assembler will initialize Program Counter to text address globally labeled 'main', if defined.",
                     null, null,
-                    mainUI);
-            settingsProgramArgumentsAction = new SettingsProgramArgumentsAction("Program arguments provided to MIPS program",
+                    GuiAction::toggleStartAtMain);
+            settingsProgramArgumentsAction = new GuiAction("Program arguments provided to MIPS program",
                     null,
                     "If set, program arguments for MIPS program can be entered in border of Text Segment window.",
                     null, null,
-                    mainUI);
-            settingsDelayedBranchingAction = new SettingsDelayedBranchingAction("Delayed branching",
+                    GuiAction::toggleProgramArguments);
+            settingsDelayedBranchingAction = new GuiAction("Delayed branching",
                     null,
                     "If set, delayed branching will occur during MIPS execution.",
                     null, null,
-                    mainUI);
-            settingsSelfModifyingCodeAction = new SettingsSelfModifyingCodeAction("Self-modifying code",
+                    GuiAction::toggleDelayedBranching);
+            settingsSelfModifyingCodeAction = new GuiAction("Self-modifying code",
                     null,
                     "If set, the MIPS program can write and branch to both text and data segments.",
                     null, null,
-                    mainUI);
+                    GuiAction::toggleSelfModifyingCode);
+
             settingsEditorAction = new GuiAction("Editor...",
                     null,
                     "View and modify text editor settings.",
                     null, null,
                     GuiAction::editorSettings);
-            settingsHighlightingAction = new SettingsHighlightingAction("Highlighting...",
+            settingsHighlightingAction = new GuiAction("Highlighting...",
                     null,
                     "View and modify Execute Tab highlighting colors",
                     null, null,
-                    mainUI);
-            settingsExceptionHandlerAction = new SettingsExceptionHandlerAction("Exception Handler...",
+                    GuiAction::highlightingSettings);
+            settingsExceptionHandlerAction = new GuiAction("Exception Handler...",
                     null,
                     "If set, the specified exception handler file will be included in all Assemble operations.",
                     null, null,
-                    mainUI);
-            settingsMemoryConfigurationAction = new SettingsMemoryConfigurationAction("Memory Configuration...",
+                    GuiAction::exceptionHandlerSettings);
+            settingsMemoryConfigurationAction = new GuiAction("Memory Configuration...",
                     null,
                     "View and modify memory segment base addresses for simulated MIPS.",
                     null, null,
-                    mainUI);
+                    GuiAction::memoryConfigurationSettings);
+
             helpHelpAction = new GuiAction("Help",
                     new ImageIcon(toolkit.getImage(c.getResource(Main.imagesPath + "Help22.png"))),
                     "Help", KeyEvent.VK_H,
@@ -575,7 +577,7 @@ public class VenusUI {
      * build the menus and connect them to action objects (which serve as action listeners
      * shared between menu item and corresponding toolbar icon).
      */
-    private void setUpMenuBar(Toolkit toolkit, Image icon) {
+    private void setUpMenuBar(Toolkit toolkit, Image icon, int formatCount) {
 
         Class cs = this.getClass();
         file = new JMenu("File");
@@ -588,7 +590,7 @@ public class VenusUI {
         settings.setMnemonic(KeyEvent.VK_S);
         help = new JMenu("Help");
         help.setMnemonic(KeyEvent.VK_H);
-      	// slight bug: user typing alt-H activates help menu item directly, not help menu
+        // slight bug: user typing alt-H activates help menu item directly, not help menu
 
         fileNew = new JMenuItem(fileNewAction);
         fileNew.setIcon(new ImageIcon(toolkit.getImage(cs.getResource(Main.imagesPath + "New16.png"))));
@@ -618,8 +620,7 @@ public class VenusUI {
         file.add(fileSave);
         file.add(fileSaveAs);
         file.add(fileSaveAll);
-        if (new mars.mips.dump.DumpFormatLoader().loadDumpFormats().size() > 0)
-            file.add(fileDumpMemory);
+        if (formatCount > 0) file.add(fileDumpMemory);
         file.addSeparator();
         file.add(filePrint);
         file.addSeparator();
@@ -734,28 +735,27 @@ public class VenusUI {
 
         helpHelp = new JMenuItem(helpHelpAction);
         helpHelp.setIcon(new ImageIcon(toolkit.getImage(cs.getResource(Main.imagesPath + "Help16.png"))));//"Help16.gif"))));
-        JMenuItem helpAbout = new JMenuItem(helpAboutAction);
+        JMenuItem helpAbout = new JMenuItem();
         helpAbout.setText("About...");
         helpAbout.setToolTipText("Information about MARS");
-        helpAbout.addActionListener((event) -> {
-            JOptionPane.showMessageDialog(mainFrame,
-                    "MARS " + Main.version + "    Copyright " + Main.copyrightYears + "\n"
-                    + Main.copyrightHolders + "\n"
-                    + "MARS is the Mips Assembler and Runtime Simulator.\n\n"
-                    + "Mars image courtesy of NASA/JPL.\n"
-                    + "Application icon taken from [PLACEHOLDER]\n"
-                    + "Toolbar and menu icons are from:\n"
-                    + "  *  Tango Desktop Project (tango.freedesktop.org),\n"
-                    + "  *  glyFX (www.glyfx.com) Common Toolbar Set,\n"
-                    + "  *  KDE-Look (www.kde-look.org) crystalline-blue-0.1,\n"
-                    + "  *  Icon-King (www.icon-king.com) Nuvola 1.0.\n"
-                    + "Print feature adapted from HardcopyWriter class in David Flanagan's\n"
-                    + "Java Examples in a Nutshell 3rd Edition, O'Reilly, ISBN 0-596-00620-9.",
-                    "About Mars",
-                    JOptionPane.INFORMATION_MESSAGE, 
-                    new ImageIcon(icon));
-        });
-        
+        helpAbout.addActionListener((event) -> JOptionPane.showMessageDialog(mainFrame,
+                "MARS " + Main.version + "    Copyright " + Main.copyrightYears + "\n"
+                + Main.copyrightHolders + "\n"
+                + "MARS is the Mips Assembler and Runtime Simulator.\n\n"
+                + "Mars image courtesy of NASA/JPL.\n"
+                + "Application icon taken from [PLACEHOLDER]\n"
+                + "Toolbar and menu icons are from:\n"
+                + "  *  Tango Desktop Project (tango.freedesktop.org),\n"
+                + "  *  glyFX (www.glyfx.com) Common Toolbar Set,\n"
+                + "  *  KDE-Look (www.kde-look.org) crystalline-blue-0.1,\n"
+                + "  *  Icon-King (www.icon-king.com) Nuvola 1.0.\n"
+                + "Print feature adapted from HardcopyWriter class in David Flanagan's\n"
+                + "Java Examples in a Nutshell 3rd Edition, O'Reilly, ISBN 0-596-00620-9.",
+                "About Mars",
+                JOptionPane.INFORMATION_MESSAGE,
+                new ImageIcon(icon))
+        );
+
         help.add(helpHelp);
         help.addSeparator();
         help.add(helpAbout);
@@ -768,49 +768,49 @@ public class VenusUI {
         if (toolMenu != null) menuBar.add(toolMenu);
         menuBar.add(help);
 
-      	// experiment with popup menu for settings. 3 Aug 2006 PS
+        // experiment with popup menu for settings. 3 Aug 2006 PS
         //setupPopupMenu();
         //return menuBar;
     }
 
     /* Determine from FileStatus what the menu state (enabled/disabled)should 
-     * be then call the appropriate method to set it.  Current states are:
+     * be then call the appropriate method to setStatus it.  Current states are:
      *
-     * setMenuStateInitial: set upon startup and after File->Close
-     * setMenuStateEditingNew: set upon File->New
-     * setMenuStateEditing: set upon File->Open or File->Save or erroneous Run->Assemble
-     * setMenuStateRunnable: set upon successful Run->Assemble
-     * setMenuStateRunning: set upon Run->Go
-     * setMenuStateTerminated: set upon completion of simulated execution
+     * setMenuStateInitial: setStatus upon startup and after File->Close
+     * setMenuStateEditingNew: setStatus upon File->New
+     * setMenuStateEditing: setStatus upon File->Open or File->Save or erroneous Run->Assemble
+     * setMenuStateRunnable: setStatus upon successful Run->Assemble
+     * setMenuStateRunning: setStatus upon Run->Go
+     * setMenuStateTerminated: setStatus upon completion of simulated execution
      */
     void setMenuState(int status) {
         menuState = status;
         switch (status) {
-            case FileStatus.NO_FILE:
+            case NO_FILE:
                 setMenuStateInitial();
                 break;
-            case FileStatus.NEW_NOT_EDITED:
+            case NEW_NOT_EDITED:
                 setMenuStateEditingNew();
                 break;
-            case FileStatus.NEW_EDITED:
+            case NEW_EDITED:
                 setMenuStateEditingNew();
                 break;
-            case FileStatus.NOT_EDITED:
+            case NOT_EDITED:
                 setMenuStateNotEdited(); // was MenuStateEditing. DPS 9-Aug-2011
                 break;
-            case FileStatus.EDITED:
+            case EDITED:
                 setMenuStateEditing();
                 break;
-            case FileStatus.RUNNABLE:
+            case RUNNABLE:
                 setMenuStateRunnable();
                 break;
-            case FileStatus.RUNNING:
+            case RUNNING:
                 setMenuStateRunning();
                 break;
-            case FileStatus.TERMINATED:
+            case TERMINATED:
                 setMenuStateTerminated();
                 break;
-            case FileStatus.OPENING:// This is a temporary state. DPS 9-Aug-2011
+            case OPENING:// This is a temporary state. DPS 9-Aug-2011
                 break;
             default:
                 System.out.println("Invalid File Status: " + status);
@@ -838,7 +838,6 @@ public class VenusUI {
         editSelectAllAction.setEnabled(false);
         settingsDelayedBranchingAction.setEnabled(true); // added 25 June 2007
         settingsMemoryConfigurationAction.setEnabled(true); // added 21 July 2009
-        runAssembleAction.setEnabled(false);
         runGoAction.setEnabled(false);
         runStepAction.setEnabled(false);
         runBackstepAction.setEnabled(false);
@@ -872,8 +871,7 @@ public class VenusUI {
         editSelectAllAction.setEnabled(true);
         settingsDelayedBranchingAction.setEnabled(true);
         settingsMemoryConfigurationAction.setEnabled(true);
-        runAssembleAction.setEnabled(true);
-			// If assemble-all, allow previous Run menu settings to remain.
+        // If assemble-all, allow previous Run menu settings to remain.
         // Otherwise, clear them out.  DPS 9-Aug-2011
         if (!Main.getSettings().getBool(mars.Settings.ASSEMBLE_ALL_ENABLED)) {
             runGoAction.setEnabled(false);
@@ -907,7 +905,6 @@ public class VenusUI {
         editSelectAllAction.setEnabled(true);
         settingsDelayedBranchingAction.setEnabled(true); // added 25 June 2007
         settingsMemoryConfigurationAction.setEnabled(true); // added 21 July 2009
-        runAssembleAction.setEnabled(true);
         runGoAction.setEnabled(false);
         runStepAction.setEnabled(false);
         runBackstepAction.setEnabled(false);
@@ -940,7 +937,6 @@ public class VenusUI {
         editSelectAllAction.setEnabled(true);
         settingsDelayedBranchingAction.setEnabled(true); // added 25 June 2007
         settingsMemoryConfigurationAction.setEnabled(true); // added 21 July 2009
-        runAssembleAction.setEnabled(false);
         runGoAction.setEnabled(false);
         runStepAction.setEnabled(false);
         runBackstepAction.setEnabled(false);
@@ -973,7 +969,6 @@ public class VenusUI {
         editSelectAllAction.setEnabled(true);
         settingsDelayedBranchingAction.setEnabled(true); // added 25 June 2007
         settingsMemoryConfigurationAction.setEnabled(true); // added 21 July 2009
-        runAssembleAction.setEnabled(true);
         runGoAction.setEnabled(true);
         runStepAction.setEnabled(true);
         runBackstepAction.setEnabled(
@@ -1007,7 +1002,6 @@ public class VenusUI {
         editSelectAllAction.setEnabled(false);
         settingsDelayedBranchingAction.setEnabled(false); // added 25 June 2007
         settingsMemoryConfigurationAction.setEnabled(false); // added 21 July 2009
-        runAssembleAction.setEnabled(false);
         runGoAction.setEnabled(false);
         runStepAction.setEnabled(false);
         runBackstepAction.setEnabled(false);
@@ -1040,7 +1034,6 @@ public class VenusUI {
         editSelectAllAction.setEnabled(true);
         settingsDelayedBranchingAction.setEnabled(true); // added 25 June 2007
         settingsMemoryConfigurationAction.setEnabled(true); // added 21 July 2009
-        runAssembleAction.setEnabled(true);
         runGoAction.setEnabled(false);
         runStepAction.setEnabled(false);
         runBackstepAction.setEnabled(
@@ -1053,67 +1046,6 @@ public class VenusUI {
         updateUndoManager();
     }
 
-    /**
-     * Get current menu state. State values are constants in FileStatus class.
-     * DPS 23 July 2008
-     *
-     * @return current menu state.
-     *
-     */
-    public static int getMenuState() {
-        return menuState;
-    }
-
-    /**
-     * To set whether the register values are reset.
-     *
-     * @param b Boolean true if the register values have been reset.
-   	  *
-     */
-    public static void setReset(boolean b) {
-        reset = b;
-    }
-
-    /**
-     * To set whether MIPS program execution has started.
-     *
-     * @param b true if the MIPS program execution has started.
-   	  *
-     */
-    public static void setStarted(boolean b) {
-        started = b;
-    }
-
-    /**
-     * To find out whether the register values are reset.
-     *
-     * @return Boolean true if the register values have been reset.
-   	  *
-     */
-
-    public static boolean getReset() {
-        return reset;
-    }
-
-    /**
-     * To find out whether MIPS program is currently executing.
-     *
-     * @return true if MIPS program is currently executing.
-   	  *
-     */
-    public static boolean getStarted() {
-        return started;
-    }
-
-    /**
-     * Get reference to Editor object associated with this GUI.
-     *
-     * @return Editor for the GUI.
-   	  *
-     */
-    public Editor getEditor() {
-        return editor;
-    }
 
     /**
      * Get reference to settings menu item for display base of memory/register
@@ -1135,24 +1067,13 @@ public class VenusUI {
         return settingsAddressDisplayBase;
     }
 
-    /**
-     * Return reference to the Run->Assemble item's action. Needed by File->Open
-     * in case assemble-upon-open flag is set.
-     *
-     * @return the Action object for the Run->Assemble operation.
-     */
-    public Action getRunAssembleAction() {
-        return runAssembleAction;
-    }
-
-    
-    void updateToolbar(ActionEvent event) {
-        toolBar.removeAll();
-        mainPane.removeAll();
+    // Toggles between "Edit" and "Execute" mode, called inside constructor
+    final void toggleGUIMode() {
         if (marsMode.getText().equals("Edit")) {
             marsMode.setText("Execute");
             marsMode.setToolTipText("View and control program execution");
 
+            toolBar.removeAll();
             toolBar.add(marsMode);
             toolBar.add(new JToolBar.Separator());
             toolBar.add(New);
@@ -1170,14 +1091,16 @@ public class VenusUI {
             toolBar.add(new JToolBar.Separator());
             toolBar.add(Help);
 
+            mainPane.removeAll();
             mainPane.add(editTabbedPane);
         }
-        else {
+        else if (ExecuteAction.assemble(true)){
             marsMode.setText("Edit");
             marsMode.setToolTipText("Edit MIPS program");
 
-            runAssembleAction.actionPerformed(event);
+            
 
+            toolBar.removeAll();
             toolBar.add(marsMode);
             toolBar.add(new JToolBar.Separator());
             toolBar.add(Run);
@@ -1193,6 +1116,7 @@ public class VenusUI {
             toolBar.add(new JToolBar.Separator());
             toolBar.add(RunSpeedPanel.getInstance());
 
+            mainPane.removeAll();
             mainPane.add(executeTab);
         }
         mainFrame.validate();
@@ -1211,7 +1135,7 @@ public class VenusUI {
     private void setupPopupMenu() {
         JPopupMenu popup;
         popup = new JPopupMenu();
-      	// cannot put the same menu item object on two different menus.
+        // cannot put the same menu item object on two different menus.
         // If you want to duplicate functionality, need a different item.
         // Should be able to share listeners, but if both menu items are
         // JCheckBoxMenuItem, how to keep their checked status in synch?
@@ -1223,17 +1147,276 @@ public class VenusUI {
         mainFrame.addMouseListener(popupListener);
     }
 
-    public void update() {
-        if (registersPane.getSelectedComponent()
-                == Main.getGUI().registersTab)
-            (Main.getGUI().registersTab).updateRegisters();
+    public final void simUpdate() {
+        if (registersPane.getSelectedComponent() == registersTab)
+            registersTab.updateRegisters();
         else
-            (Main.getGUI().coprocessor1Tab).updateRegisters();
-        (Main.getGUI().executeTab).getDataSegmentWindow().updateValues();
-        (Main.getGUI().executeTab).getTextSegmentWindow().setCodeHighlighting(true);
-        (Main.getGUI().executeTab).getTextSegmentWindow().highlightStepAtPC();
+            coprocessor1Tab.updateRegisters();
+        executeTab.getDataSegmentWindow().updateValues();
+        executeTab.getTextSegmentWindow().setCodeHighlighting(true);
+        executeTab.getTextSegmentWindow().highlightStepAtPC();
     }
 
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    
 
+    // PLEASE PUT THESE TWO (& THEIR METHODS) SOMEWHERE THEY BELONG, NOT HERE
+    private static boolean reset = true; // registers/memory reset for execution
+    private static boolean started = false;  // started execution
+    
+    /**
+     * Get current menu state. State values are constants in FileStatus class.
+     * DPS 23 July 2008
+     *
+     * @return current menu state.
+     *
+     */
+    public static int getMenuState() {
+        return menuState;
+    }
 
+    /**
+     * To setStatus whether the register values are reset.
+     *
+     * @param b Boolean true if the register values have been reset.
+     *
+     */
+    public static void setReset(boolean b) {
+        reset = b;
+    }
+
+    /**
+     * To setStatus whether MIPS program execution has started.
+     *
+     * @param b true if the MIPS program execution has started.
+     *
+     */
+    public static void setStarted(boolean b) {
+        started = b;
+    }
+
+    /**
+     * To find out whether the register values are reset.
+     *
+     * @return Boolean true if the register values have been reset.
+     *
+     */
+    public static boolean getReset() {
+        return reset;
+    }
+
+    /**
+     * To find out whether MIPS program is currently executing.
+     *
+     * @return true if MIPS program is currently executing.
+     *
+     */
+    public static boolean getStarted() {
+        return started;
+    }
+    
+    
+    /**
+     * initial state or after close
+     */
+    public static final int NO_FILE = 0;
+    /**
+     * New edit window with no edits
+     */
+    public static final int NEW_NOT_EDITED = 1;
+    /**
+     * open/saved edit window with no edits
+     */
+    public static final int NOT_EDITED = 3;
+    /**
+     * successful assembly
+     */
+    public static final int RUNNABLE = 5;
+    /**
+     * open/saved edit window with unsaved edits
+     */
+    public static final int EDITED = 4;
+    /**
+     * execution is under way
+     */
+    public static final int RUNNING = 6;
+    /**
+     * file is being opened. DPS 9-Aug-2011
+     */
+    public static final int OPENING = 8;
+    /**
+     * New edit window with unsaved edits
+     */
+    public static final int NEW_EDITED = 2;
+    /**
+     * execution terminated
+     */
+    public static final int TERMINATED = 7;
+    
+    
+    
+    private static int menuState = NO_FILE;
+    ///////////////////////////////////////////////////////////////////
+    //                                                               //
+    //  The static part.  Legacy code from original student team's   //
+    //  2003 Practicum project through MARS 3.8, when the editor     //
+    //  was limited to one file.  The status of that file became     //
+    //  the de facto status of the system.  Should have used a       //
+    //  singleton class but in 2003 did not know what that was!      //
+    //  My plan is to phase out all statics but the constants        //
+    //  in MARS 4.0 but will keep it in place while at the same time //
+    //  defining non-static members for use by individual files      //
+    //  currently opened in the editor.  DPS, 9 April 2010.          //
+    //                                                               //
+    ///////////////////////////////////////////////////////////////////
+    private static int systemStatus; // setStatus to one of the above
+    private static boolean systemEdited;
+    private static boolean systemSaved;
+    private static boolean systemAssembled;
+    private static String systemName;
+    private static File systemFile;
+
+    /**
+     * Update static FileStatus fields with values from this FileStatus object
+     * To support legacy code that depends on the static.
+     * @param file
+     * @param status
+     */
+    public static void updateStaticFileStatus(File file, int status) {
+        systemStatus = status;
+        systemName = file.getPath();
+        systemAssembled = false;
+        systemSaved = (status == VenusUI.NOT_EDITED || status == VenusUI.RUNNABLE || status == VenusUI.RUNNING || status == VenusUI.TERMINATED);
+        systemEdited = (status == VenusUI.NEW_EDITED || status == VenusUI.EDITED);
+        systemFile = file;
+    }
+
+    /**
+     * Tells whether the file has been saved.
+     *
+     * @return Boolean variable that is true if the ASM file has been saved
+     */
+    public static boolean isSaved() {
+        return systemSaved;
+    }
+
+    /**
+     * Set file status. Also updates menu state accordingly.
+     *
+     * @param newStatus New status: EDITED, RUNNABLE, etc, see list above.
+     */
+    public static void setStatus(int newStatus) {
+        systemStatus = newStatus;
+        Main.getGUI().setMenuState(systemStatus);
+    }
+
+    /**
+     * Sets the file to the ASM file passed.
+     *
+     * @param f file object variable that stores the ASM file.
+     */
+    public static void setFile(File f) {
+        systemFile = f;
+    }
+
+    /**
+     * Tells whether the file has been assembled.
+     *
+     * @return Boolean value that is true if the ASM file has been assembled.
+     */
+    public static boolean isAssembled() {
+        return systemAssembled;
+    }
+
+    /**
+     * Returns the ASM file.
+     *
+     * @return The ASM file.
+     */
+    public static File getFile() {
+        return systemFile;
+    }
+
+    /**
+     * Returns the name of the file.
+     *
+     * @return The name of the ASM file.
+     */
+    public static String getName() {
+        return systemName;
+    }
+
+    /**
+     * Resets all the values in FileStatus
+     */
+    public static void reset() {
+        systemStatus = VenusUI.NO_FILE;
+        systemName = "";
+        systemAssembled = false;
+        systemSaved = false;
+        systemEdited = false;
+        systemFile = null;
+    }
+
+    /**
+     * Get file status
+     *
+     * @return file status EDITED, RUNNABLE, etc, see list above
+     */
+    public static int getStatus() {
+        return systemStatus;
+    }
+
+    /**
+     * Changes the value of saved to the parameter given.
+     *
+     * @param b boolean variable that tells what to setStatus saved to .
+     */
+    public static void setSaved(boolean b) {
+        systemSaved = b;
+    }
+
+    /**
+     * Tells whether the file has been edited since it has been saved.
+     *
+     * @return Boolean value that returns true if the ASM file has been edited.
+     */
+    public static boolean isEdited() {
+        return systemEdited;
+    }
+
+    /**
+     * Changes the value of assembled to the parameter given.
+     *
+     * @param b boolean variable that tells what to setStatus assembled to.
+     */
+    public static void setAssembled(boolean b) {
+        systemAssembled = b;
+    }
+
+    /**
+     * Changes the value of edited to the parameter given.
+     *
+     * @param b boolean variable that tells what to setStatus edited to.
+     */
+    public static void setEdited(boolean b) {
+        systemEdited = b;
+    }
+
+    /**
+     * Changes the value of name to the parameter given.
+     *
+     * @param s string variable tells what to setStatus the name of the file to .
+     */
+    public static void setName(String s) {
+        systemName = s;
+    }
 }

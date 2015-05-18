@@ -7,8 +7,6 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import mars.mips.instructions.syscalls.*;
 import mars.mips.instructions.*;
 import mars.mips.hardware.*;
@@ -63,11 +61,11 @@ public class Main {
             -> Main.logger.log(Level.SEVERE, "Uncaught exception in thread: " + thread.getName(), exception);
 
     // List these first because they are referenced by methods called at initialization.
-    private static String configPropertiesFile = "Config";
-    private static String syscallPropertiesFile = "Syscall";
+    private static final String configPropertiesFile = "Config";
+    private static final String syscallPropertiesFile = "Syscall";
 
     /**
-     * The set of implemented MIPS instructions. *
+     * The setStatus of implemented MIPS instructions. *
      */
     public static InstructionSet instructionSet;
     /**
@@ -118,7 +116,7 @@ public class Main {
     private static VenusUI gui = null;
     /**
      * The current MARS version number. Can't wait for "initialize()" call to
-     * get it.
+ getStatus it.
      */
     public static final String version = "4.5";
     /**
@@ -324,28 +322,14 @@ public class Main {
             //----------------------------------------------------------------------
             // Putting this call inside EDT will cause both the splash and the main
             // frame to show at the same time, effectively forfeiting the splash's
-            // purpose; for now, calling externally isn't harmful
+            // purpose; calling it externally seems to be safe
             //
             // Andrea Proietto, 15/04/28 21:37
             MarsSplashScreen.showSplash(2000);
 
             EventQueue.invokeLater(() -> {
-
                 Thread.setDefaultUncaughtExceptionHandler(exHandler);
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                }
-                catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-                    Main.logger.log(Level.WARNING, "Could not set system LAF", ex);
-                }
-
                 gui = new VenusUI();
-
-                FileStatus.reset();
-                // The following has side effect of establishing menu state
-                FileStatus.set(FileStatus.NO_FILE);
-
-                getGUI().mainFrame.setVisible(true);
             });
         }
         else

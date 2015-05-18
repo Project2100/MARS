@@ -164,7 +164,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        private JScrollPane generateLabelScrollPane() {
          listOfLabelsForSymbolTable = new ArrayList();
          listOfLabelsForSymbolTable.add(new LabelsForSymbolTable(null));// global symtab
-         ArrayList MIPSprogramsAssembled = RunAssembleAction.getMIPSprogramsToAssemble();
+         ArrayList MIPSprogramsAssembled = ExecuteAction.getMIPSprogramsToAssemble();
          Box allSymtabTables = Box.createVerticalBox();
          for (int i=0; i<MIPSprogramsAssembled.size(); i++) {
             listOfLabelsForSymbolTable.add(new LabelsForSymbolTable(

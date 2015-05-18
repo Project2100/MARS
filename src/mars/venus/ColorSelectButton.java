@@ -1,14 +1,13 @@
 package mars.venus;
 
-import java.awt.event.ActionEvent;
-import javax.swing.Icon;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.KeyStroke;
-import mars.Main;
-import mars.Settings;
+import java.awt.Color;
+import javax.swing.JButton;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 
 /*
- Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
+ Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
 
  Developed by Pete Sanderson (psanderson@otterbein.edu)
  and Kenneth Vollmar (kenvollmar@missouristate.edu)
@@ -33,27 +32,20 @@ import mars.Settings;
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
  (MIT license, http://www.opensource.org/licenses/mit-license.html)
- */
-/**
- * Action class for the Settings menu item to control display of Labels window
- * (symbol table).
- */
-public class SettingsLabelAction extends GuiAction {
+*/
 
-    public SettingsLabelAction(String name, Icon icon, String descrip,
-            Integer mnemonic, KeyStroke accel, VenusUI gui) {
-        super(name, icon, descrip, mnemonic, accel, gui);
-    }
+/////////////////////////////////////////////////////////////////
+//  Dinky little custom button class to modify border based on
+//  whether enabled or not.  The default behavior does not work
+//  well on buttons with black background
+class ColorSelectButton extends JButton {
 
-    /**
-     * Show or hide the label window (symbol table). If visible, it is displayed
-     * to the right of the text segment and the latter is shrunk accordingly.
-     */
+    public static final Border ColorSelectButtonEnabledBorder = new BevelBorder(BevelBorder.RAISED, Color.WHITE, Color.GRAY);
+    public static final Border ColorSelectButtonDisabledBorder = new LineBorder(Color.GRAY, 2);
+
     @Override
-    public void actionPerformed(ActionEvent e) {
-        boolean visibility = ((JCheckBoxMenuItem) e.getSource()).isSelected();
-        Main.getGUI().executeTab.labelValues.setVisible(visibility);
-        Main.getSettings().setBool(Settings.LABEL_WINDOW_VISIBILITY, visibility);
+    public void setEnabled(boolean status) {
+        super.setEnabled(status);
+        this.setBorder(status ? ColorSelectButtonEnabledBorder : ColorSelectButtonDisabledBorder);
     }
-
 }
