@@ -56,7 +56,7 @@ public class RunGoAction extends GuiAction {
     public void actionPerformed(ActionEvent e) {
         name = this.getValue(Action.NAME).toString();
         executePane = mainUI.executeTab;
-        if (VenusUI.isAssembled()) {
+        if (executePane.isShowing()) {
             if (!VenusUI.getStarted())
                 processProgramArgumentsIfAny(); // DPS 17-July-2008
             if (VenusUI.getReset() || VenusUI.getStarted()) {
@@ -64,12 +64,11 @@ public class RunGoAction extends GuiAction {
                 VenusUI.setStarted(true);  // added 8/27/05
 
                 mainUI.messagesPane.postMarsMessage(
-                        name + ": running " + VenusUI.getFile().getName() + "\n\n");
+                        name + ": running " + Main.getGUI().editTabbedPane.getSelectedComponent().getFilename() + "\n\n");
                 (mainUI.messagesPane).selectRunMessageTab();
                 executePane.getTextSegmentWindow().setCodeHighlighting(false);
                 executePane.getTextSegmentWindow().unhighlightAllSteps();
-                //FileStatus.setStatus(FileStatus.RUNNING);
-                mainUI.setMenuState(VenusUI.RUNNING);
+                Main.getGUI().setMenuStateRunning();
                 try {
                     int[] breakPoints = executePane.getTextSegmentWindow().getSortedBreakPointsArray();
                     boolean done = Main.program.simulateFromPC(breakPoints, maxSteps, this);
@@ -103,11 +102,13 @@ public class RunGoAction extends GuiAction {
             return;
         }
         if (pauseReason == Simulator.BREAKPOINT)
+            //TODO
             mainUI.messagesPane.postMarsMessage(
-                    name + ": execution paused at breakpoint: " + VenusUI.getFile().getName() + "\n\n");
+                    name + ": execution paused at breakpoint: " + Main.getGUI().editTabbedPane.getSelectedComponent().getFilename() + "\n\n");
         else
+            //TODO
             mainUI.messagesPane.postMarsMessage(
-                    name + ": execution paused by user: " + VenusUI.getFile().getName() + "\n\n");
+                    name + ": execution paused by user: " + Main.getGUI().editTabbedPane.getSelectedComponent().getFilename() + "\n\n");
         (mainUI.messagesPane).selectMarsMessageTab();
         executePane.getTextSegmentWindow().setCodeHighlighting(true);
         executePane.getTextSegmentWindow().highlightStepAtPC();
@@ -115,7 +116,7 @@ public class RunGoAction extends GuiAction {
         (Main.getGUI().coprocessor1Tab).updateRegisters();
         (Main.getGUI().coprocessor0Tab).updateRegisters();
         executePane.getDataSegmentWindow().updateValues();
-        VenusUI.setStatus(VenusUI.RUNNABLE);
+        Main.getGUI().setMenuStateRunnable();
         VenusUI.setReset(false);
     }
 
@@ -134,7 +135,7 @@ public class RunGoAction extends GuiAction {
         (Main.getGUI().coprocessor1Tab).updateRegisters();
         (Main.getGUI().coprocessor0Tab).updateRegisters();
         executePane.getDataSegmentWindow().updateValues();
-        VenusUI.setStatus(VenusUI.TERMINATED);
+        Main.getGUI().setMenuStateTerminated();
         SystemIO.resetFiles(); // close any files opened in MIPS program
         // Bring coprocessor 0 to the front if terminated due to exception.
         if (pe != null) {

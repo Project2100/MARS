@@ -198,14 +198,14 @@ class MemoryConfigurationDialog extends JDialog implements ActionListener {
             Main.getGUI().registersTab.updateRegisters();
             Main.getGUI().executeTab.getDataSegmentWindow().updateBaseAddressComboBox();
             // 21 July 2009 Re-assemble if the situation demands it to maintain consistency.
-            if (VenusUI.getStatus() == VenusUI.RUNNABLE
-                    || VenusUI.getStatus() == VenusUI.RUNNING
-                    || VenusUI.getStatus() == VenusUI.TERMINATED) {
+            // 20150519 - Do reassemble if executePane is visible
+            if (Main.getGUI().executeTab.isShowing()) {
                 // Stop execution if executing -- should NEVER happen because this 
                 // Action's widget is disabled during MIPS execution.
-                if (VenusUI.getStatus() == VenusUI.RUNNING)
+                // 20150519 - Actually leaving this here as a feature
+                if (VenusUI.getStarted())
                     Simulator.getInstance().stopExecution(thisAction);
-                ExecuteAction.assemble(false);
+                ExecuteAction.assemble();
             }
         }
     }

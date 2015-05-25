@@ -241,7 +241,7 @@ public class MessagesPane extends JTabbedPane {
     public void selectEditorTextLine(String fileName, int line, int column) {
         EditPane editTabbedPane = Main.getGUI().editTabbedPane;
         EditTab editPane, currentPane = null;
-        editPane = editTabbedPane.getEditPaneForFile(new java.io.File(fileName).getPath());
+        editPane = editTabbedPane.getTabForFile(new java.io.File(fileName).getPath());
         if (editPane != null) {
             if (editPane != editTabbedPane.getSelectedComponent())
                 editTabbedPane.setSelectedComponent(editPane);

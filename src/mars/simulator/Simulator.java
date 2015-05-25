@@ -60,7 +60,7 @@ public class Simulator extends Observable {
     private SimThread simulatorThread;
     private static Simulator simulator = null;  // Singleton object
 
-    // Others can setStatus this true to indicate external interrupt.  Initially used
+    // Others can setStatusMenu this true to indicate external interrupt.  Initially used
     // to simulate keyboard and display interrupts.  The device is identified
     // by the address of its MMIO control register.  keyboard 0xFFFF0000 and
     // display 0xFFFF0008.  DPS 23 July 2008.
@@ -293,7 +293,7 @@ public class Simulator extends Observable {
                 // Next statement is a hack.  Previous statement sets EPC register to ProgramCounter-4
                 // because it assumes the bad address comes from an operand so the ProgramCounter has already been
                 // incremented.  In this case, bad address is the instruction fetch itself so Program Counter has
-                // not yet been incremented.  We'll setStatus the EPC directly here.  DPS 8-July-2013
+                // not yet been incremented.  We'll setStatusMenu the EPC directly here.  DPS 8-July-2013
                 Coprocessor0.updateRegister(Coprocessor0.EPC, RegisterFile.getProgramCounter());
                 this.constructReturnReason = EXCEPTION;
                 this.done = true;
@@ -371,7 +371,7 @@ public class Simulator extends Observable {
                         else {
                             // See if an exception handler is present.  Assume this is the case
                             // if and only if memory location Memory.exceptionHandlerAddress
-                            // (e.g. 0x80000180) contains an instruction.  If so, then setStatus the
+                            // (e.g. 0x80000180) contains an instruction.  If so, then setStatusMenu the
                             // program counter there and continue.  Otherwise terminate the
                             // MIPS program with appropriate error message.
                             ProgramStatement exceptionHandler = null;
@@ -402,7 +402,7 @@ public class Simulator extends Observable {
                 else if (DelayedBranch.isRegistered())
                     DelayedBranch.trigger();//////////////////////////////////////////////////////////////////////
 
-                // Volatile variable initialized false but can be setStatus true by the main thread.
+                // Volatile variable initialized false but can be setStatusMenu true by the main thread.
                 // Used to stop or pause a running MIPS program.  See stopSimulation() above.
                 if (stop == true) {
                     this.constructReturnReason = PAUSE_OR_STOP;
@@ -456,7 +456,7 @@ public class Simulator extends Observable {
                     // Next statement is a hack.  Previous statement sets EPC register to ProgramCounter-4
                     // because it assumes the bad address comes from an operand so the ProgramCounter has already been
                     // incremented.  In this case, bad address is the instruction fetch itself so Program Counter has
-                    // not yet been incremented.  We'll setStatus the EPC directly here.  DPS 8-July-2013
+                    // not yet been incremented.  We'll setStatusMenu the EPC directly here.  DPS 8-July-2013
                     Coprocessor0.updateRegister(Coprocessor0.EPC, RegisterFile.getProgramCounter());
                     this.constructReturnReason = EXCEPTION;
                     this.done = true;

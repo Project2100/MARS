@@ -2,11 +2,7 @@ package mars.venus;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.function.BiConsumer;
-import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
@@ -104,14 +100,14 @@ class GuiAction extends AbstractAction {
      * Perform "save" operation on current tab's file.
      */
     void save(ActionEvent event) {
-        Main.getGUI().editTabbedPane.saveCurrentFile();
+        Main.getGUI().editTabbedPane.getSelectedComponent().save(false);
     }
 
     /**
      * Perform "save as" operation on current tab's file.
      */
     void saveAs(ActionEvent event) {
-        Main.getGUI().editTabbedPane.saveAsCurrentFile();
+        Main.getGUI().editTabbedPane.getSelectedComponent().save(true);
     }
 
     /**
@@ -143,53 +139,8 @@ class GuiAction extends AbstractAction {
         Main.getGUI().mainFrame.dispatchEvent(new WindowEvent(Main.getGUI().mainFrame, WindowEvent.WINDOW_CLOSING));
     }
 
-    /**
-     * Uses the HardcopyWriter class developed by David Flanagan for the book
-     * "Java Examples in a Nutshell". It will do basic printing of multi-page
-     * text documents. It displays a print dialog but does not act on any
-     * changes the user may have specified there, such as number of copies.
-     */
     void print(ActionEvent event) {
-        EditTab tab = Main.getGUI().editTabbedPane.getSelectedComponent();
-        if (tab == null) return;
-        int fontsize = 10;  // fixed at 10 point
-        double margins = .5; // all margins (left,right,top,bottom) fixed at .5"
-
-        int lineNumberDigits = Integer.toString(tab.getSourceLineCount()).length();
-        String line;
-        String lineNumberString = "";
-        int lineNumber = 0;
-
-        try (BufferedReader in = new BufferedReader(new StringReader(tab.getSource()));
-                HardcopyWriter printer = new HardcopyWriter(Main.getGUI().mainFrame, tab.getFilename(),
-                        fontsize, margins, margins, margins, margins)) {
-
-//            Iterator<String> lineNumbers = Stream.iterate(1, i -> i + 1)
-//                    .map(i->Integer.toString(i)+": ")
-//                    .limit(tab.getSourceLineCount()).iterator();
-//
-//            Arrays.stream(tab.getSource().split(System.lineSeparator(), -1))
-//                    .map(lin -> lineNumbers.next() + lin + System.lineSeparator())
-//                    .forEach(lin -> printer.write(lin.toCharArray(), 0, lin.length()));
-            line = in.readLine();
-            while (line != null) {
-                if (tab.showingLineNumbers()) {
-                    lineNumber++;
-                    lineNumberString = Integer.toString(lineNumber) + ": ";
-                    while (lineNumberString.length() < lineNumberDigits)
-                        lineNumberString = lineNumberString + " ";
-                }
-                line = lineNumberString + line + "\n";
-                printer.write(line.toCharArray(), 0, line.length());
-                line = in.readLine();
-            }
-        }
-        catch (HardcopyWriter.PrintCanceledException ex) {
-            // TODO
-        }
-        catch (IOException ex) {
-            Main.logger.log(Level.WARNING, "Exception while printing file " + tab.getFilename(), ex);
-        }
+        Main.getGUI().editTabbedPane.getSelectedComponent().print();
     }
 
     void cut(ActionEvent event) {
@@ -324,15 +275,12 @@ class GuiAction extends AbstractAction {
         Main.getSettings().setBool(Settings.DELAYED_BRANCHING_ENABLED,
                 ((JCheckBoxMenuItem) e.getSource()).isSelected());
         // 25 June 2007 Re-assemble if the situation demands it to maintain consistency.
-        if (Main.getGUI() != null
-                && (VenusUI.getStatus() == VenusUI.RUNNABLE
-                || VenusUI.getStatus() == VenusUI.RUNNING
-                || VenusUI.getStatus() == VenusUI.TERMINATED)) {
+        if (Main.getGUI().executeTab.isShowing()) {
             // Stop execution if executing -- should NEVER happen because this 
             // Action's widget is disabled during MIPS execution.
-            if (VenusUI.getStatus() == VenusUI.RUNNING)
+            if (VenusUI.getStarted())
                 Simulator.getInstance().stopExecution(this);
-            ExecuteAction.assemble(false);
+            ExecuteAction.assemble();
         }
     }
 
@@ -369,7 +317,7 @@ class GuiAction extends AbstractAction {
     void exceptionHandlerSettings(ActionEvent event) {
         new ExceptionHandlerDialog().setVisible(true);
     }
-    
+
     void memoryConfigurationSettings(ActionEvent e) {
         new MemoryConfigurationDialog(this).setVisible(true);
     }

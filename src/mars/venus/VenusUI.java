@@ -11,7 +11,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
 import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -31,7 +30,6 @@ import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
-import javax.swing.undo.UndoManager;
 import mars.Main;
 import mars.Settings;
 import mars.mips.dump.DumpFormatLoader;
@@ -73,7 +71,8 @@ import mars.mips.dump.DumpFormatLoader;
  * here primarily so both can share the Action objects.
  */
 public class VenusUI {
-    
+
+    final String baseTitle;
 
     public final JFrame mainFrame;
     final JMenuBar menuBar;
@@ -86,7 +85,6 @@ public class VenusUI {
     public final Coprocessor1Window coprocessor1Tab;
     final Coprocessor0Window coprocessor0Tab;
     public final MessagesPane messagesPane;
-
 
     // components of the menubar
     private JMenu file, run, help, edit, settings;
@@ -125,16 +123,6 @@ public class VenusUI {
             settingsHighlightingAction, settingsMemoryConfigurationAction, settingsSelfModifyingCodeAction;
     private Action helpHelpAction;
 
-    void updateUndoManager() {
-        EditTab pane = editTabbedPane.getSelectedComponent();
-        if (pane != null) updateUndoManager(pane.getUndoManager());
-    }
-
-    void updateUndoManager(UndoManager manager) {
-        editUndoAction.setEnabled(manager.canUndo());
-        editRedoAction.setEnabled(manager.canRedo());
-    }
-
     /**
      * Constructor for the Class. Sets up a window object for the UI
      */
@@ -145,7 +133,7 @@ public class VenusUI {
         catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
             Main.logger.log(Level.WARNING, "Could not set system LAF", ex);
         }
-        
+
         Toolkit toolkit = Toolkit.getDefaultToolkit();
 
         double screenWidth = toolkit.getScreenSize().getWidth();
@@ -165,8 +153,7 @@ public class VenusUI {
         // the "restore" size (window control button that toggles with maximize)
         // I want to keep it large, with enough room for user to getStatus handles
         //this.setSize((int)(screenWidth*.8),(int)(screenHeight*.8));
-        mainFrame = new JFrame("MARS " + Main.version);
-        reset();
+        mainFrame = new JFrame(baseTitle = "MARS " + Main.version);
 
         //  image courtesy of NASA/JPL.
         Image icon = toolkit.getImage(VenusUI.class.getResource(
@@ -204,7 +191,7 @@ public class VenusUI {
 
         registersPane.setPreferredSize(registersPanePreferredSize);
 
-        editTabbedPane = new EditPane(mainFrame.getTitle());
+        editTabbedPane = new EditPane();
         editTabbedPane.setPreferredSize(mainPanePreferredSize);
 
         executeTab = new ExecutePane(registersTab, coprocessor1Tab, coprocessor0Tab);
@@ -215,7 +202,7 @@ public class VenusUI {
         mainPane.add(editTabbedPane);
 
         /* Listener has one specific purpose: when Execute tab is selected for the 
-         * first time, setStatus the bounds of its internal frames by invoking the
+         * first time, setStatusMenu the bounds of its internal frames by invoking the
          * setWindowsBounds() method.  Once this occurs, listener removes itself!
          * We do NOT want to reset bounds each time Execute tab is selected.
          * See ExecutePane.setWindowsBounds documentation for more details.
@@ -240,7 +227,7 @@ public class VenusUI {
         horizonSplitter.setOneTouchExpandable(true);
         horizonSplitter.resetToPreferredSizes();
 
-        // due to dependencies, do not setStatus up menu/toolbar until now.
+        // due to dependencies, do not setStatusMenu up menu/toolbar until now.
         createActionObjects(this, toolkit);
 
         menuBar = new JMenuBar();
@@ -345,9 +332,9 @@ public class VenusUI {
         // the GUI frame will be hidden but I want it to do nothing.
         mainFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
+        setMenuStateInitial();
         mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         mainFrame.pack();
-        setMenuStateInitial();
         mainFrame.setVisible(true);
     }
 
@@ -650,8 +637,6 @@ public class VenusUI {
         edit.add(editFindReplace);
         edit.add(editSelectAll);
 
-//        runAssemble = new JMenuItem(runAssembleAction);
-//        runAssemble.setIcon(new ImageIcon(toolkit.getImage(cs.getResource(Main.imagesPath + "Assemble16.png"))));//"MyAssemble16.gif"))));
         runGo = new JMenuItem(runGoAction);
         runGo.setIcon(new ImageIcon(toolkit.getImage(cs.getResource(Main.imagesPath + "Play16.png"))));//"Play16.gif"))));
         runStep = new JMenuItem(runStepAction);
@@ -774,50 +759,15 @@ public class VenusUI {
     }
 
     /* Determine from FileStatus what the menu state (enabled/disabled)should 
-     * be then call the appropriate method to setStatus it.  Current states are:
+     * be then call the appropriate method to setStatusMenu it.  Current states are:
      *
-     * setMenuStateInitial: setStatus upon startup and after File->Close
-     * setMenuStateEditingNew: setStatus upon File->New
-     * setMenuStateEditing: setStatus upon File->Open or File->Save or erroneous Run->Assemble
-     * setMenuStateRunnable: setStatus upon successful Run->Assemble
-     * setMenuStateRunning: setStatus upon Run->Go
-     * setMenuStateTerminated: setStatus upon completion of simulated execution
+     * setMenuStateInitial: setStatusMenu upon startup and after File->Close
+     * setMenuStateEditingNew: setStatusMenu upon File->New
+     * setMenuStateEditing: setStatusMenu upon File->Open or File->Save or erroneous Run->Assemble
+     * setMenuStateRunnable: setStatusMenu upon successful Run->Assemble
+     * setMenuStateRunning: setStatusMenu upon Run->Go
+     * setMenuStateTerminated: setStatusMenu upon completion of simulated execution
      */
-    void setMenuState(int status) {
-        menuState = status;
-        switch (status) {
-            case NO_FILE:
-                setMenuStateInitial();
-                break;
-            case NEW_NOT_EDITED:
-                setMenuStateEditingNew();
-                break;
-            case NEW_EDITED:
-                setMenuStateEditingNew();
-                break;
-            case NOT_EDITED:
-                setMenuStateNotEdited(); // was MenuStateEditing. DPS 9-Aug-2011
-                break;
-            case EDITED:
-                setMenuStateEditing();
-                break;
-            case RUNNABLE:
-                setMenuStateRunnable();
-                break;
-            case RUNNING:
-                setMenuStateRunning();
-                break;
-            case TERMINATED:
-                setMenuStateTerminated();
-                break;
-            case OPENING:// This is a temporary state. DPS 9-Aug-2011
-                break;
-            default:
-                System.out.println("Invalid File Status: " + status);
-                break;
-        }
-    }
-
     void setMenuStateInitial() {
         fileNewAction.setEnabled(true);
         fileOpenAction.setEnabled(true);
@@ -887,38 +837,6 @@ public class VenusUI {
     }
 
     void setMenuStateEditing() {
-        /* Note: undo and redo are handled separately by the undo manager*/
-        fileNewAction.setEnabled(true);
-        fileOpenAction.setEnabled(true);
-        fileCloseAction.setEnabled(true);
-        fileCloseAllAction.setEnabled(true);
-        fileSaveAction.setEnabled(true);
-        fileSaveAsAction.setEnabled(true);
-        fileSaveAllAction.setEnabled(true);
-        fileDumpMemoryAction.setEnabled(false);
-        filePrintAction.setEnabled(true);
-        fileExitAction.setEnabled(true);
-        editCutAction.setEnabled(true);
-        editCopyAction.setEnabled(true);
-        editPasteAction.setEnabled(true);
-        editFindReplaceAction.setEnabled(true);
-        editSelectAllAction.setEnabled(true);
-        settingsDelayedBranchingAction.setEnabled(true); // added 25 June 2007
-        settingsMemoryConfigurationAction.setEnabled(true); // added 21 July 2009
-        runGoAction.setEnabled(false);
-        runStepAction.setEnabled(false);
-        runBackstepAction.setEnabled(false);
-        runResetAction.setEnabled(false);
-        runStopAction.setEnabled(false);
-        runPauseAction.setEnabled(false);
-        runClearBreakpointsAction.setEnabled(false);
-        runToggleBreakpointsAction.setEnabled(false);
-        updateUndoManager();
-    }
-
-    /* Use this when "File -> New" is used
-     */
-    void setMenuStateEditingNew() {
         /* Note: undo and redo are handled separately by the undo manager*/
         fileNewAction.setEnabled(true);
         fileOpenAction.setEnabled(true);
@@ -1046,27 +964,6 @@ public class VenusUI {
         updateUndoManager();
     }
 
-
-    /**
-     * Get reference to settings menu item for display base of memory/register
-     * values.
-     *
-     * @return the menu item
-     */
-    public JCheckBoxMenuItem getValueDisplayBaseMenuItem() {
-        return settingsValueDisplayBase;
-    }
-
-    /**
-     * Get reference to settings menu item for display base of memory/register
-     * values.
-     *
-     * @return the menu item
-     */
-    public JCheckBoxMenuItem getAddressDisplayBaseMenuItem() {
-        return settingsAddressDisplayBase;
-    }
-
     // Toggles between "Edit" and "Execute" mode, called inside constructor
     final void toggleGUIMode() {
         if (marsMode.getText().equals("Edit")) {
@@ -1094,11 +991,9 @@ public class VenusUI {
             mainPane.removeAll();
             mainPane.add(editTabbedPane);
         }
-        else if (ExecuteAction.assemble(true)){
+        else if (ExecuteAction.assemble()) {
             marsMode.setText("Edit");
             marsMode.setToolTipText("Edit MIPS program");
-
-            
 
             toolBar.removeAll();
             toolBar.add(marsMode);
@@ -1157,34 +1052,51 @@ public class VenusUI {
         executeTab.getTextSegmentWindow().highlightStepAtPC();
     }
 
-    /////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////
-    
+    /**
+     * Places name of file currently being edited into its edit tab and the
+     * application's titleLabel bar. The edit tab will contain only the
+     * filename, the titleLabel bar will contain full pathname. If file has been
+     * modified since created, opened or saved, as indicated by value of the
+     * status parameter, the name and path will be followed with an '*'. If
+     * newly-created file has not yet been saved, the titleLabel bar will show
+     * (temporary) file name but not path.
+     */
+    void updateGUIState() {
+        EditTab tab = editTabbedPane.getSelectedComponent();
 
+        if (tab == null) {
+            mainFrame.setTitle(baseTitle);
+            setMenuStateInitial();
+        }
+        else {
+            String editMark = tab.hasUnsavedEdits() ? "* " : "  ";
+            mainFrame.setTitle(tab.getPathname() + editMark + " - " + baseTitle);
+            editTabbedPane.setTitleAtComponent(tab.getFilename() + editMark, tab);
+
+            if (tab.isNew() || tab.hasUnsavedEdits())
+                setMenuStateEditing();
+            else
+                setMenuStateNotEdited();
+        }
+    }
+
+    public void updateUndoManager() {
+        EditTab pane = editTabbedPane.getSelectedComponent();
+        if (pane != null) {
+            editUndoAction.setEnabled(pane.getUndoManager().canUndo());
+            editRedoAction.setEnabled(pane.getUndoManager().canRedo());
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
     // PLEASE PUT THESE TWO (& THEIR METHODS) SOMEWHERE THEY BELONG, NOT HERE
     private static boolean reset = true; // registers/memory reset for execution
     private static boolean started = false;  // started execution
-    
-    /**
-     * Get current menu state. State values are constants in FileStatus class.
-     * DPS 23 July 2008
-     *
-     * @return current menu state.
-     *
-     */
-    public static int getMenuState() {
-        return menuState;
-    }
 
     /**
-     * To setStatus whether the register values are reset.
+     * To setStatusMenu whether the register values are reset.
      *
      * @param b Boolean true if the register values have been reset.
      *
@@ -1194,7 +1106,7 @@ public class VenusUI {
     }
 
     /**
-     * To setStatus whether MIPS program execution has started.
+     * To setStatusMenu whether MIPS program execution has started.
      *
      * @param b true if the MIPS program execution has started.
      *
@@ -1222,201 +1134,5 @@ public class VenusUI {
     public static boolean getStarted() {
         return started;
     }
-    
-    
-    /**
-     * initial state or after close
-     */
-    public static final int NO_FILE = 0;
-    /**
-     * New edit window with no edits
-     */
-    public static final int NEW_NOT_EDITED = 1;
-    /**
-     * open/saved edit window with no edits
-     */
-    public static final int NOT_EDITED = 3;
-    /**
-     * successful assembly
-     */
-    public static final int RUNNABLE = 5;
-    /**
-     * open/saved edit window with unsaved edits
-     */
-    public static final int EDITED = 4;
-    /**
-     * execution is under way
-     */
-    public static final int RUNNING = 6;
-    /**
-     * file is being opened. DPS 9-Aug-2011
-     */
-    public static final int OPENING = 8;
-    /**
-     * New edit window with unsaved edits
-     */
-    public static final int NEW_EDITED = 2;
-    /**
-     * execution terminated
-     */
-    public static final int TERMINATED = 7;
-    
-    
-    
-    private static int menuState = NO_FILE;
-    ///////////////////////////////////////////////////////////////////
-    //                                                               //
-    //  The static part.  Legacy code from original student team's   //
-    //  2003 Practicum project through MARS 3.8, when the editor     //
-    //  was limited to one file.  The status of that file became     //
-    //  the de facto status of the system.  Should have used a       //
-    //  singleton class but in 2003 did not know what that was!      //
-    //  My plan is to phase out all statics but the constants        //
-    //  in MARS 4.0 but will keep it in place while at the same time //
-    //  defining non-static members for use by individual files      //
-    //  currently opened in the editor.  DPS, 9 April 2010.          //
-    //                                                               //
-    ///////////////////////////////////////////////////////////////////
-    private static int systemStatus; // setStatus to one of the above
-    private static boolean systemEdited;
-    private static boolean systemSaved;
-    private static boolean systemAssembled;
-    private static String systemName;
-    private static File systemFile;
 
-    /**
-     * Update static FileStatus fields with values from this FileStatus object
-     * To support legacy code that depends on the static.
-     * @param file
-     * @param status
-     */
-    public static void updateStaticFileStatus(File file, int status) {
-        systemStatus = status;
-        systemName = file.getPath();
-        systemAssembled = false;
-        systemSaved = (status == VenusUI.NOT_EDITED || status == VenusUI.RUNNABLE || status == VenusUI.RUNNING || status == VenusUI.TERMINATED);
-        systemEdited = (status == VenusUI.NEW_EDITED || status == VenusUI.EDITED);
-        systemFile = file;
-    }
-
-    /**
-     * Tells whether the file has been saved.
-     *
-     * @return Boolean variable that is true if the ASM file has been saved
-     */
-    public static boolean isSaved() {
-        return systemSaved;
-    }
-
-    /**
-     * Set file status. Also updates menu state accordingly.
-     *
-     * @param newStatus New status: EDITED, RUNNABLE, etc, see list above.
-     */
-    public static void setStatus(int newStatus) {
-        systemStatus = newStatus;
-        Main.getGUI().setMenuState(systemStatus);
-    }
-
-    /**
-     * Sets the file to the ASM file passed.
-     *
-     * @param f file object variable that stores the ASM file.
-     */
-    public static void setFile(File f) {
-        systemFile = f;
-    }
-
-    /**
-     * Tells whether the file has been assembled.
-     *
-     * @return Boolean value that is true if the ASM file has been assembled.
-     */
-    public static boolean isAssembled() {
-        return systemAssembled;
-    }
-
-    /**
-     * Returns the ASM file.
-     *
-     * @return The ASM file.
-     */
-    public static File getFile() {
-        return systemFile;
-    }
-
-    /**
-     * Returns the name of the file.
-     *
-     * @return The name of the ASM file.
-     */
-    public static String getName() {
-        return systemName;
-    }
-
-    /**
-     * Resets all the values in FileStatus
-     */
-    public static void reset() {
-        systemStatus = VenusUI.NO_FILE;
-        systemName = "";
-        systemAssembled = false;
-        systemSaved = false;
-        systemEdited = false;
-        systemFile = null;
-    }
-
-    /**
-     * Get file status
-     *
-     * @return file status EDITED, RUNNABLE, etc, see list above
-     */
-    public static int getStatus() {
-        return systemStatus;
-    }
-
-    /**
-     * Changes the value of saved to the parameter given.
-     *
-     * @param b boolean variable that tells what to setStatus saved to .
-     */
-    public static void setSaved(boolean b) {
-        systemSaved = b;
-    }
-
-    /**
-     * Tells whether the file has been edited since it has been saved.
-     *
-     * @return Boolean value that returns true if the ASM file has been edited.
-     */
-    public static boolean isEdited() {
-        return systemEdited;
-    }
-
-    /**
-     * Changes the value of assembled to the parameter given.
-     *
-     * @param b boolean variable that tells what to setStatus assembled to.
-     */
-    public static void setAssembled(boolean b) {
-        systemAssembled = b;
-    }
-
-    /**
-     * Changes the value of edited to the parameter given.
-     *
-     * @param b boolean variable that tells what to setStatus edited to.
-     */
-    public static void setEdited(boolean b) {
-        systemEdited = b;
-    }
-
-    /**
-     * Changes the value of name to the parameter given.
-     *
-     * @param s string variable tells what to setStatus the name of the file to .
-     */
-    public static void setName(String s) {
-        systemName = s;
-    }
 }

@@ -1,29 +1,35 @@
 package mars.venus;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.ItemEvent;
-import mars.venus.editors.MARSTextEditingArea;
-import mars.venus.editors.generic.GenericTextArea;
-import mars.venus.editors.jeditsyntax.JEditBasedTextArea;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.function.UnaryOperator;
+import java.util.logging.Level;
 import java.util.stream.Stream;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.undo.CompoundEdit;
 import javax.swing.undo.UndoManager;
+import mars.MIPSprogram;
 import mars.Main;
+import mars.ProcessingException;
 import mars.Settings;
+import mars.venus.editors.MARSTextEditingArea;
+import mars.venus.editors.generic.GenericTextArea;
+import mars.venus.editors.jeditsyntax.JEditBasedTextArea;
 
 /*
  Copyright (c) 2003-2011,  Pete Sanderson and Kenneth Vollmar
@@ -52,7 +58,6 @@ import mars.Settings;
 
  (MIT license, http://www.opensource.org/licenses/mit-license.html)
  */
-
 /**
  * Represents one file opened for editing. Maintains required internal
  * structures. Before Mars 4.0, there was only one editor pane, a tab, and only
@@ -64,129 +69,114 @@ import mars.Settings;
  */
 public class EditTab extends JPanel implements Observer {
 
+    private static final char newline = '\n';
+
     private Path file;
-    private int status;
+    private boolean edited;
 
-    private MARSTextEditingArea sourceCode;
-    private JLabel caretPositionLabel;
-
-    final TabTitleComponent titleComponent;
-    JLabel titleLabel;
-
-    private JCheckBox showLineNumbers;
-    private JLabel lineNumbers;
-    private boolean isCompoundEdit = false;
-    private CompoundEdit compoundEdit;
+    private final MARSTextEditingArea sourceCode;
+    private final JLabel lineNumbers;
+    private final JLabel caretPositionLabel;
+    private final JCheckBox showLineNumbers;
 
     /**
-     * Constructor for the EditPane class.
+     * Constructs a tab to display in editor mode with the contents of the
+     * specified {@code source} file.
      *
-     * @param content the source code to display in the tab
-     * @param file
+     * @param source The source file to open in this tab
+     * @throws IllegalArgumentException if {@code source} is {@code null}
      */
-    public EditTab(String content, Path file) {
+    public EditTab(Path source) {
         super(new BorderLayout());
+
+        // Argument check
+        if (source == null)
+            throw new IllegalArgumentException("Passing null Path to tab constructor!");
 
         // We want to be notified of editor font changes! See simUpdate() below.
         Main.getSettings().addObserver(this);
 
-        // Initialized as null
-        this.file = file;
-        status = file == null ? VenusUI.NEW_NOT_EDITED : VenusUI.NOT_EDITED;
+        // Field init
+        this.file = source;
+        edited = false;
 
         lineNumbers = new JLabel();
 
         caretPositionLabel = new JLabel();
         caretPositionLabel.setToolTipText("Tracks the current position of the text editing cursor.");
 
+        showLineNumbers = new JCheckBox("Show Line Numbers");
+        showLineNumbers.setToolTipText("If checked, will display line number for each line of text.");
+        showLineNumbers.setEnabled(false);
+        // Show line numbers by default.
+        showLineNumbers.setSelected(Main.getSettings().getBool(Settings.EDITOR_LINE_NUMBERS_DISPLAYED));
+
         // sourceCode uses caretPositionLabel
         sourceCode = Main.getSettings().getBool(Settings.GENERIC_TEXT_EDITOR)
                 ? new GenericTextArea(this, lineNumbers)
                 : new JEditBasedTextArea(this, lineNumbers);
-        sourceCode.setSourceCode(content, true);
 
-        // sourceCode is responsible for its own scrolling
-        add(sourceCode.getOuterComponent(), BorderLayout.CENTER);
+        String sourceContent;
+        if (source.getRoot() == null) sourceContent = "";
+        else {
+            Main.program = new MIPSprogram();
+            try {
+                Main.program.readSource(source.toString());
+            }
+            catch (ProcessingException pe) {
+            }
 
-        // If source code is modified, will setStatus flag to trigger/request file save.
+            sourceContent = ((ArrayList<String>) Main.program.getSourceList())
+                    .stream()
+                    .reduce((s, t) -> s + newline + t)
+                    .get();
+        }
+
+        sourceCode.setSourceCode(sourceContent, true);
+
+        // The above operation generates an undoable edit, setting the initial
+        // text area contents, that should not be seen as undoable by the Undo
+        // action.  Let's getStatus rid of it.
+        sourceCode.discardAllUndoableEdits();
+        showLineNumbers.setEnabled(true);
+
+        // If source code is modified, will update application status
         sourceCode.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent evt) {
-                // IF statement added DPS 9-Aug-2011
-                // This method is triggered when file contents added to document
-                // upon opening, even though not edited by user.  The IF
-                // statement will sense this situation and immediately return.
-                if (VenusUI.getStatus() == VenusUI.OPENING) {
-                    status = VenusUI.NOT_EDITED;
-                    VenusUI.setStatus(VenusUI.NOT_EDITED);
-                    if (showingLineNumbers())
-                        lineNumbers.setText(getLineNumbers());
-                    return;
+                if (!edited) {
+                    edited = true;
+                    Main.getGUI().updateGUIState();
                 }
-                // End of 9-Aug-2011 modification.                    
-                if (getFileStatus() == VenusUI.NEW_NOT_EDITED)
-                    setFileStatus(VenusUI.NEW_EDITED);
-                if (getFileStatus() == VenusUI.NOT_EDITED)
-                    setFileStatus(VenusUI.EDITED);
-                if (getFileStatus() == VenusUI.NEW_EDITED)
-                    Main.getGUI().editTabbedPane.setTitle("", getFilename(), getFileStatus());
-                else
-                    Main.getGUI().editTabbedPane.setTitle(getPathname(), getFilename(), getFileStatus());
-
-                VenusUI.setEdited(true);
-                switch (VenusUI.getStatus()) {
-                    case VenusUI.NEW_NOT_EDITED:
-                        VenusUI.setStatus(VenusUI.NEW_EDITED);
-                        break;
-                    case VenusUI.NEW_EDITED:
-                        break;
-                    default:
-                        VenusUI.setStatus(VenusUI.EDITED);
-                }
-
-                Main.getGUI().executeTab.clearPane(); // DPS 9-Aug-2011
-
-                if (showingLineNumbers())
+                if (showLineNumbers.isSelected())
                     lineNumbers.setText(getLineNumbers());
             }
 
             @Override
             public void removeUpdate(DocumentEvent evt) {
-                this.insertUpdate(evt);
+                insertUpdate(evt);
             }
 
             @Override
             public void changedUpdate(DocumentEvent evt) {
-                this.insertUpdate(evt);
             }
         });
 
-        titleLabel = new JLabel(getFilename());
-        titleComponent = new TabTitleComponent();
-
-        showLineNumbers = new JCheckBox("Show Line Numbers");
-        showLineNumbers.setToolTipText("If checked, will display line number for each line of text.");
-        showLineNumbers.setEnabled(false);
-        // Show line numbers by default.
-        showLineNumbers.setSelected(Main.getSettings().getEditorLineNumbersDisplayed());
-
         lineNumbers.setFont(getLineNumberFont(sourceCode.getFont()));
         lineNumbers.setVerticalAlignment(JLabel.TOP);
-        lineNumbers.setText("1");
+        if (showLineNumbers.isSelected())
+            lineNumbers.setText(getLineNumbers());
         lineNumbers.setVisible(true);
 
         // Listener fires when "Show Line Numbers" check box is clicked.
-        showLineNumbers.addItemListener((ItemEvent e) -> {
-            if (showLineNumbers.isSelected()) {
-                lineNumbers.setText(getLineNumbers());
-                lineNumbers.setVisible(true);
-            }
-            else {
-                lineNumbers.setText("");
-                lineNumbers.setVisible(false);
-            }
+        showLineNumbers.addItemListener((event) -> {
+            boolean isSelected = event.getStateChange() == ItemEvent.SELECTED;
+
+            lineNumbers.setText(isSelected ? getLineNumbers() : "");
+            lineNumbers.setVisible(isSelected);
+            Main.getSettings().setBool(Settings.EDITOR_LINE_NUMBERS_DISPLAYED, isSelected);
+
             sourceCode.revalidate(); // added 16 Jan 2012 to assure label redrawn.
-            Main.getSettings().setEditorLineNumbersDisplayed(showLineNumbers.isSelected());
             // needed because caret disappears when checkbox clicked
             sourceCode.setCaretVisible(true);
             sourceCode.requestFocusInWindow();
@@ -195,37 +185,18 @@ public class EditTab extends JPanel implements Observer {
         JPanel editInfo = new JPanel(new BorderLayout());
         editInfo.add(caretPositionLabel, BorderLayout.WEST);
         editInfo.add(showLineNumbers, BorderLayout.CENTER);
+        // sourceCode is responsible for its own scrolling
+        add(sourceCode.getOuterComponent(), BorderLayout.CENTER);
         add(editInfo, BorderLayout.SOUTH);
     }
 
     /**
-     * For initializing the source code when opening an ASM file
-     *
-     * @param s String containing text
-     * @param editable setStatus true if code is editable else false
-     */
-    public void setSourceCode(String s, boolean editable) {
-        sourceCode.setSourceCode(s, editable);
-    }
-
-    /**
-     * Get rid of any accumulated undoable edits. It is useful to call this
-     * method after opening a file into the text area. The act of setting its
-     * text content upon reading the file will generate an undoable edit.
-     * Normally you don't want a freshly-opened file to appear with its Undo
-     * action enabled. But it will unless you call this after setting the text.
-     */
-    public void discardAllUndoableEdits() {
-        sourceCode.discardAllUndoableEdits();
-    }
-
-    /**
-     * Form string with source code line numbers. Resulting string is HTML, for
-     * which JLabel will happily honor {@code <br>} instead of {@code \n} 
-     * to do multi-line label.
+     * Form string with source code line numbers. Resulting string is in HTML,
+     * for which JLabel will happily honor {@code <br />} instead of {@code \n}
+     * to do multi-line label.<br />
      * The line number list is a JLabel with one line number per line.
      *
-     * @return
+     * @return HTML formatted string representing the line numbers
      */
     private String getLineNumbers() {
         return Stream.iterate(1, i -> i + 1)
@@ -255,33 +226,12 @@ public class EditTab extends JPanel implements Observer {
     }
 
     /**
-     * Get the editing status for this EditTab's associated document. This will
-     * be one of the constants from class FileStatus.
-     *
-     * @return current editing status. See FileStatus static constants.
-     */
-    public int getFileStatus() {
-        return status;
-    }
-
-    /**
-     * Set the editing status for this EditTab's associated document. For the
-     * argument, use one of the constants from class FileStatus.
-     *
-     * @param fileStatus the status constant from class FileStatus
-     */
-    public void setFileStatus(int fileStatus) {
-        //TODO ADD CHECKS FROM STATE TO STATE
-        status = fileStatus;
-    }
-
-    /**
      * Get file name with no path information. See java.io.File.getName()
      *
      * @return filename as a String
      */
     public String getFilename() {
-        return (file == null) ? null : file.getFileName().toString();
+        return file.getFileName().toString();
     }
 
     /**
@@ -290,18 +240,16 @@ public class EditTab extends JPanel implements Observer {
      * @return full pathname as a String. Null if
      */
     public String getPathname() {
-        return (file == null) ? null : file.toString();
+        return file.toString();
     }
 
     /**
-     * Set full file pathname. See java.io.File(String pathname) for parameter
-     * specs.
+     * Get file parent pathname. See java.io.File.getParentDirectory()
      *
-     * @param pathname the new pathname. If no directory path,
-     * getParentDirectory() will return null.
+     * @return parent full pathname as a String
      */
-    public void setPathname(String pathname) {
-        file = Paths.get(pathname);
+    public String getParentDirectory() {
+        return file.getParent().toString();
     }
 
     /**
@@ -312,7 +260,7 @@ public class EditTab extends JPanel implements Observer {
      * otherwise.
      */
     public boolean hasUnsavedEdits() {
-        return status == VenusUI.NEW_EDITED || status == VenusUI.EDITED;
+        return edited;
     }
 
     /**
@@ -323,21 +271,14 @@ public class EditTab extends JPanel implements Observer {
      * false otherwise.
      */
     public boolean isNew() {
-        return status == VenusUI.NEW_NOT_EDITED || status == VenusUI.NEW_EDITED;
+        return file.getRoot() == null;
     }
 
     /**
      * Delegates to text area's requestFocusInWindow method.
      */
     public void tellEditingComponentToRequestFocusInWindow() {
-        this.sourceCode.requestFocusInWindow();
-    }
-
-    /**
-     * Delegates to corresponding FileStatus method
-     */
-    public void updateStaticFileStatus() {
-        VenusUI.updateStaticFileStatus(file.toFile(), status);
+        sourceCode.requestFocusInWindow();
     }
 
     /**
@@ -353,7 +294,7 @@ public class EditTab extends JPanel implements Observer {
      toolbar or menu or the defined menu Alt codes.  When
      Ctrl-C, Ctrl-X or Ctrl-V are used, this code is NOT invoked
      but the operation works correctly!
-     The "setStatus visible" operations are used because clicking on the toolbar
+     The "setStatusMenu visible" operations are used because clicking on the toolbar
      icon causes both the selection highlighting AND the blinking cursor
      to disappear!  This does not happen when using menu selection or 
      Ctrl-C/X/V
@@ -397,7 +338,7 @@ public class EditTab extends JPanel implements Observer {
      */
     public void undo() {
         sourceCode.undo();
-        updateUndoState();
+        Main.getGUI().updateUndoManager();
     }
 
     /**
@@ -405,31 +346,7 @@ public class EditTab extends JPanel implements Observer {
      */
     public void redo() {
         sourceCode.redo();
-        updateUndoState();
-    }
-
-    public void updateUndoState() {
-        Main.getGUI().updateUndoManager(this.getUndoManager());
-    }
-
-    /**
-     * getStatus editor's line number display status
-     *
-     * @return true if editor is current displaying line numbers, false
-     * otherwise.
-     */
-    public boolean showingLineNumbers() {
-        return showLineNumbers.isSelected();
-    }
-
-    /**
-     * enable or disable checkbox that controls display of line numbers
-     *
-     * @param enabled True to enable box, false to disable.
-     */
-    public void setShowLineNumbersEnabled(boolean enabled) {
-        showLineNumbers.setEnabled(enabled);
-        //showLineNumbers.setSelected(false); // setStatus off, whether closing or opening
+        Main.getGUI().updateUndoManager();
     }
 
     /**
@@ -457,11 +374,9 @@ public class EditTab extends JPanel implements Observer {
      * Given byte stream position in text being edited, calculate its column and
      * line number coordinates.
      *
-     * @param stream position of character
+     * @param position position of character
      * @return position Its column and line number coordinate as a Point.
      */
-    private static final char newline = '\n';
-
     public Point convertStreamPositionToLineColumn(int position) {
         String textStream = sourceCode.getText();
         int line = 1;
@@ -607,7 +522,7 @@ public class EditTab extends JPanel implements Observer {
         sourceCode.updateSyntaxStyles();
         sourceCode.revalidate();
         // We want line numbers to be displayed same size but always PLAIN style.
-        // Easiest way to getStatus same pixel height as source code is to setStatus to same
+        // Easiest way to getStatus same pixel height as source code is to setStatusMenu to same
         // font family as the source code! It can getStatus a bit complicated otherwise
         // because different fonts will render the same font size in different
         // pixel heights.  This is a factor because the line numbers as displayed
@@ -629,45 +544,94 @@ public class EditTab extends JPanel implements Observer {
     }
 
     /**
-     * Get file parent pathname. See java.io.File.getParentDirectory()
+     * Saves the contents of this pane into a file.
      *
-     * @return parent full pathname as a String
+     * @param doRename if true, will force "Save As" behavior
+     * @return true if save operation has been successful
      */
-    public String getParentDirectory() {
-        return (file == null) ? null : file.getParent().toString();
+    boolean save(boolean doRename) {
+
+        if (isNew() || doRename) {
+
+            //Setting up file chooser
+            JFileChooser saveDialog = new JFileChooser(isNew()
+                    ? Main.getGUI().editTabbedPane.getCurrentSaveDirectory()
+                    : file.getParent().toString());
+            saveDialog.setDialogTitle("Save As");
+            if (!isNew())
+                saveDialog.setSelectedFile(file.getFileName().toFile());
+
+            boolean doSave = false;
+            while (!doSave) {
+                if (saveDialog.showSaveDialog(Main.getGUI().mainFrame) != JFileChooser.APPROVE_OPTION)
+                    return false;
+
+                Path newFilename = saveDialog.getSelectedFile().toPath();
+
+                if (!Files.exists(newFilename)) {
+                    file = newFilename;
+                    doSave = true;
+                }
+                else switch (JOptionPane.showConfirmDialog(
+                            Main.getGUI().mainFrame,
+                            "File " + newFilename.getFileName() + " already exists.  Do you wish to overwrite it?",
+                            "Overwrite existing file?",
+                            JOptionPane.YES_NO_CANCEL_OPTION,
+                            JOptionPane.WARNING_MESSAGE)) {
+                        case JOptionPane.YES_OPTION:
+                            file = newFilename;
+                            doSave = true;
+                            break;
+                        case JOptionPane.NO_OPTION:
+                            break;
+                        case JOptionPane.CANCEL_OPTION:
+                            return false;
+                        default:
+                            throw new IllegalStateException("Unexpected exception: Illegal case on confirm dialog!");
+                    }
+            }
+        }
+
+        try {
+            Files.write(file, sourceCode.getText().getBytes());
+            edited = false;
+        }
+        catch (IOException ex) {
+            Main.logger.log(Level.SEVERE, "Exception while writing file: " + file.toString(), ex);
+            return false;
+        }
+
+        Main.getGUI().updateGUIState();
+        return true;
     }
 
     /**
-     * Set full file pathname. See java.io.File(String parent, String child) for
-     * parameter specs.
-     *
-     * @param parent the parent directory of the file. If null,
-     * getParentDirectory() will return null.
-     * @param name the name of the file (no directory path)
+     * Uses the HardcopyWriter class developed by David Flanagan for the book
+     * "Java Examples in a Nutshell". It will do basic printing of multi-page
+     * text documents. It displays a print dialog but does not act on any
+     * changes the user may have specified there, such as number of copies.
      */
-    public void setPathname(String parent, String name) {
-        file = Paths.get(parent, name);
-    }
+    void print() {
+        try (HardcopyWriter printer = new HardcopyWriter(Main.getGUI().mainFrame, getFilename(),
+                10, .5, .5, .5, .5)) {
 
-    private class TabTitleComponent extends JPanel {
+            UnaryOperator<String> mapper;
+            if (showLineNumbers.isSelected()) {
+                Iterator<String> lineNumber = Stream.iterate(1, n -> n + 1)
+                        .limit(getSourceLineCount())
+                        .map(n -> Integer.toString(n) + ": ")
+                        .iterator();
+                mapper = line -> lineNumber.next() + line + newline;
+            }
+            else mapper = line -> line + newline;
 
-        public TabTitleComponent() {
-            super(new FlowLayout(FlowLayout.LEFT, 0, 0));
-
-            setOpaque(false);
-            add(titleLabel);
-
-            JButton closeButton = new JButton("×");
-            closeButton.setMargin(new Insets(0, 2, 0, 2));
-            closeButton.addActionListener((event) -> {
-                // if for some reason the tab isn't found, an IOOBE is thrown
-                if (Main.getGUI().editTabbedPane.editsSavedOrAbandoned(EditTab.this))
-                    Main.getGUI().editTabbedPane.remove(EditTab.this);
-            });
-            add(closeButton);
-
+            Arrays.stream(getSource().split(newline + "", -1))
+                    .sequential()
+                    .map(mapper)
+                    .forEach(line -> printer.write(line.toCharArray(), 0, line.length()));
         }
-
+        catch (HardcopyWriter.PrintCanceledException ex) {
+            // TODO
+        }
     }
-
 }

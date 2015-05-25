@@ -49,13 +49,13 @@ import mars.util.SystemIO;
  * Action for the Run -> Reset menu item
  */
 class ExecuteAction extends GuiAction {
+
     private static boolean warningsAreErrors;
     // Threshold for adding filename to printed message of files being assembled.
     private static final int LINE_LENGTH_LIMIT = 60;
     private static ArrayList MIPSprogramsToAssemble;
     private static boolean extendedAssemblerEnabled;
-    
-    
+
     protected ExecuteAction(String name, Icon icon, String descrip,
             Integer mnemonic, KeyStroke accel, VenusUI gui) {
         super(name, icon, descrip, mnemonic, accel, gui);
@@ -65,34 +65,43 @@ class ExecuteAction extends GuiAction {
         return MIPSprogramsToAssemble;
     }
 
-    public static boolean assemble(boolean isInEditMode) {
+    public static boolean assemble() {
         String name = "Assemble";
         ExecutePane executePane = Main.getGUI().executeTab;
         extendedAssemblerEnabled = Main.getSettings().getExtendedAssemblerEnabled();
         warningsAreErrors = Main.getSettings().getWarningsAreErrors();
-        if (VenusUI.getFile() == null) return false;
-        if (VenusUI.getStatus() == VenusUI.EDITED)
-            Main.getGUI().editTabbedPane.saveCurrentFile();
+
+        EditPane pane = Main.getGUI().editTabbedPane;
+        EditTab current = pane.getSelectedComponent();
+
+        if (Main.getGUI().editTabbedPane.isShowing()) {
+            Main.getGUI().executeTab.clearPane();
+            if (current == null || (current.isNew() || current.hasUnsavedEdits()) && !current.save(false))
+                return false;
+        }
+
         try {
             Main.program = new MIPSprogram();
             ArrayList filesToAssemble;
             if (Main.getSettings().getAssembleAllEnabled())
-                filesToAssemble = FilenameFinder.getFilenameList(new File(VenusUI.getName()).getParent(), Main.fileExtensions);
+                //TODO
+                filesToAssemble = FilenameFinder.getFilenameList(current.getParentDirectory(), Main.fileExtensions);
             else {
                 filesToAssemble = new ArrayList();
-                filesToAssemble.add(VenusUI.getName());
+                //TODO
+                filesToAssemble.add(current.getPathname());
             }
             String exceptionHandler = null;
             if (Main.getSettings().getExceptionHandlerEnabled() && Main.getSettings().getExceptionHandler() != null && Main.getSettings().getExceptionHandler().length() > 0)
                 exceptionHandler = Main.getSettings().getExceptionHandler();
-            MIPSprogramsToAssemble = Main.program.prepareFilesForAssembly(filesToAssemble, VenusUI.getFile().getPath(), exceptionHandler);
+            //TODO
+            MIPSprogramsToAssemble = Main.program.prepareFilesForAssembly(filesToAssemble, current.getPathname(), exceptionHandler);
             Main.getGUI().messagesPane.postMarsMessage(buildFileNameList(name + ": assembling ", MIPSprogramsToAssemble));
             ErrorList warnings = Main.program.assemble(MIPSprogramsToAssemble, extendedAssemblerEnabled, warningsAreErrors);
             if (warnings.warningsOccurred())
                 Main.getGUI().messagesPane.postMarsMessage(warnings.generateWarningReport());
             Main.getGUI().messagesPane.postMarsMessage(name + ": operation completed successfully.\n\n");
-            VenusUI.setAssembled(true);
-            VenusUI.setStatus(VenusUI.RUNNABLE);
+            Main.getGUI().setMenuStateRunnable();
             RegisterFile.resetRegisters();
             Coprocessor1.resetRegisters();
             Coprocessor0.resetRegisters();
@@ -120,13 +129,11 @@ class ExecuteAction extends GuiAction {
                 if (em.getLine() == 0 && em.getPosition() == 0) continue;
                 if (!em.isWarning() || warningsAreErrors) {
                     (Main.getGUI().messagesPane).selectErrorMessage(em.getFilename(), em.getLine(), em.getPosition());
-                    if (isInEditMode)
-                        (Main.getGUI().messagesPane).selectEditorTextLine(em.getFilename(), em.getLine(), em.getPosition());
+                    if (Main.getGUI().editTabbedPane.isShowing())
+                        Main.getGUI().messagesPane.selectEditorTextLine(em.getFilename(), em.getLine(), em.getPosition());
                     break;
                 }
             }
-            VenusUI.setAssembled(false);
-            VenusUI.setStatus(VenusUI.NOT_EDITED);
             return false;
         }
         return true;
@@ -154,7 +161,7 @@ class ExecuteAction extends GuiAction {
         RunGoAction.resetMaxSteps();
         String name = this.getValue(Action.NAME).toString();
         ExecutePane executePane = mainUI.executeTab;
-         // The difficult part here is resetting the data segment.  Two approaches are:
+        // The difficult part here is resetting the data segment.  Two approaches are:
         // 1. After each assembly, getStatus a deep copy of the Globals.memory array 
         //    containing data segment.  Then replace it upon reset.
         // 2. Simply re-assemble the program upon reset, and the assembler will 
@@ -177,19 +184,19 @@ class ExecuteAction extends GuiAction {
         Coprocessor1.resetRegisters();
         Coprocessor0.resetRegisters();
 
-        (Main.getGUI().registersTab).clearHighlighting();
-        (Main.getGUI().registersTab).updateRegisters();
-        (Main.getGUI().coprocessor1Tab).clearHighlighting();
-        (Main.getGUI().coprocessor1Tab).updateRegisters();
-        (Main.getGUI().coprocessor0Tab).clearHighlighting();
-        (Main.getGUI().coprocessor0Tab).updateRegisters();
+        Main.getGUI().registersTab.clearHighlighting();
+        Main.getGUI().registersTab.updateRegisters();
+        Main.getGUI().coprocessor1Tab.clearHighlighting();
+        Main.getGUI().coprocessor1Tab.updateRegisters();
+        Main.getGUI().coprocessor0Tab.clearHighlighting();
+        Main.getGUI().coprocessor0Tab.updateRegisters();
         executePane.getDataSegmentWindow().highlightCellForAddress(Memory.dataBaseAddress);
         executePane.getDataSegmentWindow().clearHighlighting();
         executePane.getTextSegmentWindow().resetModifiedSourceCode();
         executePane.getTextSegmentWindow().setCodeHighlighting(true);
         executePane.getTextSegmentWindow().highlightStepAtPC();
-        (mainUI.registersPane).setSelectedComponent(Main.getGUI().registersTab);
-        VenusUI.setStatus(VenusUI.RUNNABLE);
+        Main.getGUI().registersPane.setSelectedComponent(Main.getGUI().registersTab);
+        Main.getGUI().setMenuStateRunnable();
         VenusUI.setReset(true);
         VenusUI.setStarted(false);
 

@@ -1,7 +1,14 @@
+####1.5
+
+GENERAL:
+! Final restructuring of the EditPane-EditTab section, print function included
+! Purge of the GUIStatus static system from VenusUI, method updateGUIState()
+  is now responsible of it during edit mode
+
 ####1.4
 
 GENERAL:
-! Moderate restructuring of the couple EditTabbedPane-EditPane-Editor,
+! Moderate restructuring of the triad EditTabbedPane-EditPane-Editor,
   close buttons added to tabs
 ! Merge of Assemble-Reset actions, under the name "ExecuteAction"
 ! Assimilated all settingsActions in GuiAction, all dialogs extracted

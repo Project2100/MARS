@@ -1,18 +1,22 @@
 package mars.venus;
 
+import java.awt.FlowLayout;
+import java.awt.Insets;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.filechooser.FileFilter;
-import mars.MIPSprogram;
 import mars.Main;
-import mars.ProcessingException;
+import mars.Settings;
 import mars.mips.hardware.RegisterFile;
 import mars.util.FilenameFinder;
 
@@ -50,14 +54,12 @@ import mars.util.FilenameFinder;
  */
 public final class EditPane extends JTabbedPane {
 
-    private final String mainUIbaseTitle;
-    
     // number of times File->New has been selected.  Used to generate
     // default filename until first Save or Save As.
     private int newUsageCount;
 
     // Current Directory for Open operation, same for Save operation
-    // Values will mainly be setStatus by the EditPane as Open/Save operations occur.
+    // Values will mainly be setStatusMenu by the EditPane as Open/Save operations occur.
     private final String defaultOpenDirectory, defaultSaveDirectory;
     private String currentOpenDirectory, currentSaveDirectory;
 
@@ -71,12 +73,10 @@ public final class EditPane extends JTabbedPane {
     /**
      * Constructor for the editor pane
      *
-     * @param frameTitle
      */
-    public EditPane(String frameTitle) {
+    public EditPane() {
         super();
 
-        mainUIbaseTitle = frameTitle;
         newUsageCount = 0;
         defaultOpenDirectory = System.getProperty("user.dir");
         defaultSaveDirectory = System.getProperty("user.dir");
@@ -105,8 +105,9 @@ public final class EditPane extends JTabbedPane {
 
         // Note: add sequence is significant - last one added becomes default.
         fileFilters = new ArrayList<>();
+        fileFilters.add(FilenameFinder.getFileFilter(Main.fileExtensions, "Assembler Files"));
+        fileFilters.add(FilenameFinder.getFileFilter(new ArrayList<>(Arrays.asList(".txt", ".in")), "Text/input Files"));
         fileFilters.add(fileChooser.getAcceptAllFileFilter());
-        fileFilters.add(FilenameFinder.getFileFilter(Main.fileExtensions, "Assembler Files", true));
         fileFilterCount = 0; // this will trigger fileChooser file filter load in next line
         setChoosableFileFilters();
 
@@ -115,22 +116,25 @@ public final class EditPane extends JTabbedPane {
             if (tab != null) {
                 // New IF statement to permit free traversal of edit panes w/o invalidating
                 // assembly if assemble-all is selected.  DPS 9-Aug-2011
-                if (Main.getSettings().getBool(mars.Settings.ASSEMBLE_ALL_ENABLED))
-                    updateTitles(tab);
-                else {
-                    updateTitlesAndMenuState(tab);
-                    Main.getGUI().executeTab.clearPane();
-                }
+                //20150520 - Modes implicitly invalid assembled status on swap
+//                if (Main.getSettings().getBool(mars.Settings.ASSEMBLE_ALL_ENABLED))
+//                    updateTitles(tab);
+//                else {
+//                tab.updateTitlesAndMenuState();
+                Main.getGUI().updateGUIState();
+//                    Main.getGUI().executeTab.clearPane();
+//                }
                 tab.tellEditingComponentToRequestFocusInWindow();
             }
         });
     }
 
     /**
-     * The current EditTab representing a file. Returns null if no files open.
-     * <br/><br/>Overridden for return type cast
+     * Gets the tab currently shown in this pane.
+     * <p/>Overridden for return type cast
      *
-     * @return the current editor pane
+     * @return the current editor tab, or null if this container is empty
+     * @see JTabbedPane#getSelectedComponent()
      */
     @Override
     public EditTab getSelectedComponent() {
@@ -138,25 +142,67 @@ public final class EditPane extends JTabbedPane {
     }
 
     /**
-     * If the given file is open in the tabbed pane, make it the current tab. If
-     * not opened, open it in a new tab and make it the current tab. If file is
-     * unable to be opened, leave current tab as is.
+     * Gets the tab at the specified index.
+     * <p/>Overridden for return type cast
      *
-     * @param file File object for the desired file.
-     * @return EditTab for the specified file, or null if file is unable to be
-     * opened in an EditTab
+     * @param index the position of the requested tab
+     * @return the tab
+     * @throws IndexOutOfBoundsException if {@code index} is out of bounds
+     * @see JTabbedPane#getComponentAt(int index)
      */
-    public EditTab getCurrentEditTabForFile(File file) {
-        EditTab result = null;
-        EditTab tab = getEditPaneForFile(file.getPath());
-        if (tab != null) {
-            if (tab != getSelectedComponent()) this.setSelectedComponent(tab);
-            return tab;
-        }
-        // If no return yet, then file is not open.  Try to open it.
-        if (openFile(file))
-            result = getSelectedComponent();
-        return result;
+    @Override
+    public EditTab getComponentAt(int index) {
+        return (EditTab) super.getComponentAt(index);
+    }
+
+    void setTitleAtComponent(String title, EditTab tab) {
+        if (getTabComponentAt(indexOfComponent(tab)) == null)
+            setTabComponentAt(indexOfComponent(tab), new TabTitleComponent(tab));
+        else
+            ((TabTitleComponent) getTabComponentAt(indexOfComponent(tab))).titleLabel.setText(title);
+    }
+
+    /**
+     * Set name of current directory for Open operation. The contents of this
+     * directory will be displayed when Open dialog is launched.
+     *
+     * @param currentOpenDirectory String containing pathname for current Open
+     * directory. If it does not exist or is not a directory, the default (MARS
+     * launch directory) will be used.
+     */
+    void setCurrentOpenDirectory(String currentOpenDirectory) {
+        File file = new File(currentOpenDirectory);
+        if (!file.exists() || !file.isDirectory())
+            this.currentOpenDirectory = defaultOpenDirectory;
+        else
+            this.currentOpenDirectory = currentOpenDirectory;
+    }
+
+    /**
+     * Get name of current directory for Save or Save As operation.
+     *
+     * @return String containing directory pathname. Returns null if there is no
+     * EditPane. Returns default, directory MARS is launched from, if no Save or
+     * Save As operations have been performed.
+     */
+    public String getCurrentSaveDirectory() {
+        return currentSaveDirectory;
+    }
+
+    /**
+     * Set name of current directory for Save operation. The contents of this
+     * directory will be displayed when Save dialog is launched.
+     *
+     * @param currentSaveDirectory String containing pathname for current Save
+     * directory. If it does not exist or is not a directory, the default (MARS
+     * launch directory) will be used.
+     */
+    void setCurrentSaveDirectory(String currentSaveDirectory) {
+        File file = new File(currentSaveDirectory);
+        if (!file.exists() || !file.isDirectory())
+            this.currentSaveDirectory = defaultSaveDirectory;
+        else
+            this.currentSaveDirectory = currentSaveDirectory;
     }
 
     /**
@@ -164,27 +210,16 @@ public final class EditPane extends JTabbedPane {
      * the File menu.
      */
     public void newFile() {
-        
-        String name = "Untitled" + (++newUsageCount) + ".asm";
-        EditTab tab = new EditTab("", null);
 
-        tab.setShowLineNumbersEnabled(true);
-        tab.setFileStatus(VenusUI.NEW_NOT_EDITED);
-        tab.setPathname(name);
+        String name = "Untitled" + (++newUsageCount) + ".asm";
+        EditTab tab = new EditTab(Paths.get(name));
 
         addTab(name, tab);
-        setTabComponentAt(indexOfComponent(tab), tab.titleComponent);
 
-        VenusUI.reset();
-        VenusUI.setName(name);
-        VenusUI.setStatus(VenusUI.NEW_NOT_EDITED);
-
-        RegisterFile.resetRegisters();
         VenusUI.setReset(true);
-
+        RegisterFile.resetRegisters();
         tab.displayCaretPosition(0);
         setSelectedComponent(tab);
-        updateTitlesAndMenuState(tab);
         tab.tellEditingComponentToRequestFocusInWindow();
     }
 
@@ -204,7 +239,7 @@ public final class EditPane extends JTabbedPane {
         // Set default to previous file opened, if any.  This is useful in conjunction
         // with option to assemble file automatically upon opening.  File likely to have
         // been edited externally (e.g. by Mipster).
-        if (Main.getSettings().getAssembleOnOpenEnabled() && mostRecentlyOpenedFile != null)
+        if (Main.getSettings().getBool(Settings.ASSEMBLE_ON_OPEN_ENABLED) && mostRecentlyOpenedFile != null)
             fileChooser.setSelectedFile(mostRecentlyOpenedFile);
 
         if (fileChooser.showOpenDialog(Main.getGUI().mainFrame) == JFileChooser.APPROVE_OPTION) {
@@ -214,9 +249,8 @@ public final class EditPane extends JTabbedPane {
             if (!openFile(theFile))
                 return false;
 
-            // possibly send this file right through to the assembler by firing Run->Assemble's
-            // actionPerformed() method.
-            if (theFile.canRead() && Main.getSettings().getAssembleOnOpenEnabled())
+            // possibly send this file right through to the assembler by switching mode
+            if (theFile.canRead() && Main.getSettings().getBool(Settings.ASSEMBLE_ON_OPEN_ENABLED))
                 Main.getGUI().toggleGUIMode();
         }
         return true;
@@ -240,67 +274,69 @@ public final class EditPane extends JTabbedPane {
         }
         String currentFilePath = file.getPath();
         // If this file is currently already open, then simply select its tab
-        EditTab tab = getEditPaneForFile(currentFilePath);
+        EditTab tab = getTabForFile(currentFilePath);
         if (tab != null) {
             setSelectedComponent(tab);
-            updateTitles(tab);
             return false;
         }
 
-        //FileStatus.reset();
-        VenusUI.setName(currentFilePath);
-        VenusUI.setFile(file);
-        VenusUI.setStatus(VenusUI.OPENING);// DPS 9-Aug-2011
         if (file.canRead()) {
-            Main.program = new MIPSprogram();
-            try {
-                Main.program.readSource(currentFilePath);
-            }
-            catch (ProcessingException pe) {
-            }
-            // DPS 1 Nov 2006.  Defined a StringBuffer to receive all file contents, 
-            // one line at a time, before adding to the Edit pane with one setText.
-            // StringBuffer is preallocated to full filelength to eliminate dynamic
-            // expansion as lines are added to it. Previously, each line was appended 
-            // to the Edit pane as it was read, way slower due to dynamic string alloc.  
-            StringBuilder fileContents = new StringBuilder((int) file.length());
-            int lineNumber = 1;
-            String line = Main.program.getSourceLine(lineNumber++);
-            while (line != null) {
-                fileContents.append(line).append('\n');
-                line = Main.program.getSourceLine(lineNumber++);
-            }
-            tab = new EditTab(fileContents.toString(), file.toPath());
-            tab.setPathname(currentFilePath);
 
-            // The above operation generates an undoable edit, setting the initial
-            // text area contents, that should not be seen as undoable by the Undo
-            // action.  Let's getStatus rid of it.
-            tab.discardAllUndoableEdits();
-            tab.setShowLineNumbersEnabled(true);
-            tab.setFileStatus(VenusUI.NOT_EDITED);
+            tab = new EditTab(file.toPath());
 
             addTab(tab.getFilename(), tab);
-            setTabComponentAt(indexOfComponent(tab), tab.titleComponent);
 
             setToolTipTextAt(indexOfComponent(tab), tab.getPathname());
             setSelectedComponent(tab);
-            VenusUI.setSaved(true);
-            VenusUI.setEdited(false);
-            VenusUI.setStatus(VenusUI.NOT_EDITED);
-
-            // If assemble-all, then allow opening of any file w/o invalidating assembly.
-            // DPS 9-Aug-2011
-            if (Main.getSettings().getBool(mars.Settings.ASSEMBLE_ALL_ENABLED))
-                updateTitles(tab);
-            else {// this was the original code...
-                updateTitlesAndMenuState(tab);
-                Main.getGUI().executeTab.clearPane();
-            }
 
             tab.tellEditingComponentToRequestFocusInWindow();
             mostRecentlyOpenedFile = file;
         }
+        return true;
+    }
+
+    /**
+     * If there is an EditTab for the given file pathname, return it else return
+     * null.
+     *
+     * @param pathname Pathname for desired file
+     * @return the EditTab for this file if it is open in the editor, or null if
+     * not.
+     */
+    public EditTab getTabForFile(String pathname) {
+        EditTab openPane = null;
+        for (int i = 0; i < getTabCount(); i++) {
+            EditTab pane = (EditTab) getComponentAt(i);
+            if (pathname.equals(pane.getPathname())) {
+                openPane = pane;
+                break;
+            }
+        }
+        return openPane;
+    }
+
+    /**
+     * Saves all files currently open in the editor.
+     *
+     * @return true if operation succeeded otherwise false.
+     */
+    public boolean saveAllFiles() {
+        int tabCount = getTabCount();
+        if (tabCount == 0)
+            throw new IllegalStateException("No tabs found on SaveAll action!");
+
+        EditTab savedPane = getSelectedComponent();
+        EditTab tab;
+        for (int i = 0; i < tabCount; i++) {
+            tab = getComponentAt(i);
+            if (tab.hasUnsavedEdits()) {
+                setSelectedComponent(tab);
+                if (!tab.save(false))
+                    return false;
+            }
+
+        }
+        setSelectedComponent(savedPane);
         return true;
     }
 
@@ -313,14 +349,11 @@ public final class EditPane extends JTabbedPane {
      */
     public boolean closeCurrentFile() {
         EditTab tab = getSelectedComponent();
-        if (tab != null)
-            if (editsSavedOrAbandoned()) {
-                this.remove(tab);
-                Main.getGUI().executeTab.clearPane();
-            }
-            else
-                return false;
-        return true;
+        if (tab != null && editsSavedOrAbandoned(tab)) {
+            remove(tab);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -331,282 +364,74 @@ public final class EditPane extends JTabbedPane {
      */
     public boolean closeAllFiles() {
         boolean result = true;
-        boolean unsavedChanges = false;
+
         int tabCount = getTabCount();
         if (tabCount > 0) {
-            Main.getGUI().executeTab.clearPane();
 
+            // Build tab array
+            boolean unsavedChanges = false;
             EditTab[] tabs = new EditTab[tabCount];
             for (int i = 0; i < tabCount; i++) {
-                tabs[i] = (EditTab) getComponentAt(i);
+                tabs[i] = getComponentAt(i);
                 if (tabs[i].hasUnsavedEdits())
                     unsavedChanges = true;
             }
-            if (unsavedChanges)
-                switch (confirm("one or more files")) {
-                    case JOptionPane.YES_OPTION:
-                        boolean removedAll = true;
-                        for (int i = 0; i < tabCount; i++)
-                            if (tabs[i].hasUnsavedEdits()) {
-                                setSelectedComponent(tabs[i]);
-                                boolean saved = saveCurrentFile();
-                                if (saved)
-                                    this.remove(tabs[i]);
-                                else
-                                    removedAll = false;
-                            }
+
+            if (unsavedChanges) switch (confirm("one or more files")) {
+                case JOptionPane.YES_OPTION:
+                    boolean removedAll = true;
+                    for (int i = 0; i < tabCount; i++)
+                        if (tabs[i].hasUnsavedEdits()) {
+                            setSelectedComponent(tabs[i]);
+                            boolean saved = tabs[i].save(false);
+                            if (saved)
+                                remove(tabs[i]);
                             else
-                                this.remove(tabs[i]);
-                        return removedAll;
-                    case JOptionPane.NO_OPTION:
-                        for (int i = 0; i < tabCount; i++)
-                            this.remove(tabs[i]);
-                        return true;
-                    case JOptionPane.CANCEL_OPTION:
-                        return false;
-                    default: // should never occur
-                        return false;
-                }
+                                removedAll = false;
+                        }
+                        else
+                            remove(tabs[i]);
+                    return removedAll;
+                case JOptionPane.NO_OPTION:
+                    removeAll();
+                    return true;
+                case JOptionPane.CANCEL_OPTION:
+                    return false;
+                default: // should never occur
+                    throw new IllegalStateException("Unexpected return value while closing all files!");
+            }
             else
-                for (int i = 0; i < tabCount; i++)
-                    this.remove(tabs[i]);
+                removeAll();
         }
         return result;
     }
 
     /**
-     * Saves file under existing name. If no name, will invoke Save As.
+     * Remove tab from the editor
      *
-     * @return true if the file was actually saved.
-     */
-    public boolean saveCurrentFile() {
-        EditTab tab = getSelectedComponent();
-        if (saveFile(tab)) {
-            VenusUI.setSaved(true);
-            VenusUI.setEdited(false);
-            VenusUI.setStatus(VenusUI.NOT_EDITED);
-            tab.setFileStatus(VenusUI.NOT_EDITED);
-            updateTitlesAndMenuState(tab);
-            return true;
-        }
-        return false;
-    }
-
-    // Save file associatd with specified edit pane.
-    // Returns true if save operation worked, else false.
-    private boolean saveFile(EditTab tab) {
-        if (tab != null) {
-            if (tab.isNew()) {
-                File theFile = saveAsFile(tab);
-                if (theFile != null)
-                    tab.setPathname(theFile.getPath());
-                return (theFile != null);
-            }
-            File theFile = new File(tab.getPathname());
-
-//            tab.save();
-            
-            try (BufferedWriter outFileStream = new BufferedWriter(new FileWriter(theFile))) {
-                outFileStream.write(tab.getSource(), 0, tab.getSource().length());
-            }
-            catch (java.io.IOException c) {
-                JOptionPane.showMessageDialog(null, "Save operation could not be completed due to an error:\n" + c,
-                        "Save Operation Failed", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Pops up a dialog box to do "Save As" operation. If necessary an
-     * additional overwrite dialog is performed.
-     *
-     * @return true if the file was actually saved.
-     */
-    public boolean saveAsCurrentFile() {
-        EditTab tab = getSelectedComponent();
-        File theFile = saveAsFile(tab);
-        if (theFile != null) {
-            VenusUI.setFile(theFile);
-            VenusUI.setName(theFile.getPath());
-            VenusUI.setSaved(true);
-            VenusUI.setEdited(false);
-            VenusUI.setStatus(VenusUI.NOT_EDITED);
-            setCurrentSaveDirectory(theFile.getParent());
-            tab.setPathname(theFile.getPath());
-            tab.setFileStatus(VenusUI.NOT_EDITED);
-            updateTitlesAndMenuState(tab);
-            return true;
-        }
-        return false;
-    }
-
-    // perform Save As for selected edit pane.  If the save is performed,
-    // return its File object.  Otherwise return null.
-    private File saveAsFile(EditTab tab) {
-        File theFile = null;
-        if (tab != null) {
-            JFileChooser saveDialog;
-            boolean operationOK = false;
-            while (!operationOK) {
-                // Set Save As dialog directory in a logical way.  If file in
-                // edit pane had been previously saved, default to its directory.  
-                // If a new file (mipsN.asm), default to current save directory.
-                // DPS 13-July-2011
-                if (tab.isNew())
-                    saveDialog = new JFileChooser(currentSaveDirectory);
-                else if (tab.getPathname() != null)
-                    saveDialog = new JFileChooser(new File(tab.getPathname()).getParent());
-                else
-                    saveDialog = new JFileChooser(currentSaveDirectory);
-                String paneFile = tab.getFilename();
-                if (paneFile != null)
-                    saveDialog.setSelectedFile(new File(paneFile));
-                // end of 13-July-2011 code.
-                saveDialog.setDialogTitle("Save As");
-
-                int decision = saveDialog.showSaveDialog(Main.getGUI().mainFrame);
-                if (decision != JFileChooser.APPROVE_OPTION)
-                    return null;
-                theFile = saveDialog.getSelectedFile();
-                operationOK = true;
-                if (theFile.exists()) {
-                    int overwrite = JOptionPane.showConfirmDialog(Main.getGUI().mainFrame,
-                            "File " + theFile.getName() + " already exists.  Do you wish to overwrite it?",
-                            "Overwrite existing file?",
-                            JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
-                    switch (overwrite) {
-                        case JOptionPane.YES_OPTION:
-                            operationOK = true;
-                            break;
-                        case JOptionPane.NO_OPTION:
-                            operationOK = false;
-                            break;
-                        case JOptionPane.CANCEL_OPTION:
-                            return null;
-                        default: // should never occur
-                            return null;
-                    }
-                }
-            }
-            // Either file with selected name does not exist or user wants to 
-            // overwrite it, so go for it!
-            try (BufferedWriter outFileStream = new BufferedWriter(new FileWriter(theFile))) {
-                outFileStream.write(tab.getSource(), 0, tab.getSource().length());
-
-            }
-            catch (java.io.IOException c) {
-                JOptionPane.showMessageDialog(null, "Save As operation could not be completed due to an error:\n" + c,
-                        "Save As Operation Failed", JOptionPane.ERROR_MESSAGE);
-                return null;
-            }
-        }
-        return theFile;
-    }
-
-    /**
-     * Saves all files currently open in the editor.
-     *
-     * @return true if operation succeeded otherwise false.
-     */
-    public boolean saveAllFiles() {
-        boolean result = false;
-        int tabCount = getTabCount();
-        if (tabCount > 0) {
-
-            result = true;
-            EditTab[] tabs = new EditTab[tabCount];
-            EditTab savedPane = getSelectedComponent();
-            for (int i = 0; i < tabCount; i++) {
-                tabs[i] = (EditTab) getComponentAt(i);
-                if (tabs[i].hasUnsavedEdits()) {
-                    this.setSelectedComponent(tabs[i]);
-                    if (saveFile(tabs[i])) {
-                        tabs[i].setFileStatus(VenusUI.NOT_EDITED);
-                        setTitle(tabs[i].getPathname(), tabs[i].getFilename(), tabs[i].getFileStatus());
-                    }
-                    else
-                        result = false;
-                }
-            }
-            this.setSelectedComponent(savedPane);
-            if (result) {
-                EditTab tab = getSelectedComponent();
-                VenusUI.setSaved(true);
-                VenusUI.setEdited(false);
-                VenusUI.setStatus(VenusUI.NOT_EDITED);
-                tab.setFileStatus(VenusUI.NOT_EDITED);
-                updateTitlesAndMenuState(tab);
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Remove the pane and simUpdate menu status
-     *
-     * @param tab
+     * @param tab the tab to remove
      */
     public void remove(EditTab tab) {
         super.remove(tab);
-        tab = getSelectedComponent(); // is now next tab or null
-        if (tab == null) {
-            VenusUI.setStatus(VenusUI.NO_FILE);
-            setTitle("", "", VenusUI.NO_FILE);
-            Main.getGUI().setMenuState(VenusUI.NO_FILE);
-        }
-        else {
-            VenusUI.setStatus(tab.getFileStatus());
-            updateTitlesAndMenuState(tab);
-        }
-        // When last file is closed, menu is unable to respond to mnemonics
-        // and accelerators.  Let's have it request focus so it may do so.
-        if (getTabCount() == 0) Main.getGUI().menuBar.requestFocus();
-    }
 
-    // Handy little utility to simUpdate the titleLabel on the current tab and the frame titleLabel bar
-    // and also to simUpdate the MARS menu state (controls which actions are enabled).
-    private void updateTitlesAndMenuState(EditTab tab) {
-        setTitle(tab.getPathname(), tab.getFilename(), tab.getFileStatus());
-        tab.updateStaticFileStatus(); //  for legacy code that depends on the static FileStatus (pre 4.0)
-        Main.getGUI().setMenuState(tab.getFileStatus());
-    }
-
-    // Handy little utility to simUpdate the titleLabel on the current tab and the frame titleLabel bar
-    // and also to simUpdate the MARS menu state (controls which actions are enabled).
-    // DPS 9-Aug-2011
-    private void updateTitles(EditTab tab) {
-        setTitle(tab.getPathname(), tab.getFilename(), tab.getFileStatus());
-        boolean assembled = VenusUI.isAssembled();
-        tab.updateStaticFileStatus(); //  for legacy code that depends on the static FileStatus (pre 4.0)
-        VenusUI.setAssembled(assembled);
-    }
-
-    /**
-     * If there is an EditTab for the given file pathname, return it else return
-     * null.
-     *
-     * @param pathname Pathname for desired file
-     * @return the EditTab for this file if it is open in the editor, or null if
-     * not.
-     */
-    public EditTab getEditPaneForFile(String pathname) {
-        EditTab openPane = null;
-        for (int i = 0; i < getTabCount(); i++) {
-            EditTab pane = (EditTab) getComponentAt(i);
-            if (pane.getPathname().equals(pathname)) {
-                openPane = pane;
-                break;
-            }
+        if (getTabCount() == 0) {
+            // Apparently, removing the last tab doesn't fire a changeEvent to this pane,
+            // so I'm leaving this here
+            // 20150525 - Andrea Proietto
+            Main.getGUI().setMenuStateInitial();
+            Main.getGUI().mainFrame.setTitle(Main.getGUI().baseTitle);
+            // When last file is closed, menu is unable to respond to mnemonics
+            // and accelerators.  Let's have it request focus so it may do so.
+            Main.getGUI().menuBar.requestFocus();
         }
-        return openPane;
+
     }
 
     /**
      * Check whether file has unsaved edits and, if so, check with user about
-     * saving them. Specifically: if there is a current file open for editing
+     * saving them.<p/>
+     * 
+     * Specifically: if there is a current file open for editing
      * and its modify flag is true, then give user a dialog box with choice to
      * save, discard edits, or cancel and carry out the decision. This applies
      * to File->New, File->Open, File->Close, and File->Exit.
@@ -614,15 +439,11 @@ public final class EditPane extends JTabbedPane {
      * @return true if no unsaved edits or if user chooses to save them or not;
      * false if there are unsaved edits and user cancels the operation.
      */
-    public boolean editsSavedOrAbandoned() {
-        return editsSavedOrAbandoned(getSelectedComponent());
-    }
-
     boolean editsSavedOrAbandoned(EditTab currentPane) {
         if (currentPane != null && currentPane.hasUnsavedEdits())
             switch (confirm(currentPane.getFilename())) {
                 case JOptionPane.YES_OPTION:
-                    return saveCurrentFile();
+                    return currentPane.save(false);
                 case JOptionPane.NO_OPTION:
                     return true;
                 case JOptionPane.CANCEL_OPTION:
@@ -681,71 +502,24 @@ public final class EditPane extends JTabbedPane {
         }
     }
 
-    /**
-     * Set name of current directory for Open operation. The contents of this
-     * directory will be displayed when Open dialog is launched.
-     *
-     * @param currentOpenDirectory String containing pathname for current Open
-     * directory. If it does not exist or is not a directory, the default (MARS
-     * launch directory) will be used.
-     */
-    void setCurrentOpenDirectory(String currentOpenDirectory) {
-        File file = new File(currentOpenDirectory);
-        if (!file.exists() || !file.isDirectory())
-            this.currentOpenDirectory = defaultOpenDirectory;
-        else
-            this.currentOpenDirectory = currentOpenDirectory;
-    }
+    private class TabTitleComponent extends JPanel {
 
-    /**
-     * Get name of current directory for Save or Save As operation.
-     *
-     * @return String containing directory pathname. Returns null if there is no
-     * EditPane. Returns default, directory MARS is launched from, if no Save or
-     * Save As operations have been performed.
-     */
-    public String getCurrentSaveDirectory() {
-        return currentSaveDirectory;
-    }
+        private final JLabel titleLabel;
 
-    /**
-     * Set name of current directory for Save operation. The contents of this
-     * directory will be displayed when Save dialog is launched.
-     *
-     * @param currentSaveDirectory String containing pathname for current Save
-     * directory. If it does not exist or is not a directory, the default (MARS
-     * launch directory) will be used.
-     */
-    void setCurrentSaveDirectory(String currentSaveDirectory) {
-        File file = new File(currentSaveDirectory);
-        if (!file.exists() || !file.isDirectory())
-            this.currentSaveDirectory = defaultSaveDirectory;
-        else
-            this.currentSaveDirectory = currentSaveDirectory;
-    }
+        TabTitleComponent(EditTab tab) {
+            super(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            titleLabel = new JLabel(tab.getFilename() + "  ");
 
-    /**
-     * Places name of file currently being edited into its edit tab and the
-     * application's titleLabel bar. The edit tab will contain only the
-     * filename, the titleLabel bar will contain full pathname. If file has been
-     * modified since created, opened or saved, as indicated by value of the
-     * status parameter, the name and path will be followed with an '*'. If
-     * newly-created file has not yet been saved, the titleLabel bar will show
-     * (temporary) file name but not path.
-     *
-     * @param path Full pathname for file
-     * @param name Name of file (last component of path)
-     * @param status Edit status of file. See FileStatus static constants.
-     */
-    public void setTitle(String path, String name, int status) {
-        if (status == VenusUI.NO_FILE || name == null || name.length() == 0)
-            Main.getGUI().mainFrame.setTitle(mainUIbaseTitle);
-        else {
-            String edited = (status == VenusUI.NEW_EDITED || status == VenusUI.EDITED) ? "* " : "  ";
-            String titleName = (status == VenusUI.NEW_EDITED || status == VenusUI.NEW_NOT_EDITED) ? name : path;
-            Main.getGUI().mainFrame.setTitle(titleName + edited + " - " + mainUIbaseTitle);
+            setOpaque(false);
+            add(titleLabel);
 
-            getSelectedComponent().titleLabel.setText(name + edited);
+            JButton closeButton = new JButton("×");
+            closeButton.setMargin(new Insets(0, 2, 0, 2));
+            closeButton.addActionListener((event) -> {
+                if (editsSavedOrAbandoned(tab))
+                    EditPane.this.remove(tab);
+            });
+            add(closeButton);
         }
     }
 

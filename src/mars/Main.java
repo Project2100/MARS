@@ -7,12 +7,13 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import mars.mips.instructions.syscalls.*;
-import mars.mips.instructions.*;
-import mars.mips.hardware.*;
-import mars.assembler.*;
-import mars.venus.*;
-import mars.util.*;
+import mars.assembler.SymbolTable;
+import mars.mips.hardware.Memory;
+import mars.mips.instructions.InstructionSet;
+import mars.mips.instructions.syscalls.SyscallNumberOverride;
+import mars.util.PropertiesFile;
+import mars.venus.MarsSplashScreen;
+import mars.venus.VenusUI;
 
 /*
  Copyright (c) 2003-2008,  Pete Sanderson and Kenneth Vollmar
@@ -65,7 +66,7 @@ public class Main {
     private static final String syscallPropertiesFile = "Syscall";
 
     /**
-     * The setStatus of implemented MIPS instructions. *
+     * The status of implemented MIPS instructions. *
      */
     public static InstructionSet instructionSet;
     /**
@@ -116,7 +117,7 @@ public class Main {
     private static VenusUI gui = null;
     /**
      * The current MARS version number. Can't wait for "initialize()" call to
- getStatus it.
+     * set it.
      */
     public static final String version = "4.5";
     /**

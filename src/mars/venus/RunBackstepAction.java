@@ -1,9 +1,15 @@
 package mars.venus;
 
-import mars.*;
-import mars.mips.hardware.*;
-import java.awt.event.*;
-import javax.swing.*;
+import java.awt.event.ActionEvent;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
+import mars.Main;
+import mars.mips.hardware.Coprocessor0;
+import mars.mips.hardware.Coprocessor1;
+import mars.mips.hardware.Memory;
+import mars.mips.hardware.RegisterFile;
 
 /*
  Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -53,7 +59,7 @@ public class RunBackstepAction extends GuiAction {
         name = this.getValue(Action.NAME).toString();
         executePane = mainUI.executeTab;
         boolean done = false;
-        if (!VenusUI.isAssembled()) {
+        if (!executePane.isShowing()) {
             // note: this should never occur since backstepping is only enabled after successful assembly.
             JOptionPane.showMessageDialog(Main.getGUI().mainFrame, "The program must be assembled before it can be run.");
             return;
@@ -71,12 +77,12 @@ public class RunBackstepAction extends GuiAction {
             Main.program.getBackStepper().backStep();
             Memory.getInstance().deleteObserver(executePane.getDataSegmentWindow());
             RegisterFile.deleteRegistersObserver(Main.getGUI().registersTab);
-            (Main.getGUI().registersTab).updateRegisters();
-            (Main.getGUI().coprocessor1Tab).updateRegisters();
-            (Main.getGUI().coprocessor0Tab).updateRegisters();
+            Main.getGUI().registersTab.updateRegisters();
+            Main.getGUI().coprocessor1Tab.updateRegisters();
+            Main.getGUI().coprocessor0Tab.updateRegisters();
             executePane.getDataSegmentWindow().updateValues();
             executePane.getTextSegmentWindow().highlightStepAtPC(inDelaySlot); // Argument aded 25 June 2007
-            VenusUI.setStatus(VenusUI.RUNNABLE);
+            Main.getGUI().setMenuStateRunnable();
          // if we've backed all the way, disable the button
             //    if (Globals.program.getBackStepper().empty()) {
             //     ((AbstractAction)((AbstractButton)e.getSource()).getAction()).setEnabled(false);
@@ -89,7 +95,7 @@ public class RunBackstepAction extends GuiAction {
              mainUI.getMessagesPane().postMarsMessage(
              "\n"+name+": execution terminated with errors.\n\n");
              mainUI.getRegistersPane().setSelectedComponent(executePane.getCoprocessor0Window());
-             FileStatus.setStatus(FileStatus.TERMINATED); // should be redundant.
+             FileStatus.setStatusMenu(FileStatus.TERMINATED); // should be redundant.
              executePane.getTextSegmentWindow().setCodeHighlighting(true);
              executePane.getTextSegmentWindow().unhighlightAllSteps();
              executePane.getTextSegmentWindow().highlightStepAtAddress(RegisterFile.getProgramCounter()-4);

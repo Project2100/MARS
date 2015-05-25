@@ -54,7 +54,7 @@ public class RunStepAction extends GuiAction {
         name = this.getValue(Action.NAME).toString();
         executePane = mainUI.executeTab;
         boolean done = false;
-        if (VenusUI.isAssembled()) {
+        if (executePane.isShowing()) {
             if (!VenusUI.getStarted()) // DPS 17-July-2008
                 processProgramArgumentsIfAny();
             VenusUI.setStarted(true);
@@ -80,12 +80,12 @@ public class RunStepAction extends GuiAction {
         executePane.getDataSegmentWindow().updateValues();
         if (!done) {
             executePane.getTextSegmentWindow().highlightStepAtPC();
-            VenusUI.setStatus(VenusUI.RUNNABLE);
+            Main.getGUI().setMenuStateRunnable();
         }
         if (done) {
             RunGoAction.resetMaxSteps();
             executePane.getTextSegmentWindow().unhighlightAllSteps();
-            VenusUI.setStatus(VenusUI.TERMINATED);
+            Main.getGUI().setMenuStateTerminated();
         }
         if (done && pe == null) {
             (mainUI.messagesPane).postMarsMessage(
@@ -104,7 +104,7 @@ public class RunStepAction extends GuiAction {
             (mainUI.messagesPane).postMarsMessage(
                     "\n" + name + ": execution terminated with errors.\n\n");
             (mainUI.registersPane).setSelectedComponent(Main.getGUI().coprocessor0Tab);
-            VenusUI.setStatus(VenusUI.TERMINATED); // should be redundant.
+            Main.getGUI().setMenuStateTerminated(); // should be redundant.
             executePane.getTextSegmentWindow().setCodeHighlighting(true);
             executePane.getTextSegmentWindow().unhighlightAllSteps();
             executePane.getTextSegmentWindow().highlightStepAtAddress(RegisterFile.getProgramCounter() - 4);
