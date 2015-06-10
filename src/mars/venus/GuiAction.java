@@ -6,15 +6,10 @@ import java.util.function.BiConsumer;
 import javax.swing.AbstractAction;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import mars.Main;
 import mars.Settings;
-import mars.mips.hardware.AddressErrorException;
-import mars.mips.hardware.Memory;
 import mars.simulator.Simulator;
-import mars.util.Binary;
-import mars.util.MemoryDump;
 
 /*
  Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
@@ -160,13 +155,11 @@ class GuiAction extends AbstractAction {
      * "Text Component Features"
      */
     void undo(ActionEvent event) {
-        EditTab tab = Main.getGUI().editTabbedPane.getSelectedComponent();
-        if (tab != null) tab.undo();
+        Main.getGUI().editTabbedPane.getSelectedComponent().undo();
     }
 
     void redo(ActionEvent event) {
-        EditTab tab = Main.getGUI().editTabbedPane.getSelectedComponent();
-        if (tab != null) tab.redo();
+        Main.getGUI().editTabbedPane.getSelectedComponent().redo();
     }
 
     void selectAll(ActionEvent event) {
@@ -178,56 +171,11 @@ class GuiAction extends AbstractAction {
     }
 
     void dumpMemory(ActionEvent e) {
-
-        String[] segments = MemoryDump.getSegmentNames();
-
-        String[] segNames = new String[segments.length];
-        int[] segBaseAddresses = new int[segments.length];
-        int[] segHighAddresses = new int[segments.length];
-
-        // Calculate the actual highest address to be dumped.  For text segment, this depends on the
-        // program length (number of machine code instructions).  For data segment, this depends on
-        // how many MARS 4K word blocks have been referenced during assembly and/or execution.
-        // Then generate label from concatentation of segmentArray[i], baseAddressArray[i]
-        // and highAddressArray[i].  This lets user know exactly what range will be dumped.  Initially not
-        // editable but maybe add this later.
-        // If there is nothing to dump (e.g. address of first null == base address), then
-        // the segment will not be listed.
-        int segmentCount = 0;
-        for (String segmentName : segments) {
-            Integer[] bounds = MemoryDump.getSegmentBounds(segmentName);
-            int upperBound;
-            try {
-                upperBound = Main.memory.getAddressOfFirstNull(bounds[0], bounds[1]);
-            }
-            catch (AddressErrorException aee) {
-                upperBound = bounds[0];
-            }
-            upperBound -= Memory.WORD_LENGTH_BYTES;
-
-            if (upperBound >= bounds[0]) {
-                segBaseAddresses[segmentCount] = bounds[0];
-                segHighAddresses[segmentCount] = upperBound;
-                segNames[segmentCount] = segmentName + " (" + Binary.intToHexString(bounds[0]) + " - " + Binary.intToHexString(upperBound) + ")";
-                segmentCount++;
-            }
-        }
-        if (segmentCount == 0) {
-            JOptionPane.showMessageDialog(Main.getGUI().mainFrame, "There is nothing to dump!", "MARS", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-
-        if (segmentCount < segNames.length) {
-            String[] tempArray = new String[segmentCount];
-            System.arraycopy(segNames, 0, tempArray, 0, segmentCount);
-            segNames = tempArray;
-        }
-
-        new DumpMemoryDialog(segNames, segBaseAddresses, segHighAddresses).setVisible(true);
+        new DumpMemoryDialog().setVisible(true);
     }
 
     void toggleBreakpoints(ActionEvent event) {
-        Main.getGUI().executeTab.getTextSegmentWindow().toggleBreakpoints();
+        Main.getGUI().executePane.getTextSegmentWindow().toggleBreakpoints();
     }
 
     void toggleWarningsAreErrors(ActionEvent e) {
@@ -235,22 +183,20 @@ class GuiAction extends AbstractAction {
     }
 
     void togglePopupInput(ActionEvent e) {
-        boolean usePopup = ((JCheckBoxMenuItem) e.getSource()).isSelected();
-        Main.getSettings().setBool(Settings.POPUP_SYSCALL_INPUT, usePopup);
+        Main.getSettings().setBool(Settings.POPUP_SYSCALL_INPUT, ((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleProgramArguments(ActionEvent e) {
         boolean selected = ((JCheckBoxMenuItem) e.getSource()).isSelected();
         Main.getSettings().setBool(Settings.PROGRAM_ARGUMENTS, selected);
         if (selected)
-            Main.getGUI().executeTab.getTextSegmentWindow().addProgramArgumentsPanel();
+            Main.getGUI().executePane.getTextSegmentWindow().addProgramArgumentsPanel();
         else
-            Main.getGUI().executeTab.getTextSegmentWindow().removeProgramArgumentsPanel();
+            Main.getGUI().executePane.getTextSegmentWindow().removeProgramArgumentsPanel();
     }
 
     void toggleSelfModifyingCode(ActionEvent e) {
-        Main.getSettings().setBool(Settings.SELF_MODIFYING_CODE_ENABLED,
-                ((JCheckBoxMenuItem) e.getSource()).isSelected());
+        Main.getSettings().setBool(Settings.SELF_MODIFYING_CODE_ENABLED, ((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleExtendedInstructionSet(ActionEvent e) {
@@ -263,7 +209,7 @@ class GuiAction extends AbstractAction {
      */
     void toggleLabelWindow(ActionEvent e) {
         boolean visibility = ((JCheckBoxMenuItem) e.getSource()).isSelected();
-        Main.getGUI().executeTab.labelValues.setVisible(visibility);
+        Main.getGUI().executePane.labelValues.setVisible(visibility);
         Main.getSettings().setBool(Settings.LABEL_WINDOW_VISIBILITY, visibility);
     }
 
@@ -275,7 +221,7 @@ class GuiAction extends AbstractAction {
         Main.getSettings().setBool(Settings.DELAYED_BRANCHING_ENABLED,
                 ((JCheckBoxMenuItem) e.getSource()).isSelected());
         // 25 June 2007 Re-assemble if the situation demands it to maintain consistency.
-        if (Main.getGUI().executeTab.isShowing()) {
+        if (Main.getGUI().executePane.isShowing()) {
             // Stop execution if executing -- should NEVER happen because this 
             // Action's widget is disabled during MIPS execution.
             if (VenusUI.getStarted())
@@ -285,24 +231,22 @@ class GuiAction extends AbstractAction {
     }
 
     void toggleAssembleOnOpen(ActionEvent e) {
-        Main.getSettings().setBool(Settings.ASSEMBLE_ON_OPEN_ENABLED,
-                ((JCheckBoxMenuItem) e.getSource()).isSelected());
+        Main.getSettings().setBool(Settings.ASSEMBLE_ON_OPEN_ENABLED, ((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleAssembleAll(ActionEvent e) {
-        Main.getSettings().setBool(Settings.ASSEMBLE_ALL_ENABLED,
-                ((JCheckBoxMenuItem) e.getSource()).isSelected());
+        Main.getSettings().setBool(Settings.ASSEMBLE_ALL_ENABLED, ((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleValueDisplayBase(ActionEvent e) {
         boolean isHex = ((JCheckBoxMenuItem) e.getSource()).isSelected();
-        Main.getGUI().executeTab.getValueDisplayBaseChooser().setSelected(isHex);
+        Main.getGUI().executePane.getValueDisplayBaseChooser().setSelected(isHex);
         Main.getSettings().setBool(Settings.DISPLAY_VALUES_IN_HEX, isHex);
     }
 
     void toggleAddressDisplayBase(ActionEvent e) {
         boolean isHex = ((JCheckBoxMenuItem) e.getSource()).isSelected();
-        Main.getGUI().executeTab.getAddressDisplayBaseChooser().setSelected(isHex);
+        Main.getGUI().executePane.getAddressDisplayBaseChooser().setSelected(isHex);
         Main.getSettings().setBool(Settings.DISPLAY_ADDRESSES_IN_HEX, isHex);
     }
 

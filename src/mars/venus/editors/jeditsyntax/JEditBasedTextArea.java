@@ -4,19 +4,17 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JComponent;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
-import javax.swing.text.BadLocationException;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.CompoundEdit;
 import javax.swing.undo.UndoManager;
 import mars.Main;
-import mars.venus.EditTab;
+import mars.venus.EditPane;
 import mars.venus.editors.MARSTextEditingArea;
 import mars.venus.editors.jeditsyntax.tokenmarker.MIPSTokenMarker;
 
@@ -32,13 +30,13 @@ import mars.venus.editors.jeditsyntax.tokenmarker.MIPSTokenMarker;
  */
 public class JEditBasedTextArea extends JEditTextArea implements MARSTextEditingArea, CaretListener {
 
-    private EditTab editPane;
+    private final EditPane editPane;
     private UndoManager undoManager;
     private UndoableEditListener undoableEditListener;
     private boolean isCompoundEdit = false;
     private CompoundEdit compoundEdit;
 
-    public JEditBasedTextArea(EditTab editPain, JComponent lineNumbers) {
+    public JEditBasedTextArea(EditPane editPain, JComponent lineNumbers) {
         super(lineNumbers);
         editPane = editPain;
         undoManager = new UndoManager();

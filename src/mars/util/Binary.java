@@ -39,7 +39,7 @@ import mars.Main;
 public class Binary {
 
     // Using int value 0-15 as index, yields equivalent hex digit as char.
-    private static char[] chars
+    private static final char[] chars
             = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
     // Use this to produce String equivalent of unsigned int value (add it to int value, result is long)
     private static final long UNSIGNED_BASE = (long) 0x7FFFFFFF + (long) 0x7FFFFFFF + (long) 2; //0xFFFFFFFF+1
@@ -269,9 +269,9 @@ public class Binary {
      *
      * Optimized surrogate of String.format("%0#10x", value);
      *
-     * @param d The int value to convert.
+     * @param d The integer value to convert.
      * @return String containing '0', '1', ...'F' which form hexadecimal
-     * equivalent of int.
+     * equivalent of integer.
      */
     public static String intToHexString(int d) {
         String t = Integer.toHexString(d);
@@ -281,31 +281,6 @@ public class Binary {
         pad[1] = 'x';
 
         return new String(pad) + t;
-    }
-
-    /**
-     * Returns a 6 character string representing the 16-bit hexadecimal
-     * equivalent of the given integer value. First two characters are "0x". It
-     * assumes value will "fit" in 16 bits. If non-negative, prepend leading
-     * zeroes to that string as necessary to make it always four hexadecimal
-     * digits. If negative, chop off the first four 'f' digits so result is
-     * always four hexadecimal digits
-     *
-     * @param d The int value to convert.
-     * @return String containing '0', '1', ...'F' which form hexadecimal
-     * equivalent of int.
-     */
-    public static String intToHalfHexString(int d) {
-        String leadingZero = new String("0");
-        String leadingX = new String("0x");
-        String t = Integer.toHexString(d);
-        if (t.length() > 4)
-            t = t.substring(t.length() - 4, t.length());
-        while (t.length() < 4)
-            t = leadingZero.concat(t);
-
-        t = leadingX.concat(t);
-        return t;
     }
 
     /**
@@ -364,7 +339,7 @@ public class Binary {
     public static int stringToInt(String s) throws NumberFormatException {
         String work = s;
         int result = 0;
-       // First, use Integer.decode().  This will validate most, but it flags
+        // First, use Integer.decode().  This will validate most, but it flags
         // valid hex two's complement values as exceptions.  We'll catch those and
         // do our own validation.
         try {
@@ -427,7 +402,7 @@ public class Binary {
     public static long stringToLong(String s) throws NumberFormatException {
         String work = s;
         long result = 0;
-       // First, use Long.decode().  This will validate most, but it flags
+        // First, use Long.decode().  This will validate most, but it flags
         // valid hex two's complement values as exceptions.  We'll catch those and
         // do our own validation.
         try {
@@ -463,7 +438,7 @@ public class Binary {
      *
      * @param longValue The long value from which to extract bits.
      * @return int containing high order 32 bits of argument
-   	  *
+     *
      */
     public static int highOrderLongToInt(long longValue) {
         return (int) (longValue >> 32);  // high order 32 bits
@@ -475,7 +450,7 @@ public class Binary {
      *
      * @param longValue The long value from which to extract bits.
      * @return int containing low order 32 bits of argument
-   	  *
+     *
      */
     public static int lowOrderLongToInt(long longValue) {
         return (int) (longValue << 32 >> 32);  // low order 32 bits
@@ -488,7 +463,7 @@ public class Binary {
      * @param highOrder Integer to form the high-order 32 bits of result.
      * @param lowOrder Integer to form the high-order 32 bits of result.
      * @return long containing concatenated 32 bit int values.
-   	  *
+     *
      */
     public static long twoIntsToLong(int highOrder, int lowOrder) {
         return (((long) highOrder) << 32) | (((long) lowOrder) & 0xFFFFFFFFL);
@@ -500,7 +475,7 @@ public class Binary {
      * @param value The value to read the bit from.
      * @param bit bit position in range 0 (least significant) to 31 (most)
      * @return 0 if the bit position contains 0, and 1 otherwise.
-   	  *
+     *
      */
     public static int bitValue(int value, int bit) {
         return 1 & (value >> bit);
@@ -512,7 +487,7 @@ public class Binary {
      * @param value The value to read the bit from.
      * @param bit bit position in range 0 (least significant) to 63 (most)
      * @return 0 if the bit position contains 0, and 1 otherwise.
-   	  *
+     *
      */
     public static int bitValue(long value, int bit) {
 
@@ -526,7 +501,7 @@ public class Binary {
      * @param value The value in which the bit is to be set.
      * @param bit bit position in range 0 (least significant) to 31 (most)
      * @return value possibly modified with given bit set to 1.
-   	  *
+     *
      */
     public static int setBit(int value, int bit) {
         return value | (1 << bit);
@@ -539,13 +514,13 @@ public class Binary {
      * @param value The value in which the bit is to be set.
      * @param bit bit position in range 0 (least significant) to 31 (most)
      * @return value possibly modified with given bit set to 0.
-   	  *
+     *
      */
     public static int clearBit(int value, int bit) {
         return value & ~(1 << bit);
     }
 
-   	// setByte and getByte added by DPS on 12 July 2006
+    // setByte and getByte added by DPS on 12 July 2006
     /**
      * Sets the specified byte of the specified value to the low order 8 bits of
      * specified replacement value, and returns the result.
@@ -555,7 +530,7 @@ public class Binary {
      * @param replace value to place into that byte position - use low order 8
      * bits
      * @return value modified value.
-   	  *
+     *
      */
     public static int setByte(int value, int bite, int replace) {
         return value & ~(0xFF << (bite << 3)) | ((replace & 0xFF) << (bite << 3));
@@ -567,7 +542,7 @@ public class Binary {
      * @param value The value in which the byte is to be retrieved.
      * @param bite byte position in range 0 (least significant) to 3 (most)
      * @return zero-extended byte value in low order byte.
-   	  *
+     *
      */
     public static int getByte(int value, int bite) {
         return value << ((3 - bite) << 3) >>> 24;
@@ -587,11 +562,11 @@ public class Binary {
      *
      * @return Returns <tt>true</tt> if string represents a hex number, else
      * returns <tt>false</tt>.
-    *
+     *
      */
     public static boolean isHex(String v) {
         try {
-           // don't care about return value, just whether it threw exception.
+            // don't care about return value, just whether it threw exception.
             // If value is EITHER a valid int OR a valid long, continue.
             try {
                 Binary.stringToInt(v);

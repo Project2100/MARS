@@ -1,27 +1,37 @@
 package mars.venus;
 
-import java.awt.FlowLayout;
-import java.awt.Insets;
-import java.beans.PropertyChangeListener;
-import java.io.File;
+import java.awt.BorderLayout;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.event.ItemEvent;
 import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
-import javax.swing.JButton;
+import java.util.Iterator;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.function.UnaryOperator;
+import java.util.logging.Level;
+import java.util.stream.Stream;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-import javax.swing.filechooser.FileFilter;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.undo.UndoManager;
+import mars.MIPSprogram;
 import mars.Main;
+import mars.ProcessingException;
 import mars.Settings;
-import mars.mips.hardware.RegisterFile;
-import mars.util.FilenameFinder;
+import mars.venus.editors.MARSTextEditingArea;
+import mars.venus.editors.generic.GenericTextArea;
+import mars.venus.editors.jeditsyntax.JEditBasedTextArea;
 
 /*
- Copyright (c) 2003-2010,  Pete Sanderson and Kenneth Vollmar
+ Copyright (c) 2003-2011,  Pete Sanderson and Kenneth Vollmar
 
  Developed by Pete Sanderson (psanderson@otterbein.edu)
  and Kenneth Vollmar (kenvollmar@missouristate.edu)
@@ -48,479 +58,580 @@ import mars.util.FilenameFinder;
  (MIT license, http://www.opensource.org/licenses/mit-license.html)
  */
 /**
- * Tabbed pane for the editor. Each of its tabs represents an open file.
+ * Represents one file opened for editing. Maintains required internal
+ * structures. Before Mars 4.0, there was only one editor pane, a tab, and only
+ * one file could be open at a time. With 4.0 came the multifile (pane, tab)
+ * editor, and existing duties were split between EditPane and the new
+ * EditTabbedPane class.
  *
- * @author Sanderson
+ * @author Sanderson and Bumgarner
  */
-public final class EditPane extends JTabbedPane {
+public class EditPane extends JPanel implements Observer {
 
-    // number of times File->New has been selected.  Used to generate
-    // default filename until first Save or Save As.
-    private int newUsageCount;
+    private static final char newline = '\n';
 
-    // Current Directory for Open operation, same for Save operation
-    // Values will mainly be setStatusMenu by the EditPane as Open/Save operations occur.
-    private final String defaultOpenDirectory, defaultSaveDirectory;
-    private String currentOpenDirectory, currentSaveDirectory;
+    private Path file;
+    private boolean edited;
 
-    private File mostRecentlyOpenedFile;
-    private JFileChooser fileChooser;
-
-    private int fileFilterCount;
-    private ArrayList<FileFilter> fileFilters;
-    private PropertyChangeListener listenForUserAddedFileFilter;
+    private final MARSTextEditingArea sourceCode;
+    private final JLabel lineNumbers;
+    private final JLabel caretPositionLabel;
+    private final JCheckBox showLineNumbers;
 
     /**
-     * Constructor for the editor pane
+     * Constructs a tab to display in editor mode with the contents of the
+     * specified {@code source} file.
      *
+     * @param source The source file to open in this tab
+     * @throws IllegalArgumentException if {@code source} is {@code null}
      */
-    public EditPane() {
-        super();
+    public EditPane(Path source) {
+        super(new BorderLayout());
 
-        newUsageCount = 0;
-        defaultOpenDirectory = System.getProperty("user.dir");
-        defaultSaveDirectory = System.getProperty("user.dir");
-        currentOpenDirectory = defaultOpenDirectory;
-        currentSaveDirectory = defaultSaveDirectory;
+        // Argument check
+        if (source == null)
+            throw new IllegalArgumentException("Passing null Path to tab constructor!");
 
-        mostRecentlyOpenedFile = null;
-        fileChooser = new JFileChooser();
+        // We want to be notified of editor font changes! See update() below.
+        Main.getSettings().addObserver(this);
 
-        //////////////////////////////////////////////////////////////////////////////////
-        //  Private inner class for special property change listener.  DPS 9 July 2008.
-        //  If user adds a file filter, e.g. by typing *.txt into the file text field then pressing
-        //  Enter, then it is automatically added to the array of choosable file filters.  BUT, unless you
-        //  Cancel out of the Open dialog, it is then REMOVED from the list automatically also. Here
-        //  we will achieve a sort of persistence at least through the current activation of MARS.
-        listenForUserAddedFileFilter = (event) -> {
-            if (event.getPropertyName() == JFileChooser.CHOOSABLE_FILE_FILTER_CHANGED_PROPERTY) {
-                FileFilter[] newFilters = (FileFilter[]) event.getNewValue();
-                if (newFilters.length > fileFilters.size())
-                    // new filter added, so add to end of master list.
-                    fileFilters.add(newFilters[newFilters.length - 1]);
+        // Field init
+        file = source;
+        edited = false;
+
+        lineNumbers = new JLabel();
+
+        caretPositionLabel = new JLabel();
+        caretPositionLabel.setToolTipText("Tracks the current position of the text editing cursor.");
+
+        showLineNumbers = new JCheckBox("Show Line Numbers");
+        showLineNumbers.setToolTipText("If checked, will display line number for each line of text.");
+        showLineNumbers.setEnabled(false);
+        // Show line numbers by default.
+        showLineNumbers.setSelected(Main.getSettings().getBool(Settings.EDITOR_LINE_NUMBERS_DISPLAYED));
+
+        // sourceCode uses caretPositionLabel
+        sourceCode = Main.getSettings().getBool(Settings.GENERIC_TEXT_EDITOR)
+                ? new GenericTextArea(this, lineNumbers)
+                : new JEditBasedTextArea(this, lineNumbers);
+
+        if (source.getRoot() != null) {
+            Main.program = new MIPSprogram();
+            try {
+                Main.program.readSource(source.toString());
             }
-        };
+            catch (ProcessingException pe) {
+            }
+        }
 
-        fileChooser.addPropertyChangeListener(listenForUserAddedFileFilter);
+        sourceCode.setSourceCode(source.getRoot() == null
+                ? ""
+                : Main.program.getSourceList()
+                .stream()
+                .reduce((s, t) -> s + newline + t)
+                .get(), true);
 
-        // Note: add sequence is significant - last one added becomes default.
-        fileFilters = new ArrayList<>();
-        fileFilters.add(FilenameFinder.getFileFilter(Main.fileExtensions, "Assembler Files"));
-        fileFilters.add(FilenameFinder.getFileFilter(new ArrayList<>(Arrays.asList(".txt", ".in")), "Text/input Files"));
-        fileFilters.add(fileChooser.getAcceptAllFileFilter());
-        fileFilterCount = 0; // this will trigger fileChooser file filter load in next line
-        setChoosableFileFilters();
+        // The above operation generates an undoable edit, setting the initial
+        // text area contents, that should not be seen as undoable by the Undo
+        // action.  Let's get rid of it.
+        sourceCode.discardAllUndoableEdits();
+        showLineNumbers.setEnabled(true);
 
-        addChangeListener((event) -> {
-            EditTab tab = getSelectedComponent();
-            if (tab != null) {
-                // New IF statement to permit free traversal of edit panes w/o invalidating
-                // assembly if assemble-all is selected.  DPS 9-Aug-2011
-                //20150520 - Modes implicitly invalid assembled status on swap
-//                if (Main.getSettings().getBool(mars.Settings.ASSEMBLE_ALL_ENABLED))
-//                    updateTitles(tab);
-//                else {
-//                tab.updateTitlesAndMenuState();
-                Main.getGUI().updateGUIState();
-//                    Main.getGUI().executeTab.clearPane();
-//                }
-                tab.tellEditingComponentToRequestFocusInWindow();
+        // If source code is modified, will update application status
+        sourceCode.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent evt) {
+                if (!edited) {
+                    edited = true;
+                    Main.getGUI().updateGUIState();
+                }
+                if (showLineNumbers.isSelected())
+                    lineNumbers.setText(getLineNumbers());
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent evt) {
+                insertUpdate(evt);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent evt) {
             }
         });
+
+        lineNumbers.setFont(getLineNumberFont(sourceCode.getFont()));
+        lineNumbers.setVerticalAlignment(JLabel.TOP);
+        if (showLineNumbers.isSelected())
+            lineNumbers.setText(getLineNumbers());
+        lineNumbers.setVisible(true);
+
+        // Listener fires when "Show Line Numbers" check box is clicked.
+        showLineNumbers.addItemListener((event) -> {
+            boolean isSelected = event.getStateChange() == ItemEvent.SELECTED;
+
+            lineNumbers.setText(isSelected ? getLineNumbers() : "");
+            lineNumbers.setVisible(isSelected);
+            Main.getSettings().setBool(Settings.EDITOR_LINE_NUMBERS_DISPLAYED, isSelected);
+
+            sourceCode.revalidate(); // added 16 Jan 2012 to assure label redrawn.
+            // needed because caret disappears when checkbox clicked
+            sourceCode.setCaretVisible(true);
+            sourceCode.requestFocusInWindow();
+        });
+
+        JPanel editInfo = new JPanel(new BorderLayout());
+        editInfo.add(caretPositionLabel, BorderLayout.WEST);
+        editInfo.add(showLineNumbers, BorderLayout.CENTER);
+        // sourceCode is responsible for its own scrolling
+        add(sourceCode.getOuterComponent(), BorderLayout.CENTER);
+        add(editInfo, BorderLayout.SOUTH);
     }
 
     /**
-     * Gets the tab currently shown in this pane.
-     * <p/>Overridden for return type cast
+     * Form string with source code line numbers. Resulting string is in HTML,
+     * for which JLabel will happily honor {@code <br />} instead of {@code \n}
+     * to do multi-line label.<br />
+     * The line number list is a JLabel with one line number per line.
      *
-     * @return the current editor tab, or null if this container is empty
-     * @see JTabbedPane#getSelectedComponent()
+     * @return HTML formatted string representing the line numbers
      */
-    @Override
-    public EditTab getSelectedComponent() {
-        return (EditTab) super.getSelectedComponent();
+    private String getLineNumbers() {
+        return Stream.iterate(1, i -> i + 1)
+                .limit(getSourceLineCount())
+                .map((i) -> Integer.toString(i) + "&nbsp;<br/>")
+                .reduce("<html><body style='text-align:right'>", String::concat)
+                + "</body></html>";
     }
 
     /**
-     * Gets the tab at the specified index.
-     * <p/>Overridden for return type cast
+     * Gets th number of lines in source code text. Equivalent of
+     * {@code sourceCode.getDocument().getDefaultRootElement().getElementCount()}
      *
-     * @param index the position of the requested tab
-     * @return the tab
-     * @throws IndexOutOfBoundsException if {@code index} is out of bounds
-     * @see JTabbedPane#getComponentAt(int index)
+     * @return line count of this document
      */
-    @Override
-    public EditTab getComponentAt(int index) {
-        return (EditTab) super.getComponentAt(index);
-    }
-
-    void setTitleAtComponent(String title, EditTab tab) {
-        if (getTabComponentAt(indexOfComponent(tab)) == null)
-            setTabComponentAt(indexOfComponent(tab), new TabTitleComponent(tab));
-        else
-            ((TabTitleComponent) getTabComponentAt(indexOfComponent(tab))).titleLabel.setText(title);
+    public int getSourceLineCount() {
+        return sourceCode.getDocument().getDefaultRootElement().getElementCount();
     }
 
     /**
-     * Set name of current directory for Open operation. The contents of this
-     * directory will be displayed when Open dialog is launched.
+     * Get source code text
      *
-     * @param currentOpenDirectory String containing pathname for current Open
-     * directory. If it does not exist or is not a directory, the default (MARS
-     * launch directory) will be used.
+     * @return Sting containing source code
      */
-    void setCurrentOpenDirectory(String currentOpenDirectory) {
-        File file = new File(currentOpenDirectory);
-        if (!file.exists() || !file.isDirectory())
-            this.currentOpenDirectory = defaultOpenDirectory;
-        else
-            this.currentOpenDirectory = currentOpenDirectory;
+    public String getSource() {
+        return sourceCode.getText();
     }
 
     /**
-     * Get name of current directory for Save or Save As operation.
+     * Get file name with no path information. See java.io.File.getName()
      *
-     * @return String containing directory pathname. Returns null if there is no
-     * EditPane. Returns default, directory MARS is launched from, if no Save or
-     * Save As operations have been performed.
+     * @return filename as a String
      */
-    public String getCurrentSaveDirectory() {
-        return currentSaveDirectory;
+    public String getFilename() {
+        return file.getFileName().toString();
     }
 
     /**
-     * Set name of current directory for Save operation. The contents of this
-     * directory will be displayed when Save dialog is launched.
+     * Get full file pathname. See java.io.File.getPath()
      *
-     * @param currentSaveDirectory String containing pathname for current Save
-     * directory. If it does not exist or is not a directory, the default (MARS
-     * launch directory) will be used.
+     * @return full pathname as a {@code String}
      */
-    void setCurrentSaveDirectory(String currentSaveDirectory) {
-        File file = new File(currentSaveDirectory);
-        if (!file.exists() || !file.isDirectory())
-            this.currentSaveDirectory = defaultSaveDirectory;
-        else
-            this.currentSaveDirectory = currentSaveDirectory;
+    public String getPathname() {
+        return file.toString();
     }
 
     /**
-     * Carries out all necessary operations to implement the New operation from
-     * the File menu.
-     */
-    public void newFile() {
-
-        String name = "Untitled" + (++newUsageCount) + ".asm";
-        EditTab tab = new EditTab(Paths.get(name));
-
-        addTab(name, tab);
-
-        VenusUI.setReset(true);
-        RegisterFile.resetRegisters();
-        tab.displayCaretPosition(0);
-        setSelectedComponent(tab);
-        tab.tellEditingComponentToRequestFocusInWindow();
-    }
-
-    /**
-     * Carries out all necessary operations to implement the Open operation from
-     * the File menu. This begins with an Open File dialog.
+     * Get file parent pathname. See java.io.File.getParentDirectory()
      *
-     * @return true if file was opened, false otherwise.
+     * @return parent full pathname as a {@code String}
      */
-    public boolean openFile() {
+    public String getParentDirectory() {
+        return file.getParent().toString();
+    }
 
-        // The fileChooser's list may be rebuilt from the master ArrayList if a new filter
-        // has been added by the user.
-        setChoosableFileFilters();
-        // getStatus name of file to be opened and load contents into text editing area.
-        fileChooser.setCurrentDirectory(new File(currentOpenDirectory));
-        // Set default to previous file opened, if any.  This is useful in conjunction
-        // with option to assemble file automatically upon opening.  File likely to have
-        // been edited externally (e.g. by Mipster).
-        if (Main.getSettings().getBool(Settings.ASSEMBLE_ON_OPEN_ENABLED) && mostRecentlyOpenedFile != null)
-            fileChooser.setSelectedFile(mostRecentlyOpenedFile);
+    /**
+     * Determine if file has been modified since last save or, if not yet saved,
+     * since being created using New or Open.
+     *
+     * @return true if file has been modified since save or creation, false
+     * otherwise.
+     */
+    public boolean hasUnsavedEdits() {
+        return edited;
+    }
 
-        if (fileChooser.showOpenDialog(Main.getGUI().mainFrame) == JFileChooser.APPROVE_OPTION) {
-            File theFile = fileChooser.getSelectedFile();
-            setCurrentOpenDirectory(theFile.getParent());
-            //setCurrentSaveDirectory(theFile.getParentDirectory());// 13-July-2011 DPS.
-            if (!openFile(theFile))
-                return false;
+    /**
+     * Determine if file is "new", which means created using New but not yet
+     * saved. If created using Open, it is not new.
+     *
+     * @return true if file was created using New and has not yet been saved,
+     * false otherwise.
+     */
+    public boolean isNew() {
+        return file.getRoot() == null;
+    }
 
-            // possibly send this file right through to the assembler by switching mode
-            if (theFile.canRead() && Main.getSettings().getBool(Settings.ASSEMBLE_ON_OPEN_ENABLED))
-                Main.getGUI().toggleGUIMode();
+    /**
+     * Delegates to text area's requestFocusInWindow method.
+     */
+    public void tellEditingComponentToRequestFocusInWindow() {
+        sourceCode.requestFocusInWindow();
+    }
+
+    /**
+     * Get the manager in charge of Undo and Redo operations
+     *
+     * @return the UnDo manager
+     */
+    public UndoManager getUndoManager() {
+        return sourceCode.getUndoManager();
+    }
+
+    /*       Note: these are invoked only when copy/cut/paste are used from the
+     toolbar or menu or the defined menu Alt codes.  When
+     Ctrl-C, Ctrl-X or Ctrl-V are used, this code is NOT invoked
+     but the operation works correctly!
+     The "set visible" operations are used because clicking on the toolbar
+     icon causes both the selection highlighting AND the blinking cursor
+     to disappear!  This does not happen when using menu selection or 
+     Ctrl-C/X/V
+     */
+    /**
+     * copy currently-selected text into clipboard
+     */
+    public void copyText() {
+        sourceCode.copy();
+        sourceCode.setCaretVisible(true);
+        sourceCode.setSelectionVisible(true);
+    }
+
+    /**
+     * cut currently-selected text into clipboard
+     */
+    public void cutText() {
+        sourceCode.cut();
+        sourceCode.setCaretVisible(true);
+    }
+
+    /**
+     * paste clipboard contents at cursor position
+     */
+    public void pasteText() {
+        sourceCode.paste();
+        sourceCode.setCaretVisible(true);
+    }
+
+    /**
+     * select all text
+     */
+    public void selectAllText() {
+        sourceCode.selectAll();
+        sourceCode.setCaretVisible(true);
+        sourceCode.setSelectionVisible(true);
+    }
+
+    /**
+     * Undo previous edit
+     */
+    public void undo() {
+        sourceCode.undo();
+        Main.getGUI().updateUndoManager();
+    }
+
+    /**
+     * Redo previous edit
+     */
+    public void redo() {
+        sourceCode.redo();
+        Main.getGUI().updateUndoManager();
+    }
+
+    /**
+     * Update the caret position label on the editor's border to display the
+     * current line and column. The position is given as text stream offset and
+     * will be converted into line and column.
+     *
+     * @param pos Offset into the text stream of caret.
+     */
+    public void displayCaretPosition(int pos) {
+        displayCaretPosition(convertStreamPositionToLineColumn(pos));
+    }
+
+    /**
+     * Display cursor coordinates
+     *
+     * @param p Point object with x-y (column, line number) coordinates of
+     * cursor
+     */
+    public void displayCaretPosition(Point p) {
+        caretPositionLabel.setText("Line: " + p.y + " Column: " + p.x);
+    }
+
+    /**
+     * Given byte stream position in text being edited, calculate its column and
+     * line number coordinates.
+     *
+     * @param position position of character
+     * @return column and line coordinates as a {@link Point}
+     */
+    private Point convertStreamPositionToLineColumn(int position) {
+        String textStream = sourceCode.getText();
+        int line = 1;
+        int column = 1;
+        for (int i = 0; i < position; i++)
+            if (textStream.charAt(i) == newline) {
+                line++;
+                column = 1;
+            }
+            else
+                column++;
+        return new Point(column, line);
+    }
+
+    /**
+     * Given line and column (position in the line) numbers, calculate its byte
+     * stream position in text being edited.
+     *
+     * @param line Line number in file (starts with 1)
+     * @param column Position within that line (starts with 1)
+     * @return corresponding stream position. Returns -1 if there is no
+     * corresponding position.
+     */
+    private int convertLineColumnToStreamPosition(int line, int column) {
+        String textStream = sourceCode.getText();
+        int textLength = textStream.length();
+        int textLine = 1;
+        int textColumn = 1;
+        for (int i = 0; i < textLength; i++) {
+            if (textLine == line && textColumn == column)
+                return i;
+            if (textStream.charAt(i) == newline) {
+                textLine++;
+                textColumn = 1;
+            }
+            else
+                textColumn++;
         }
-        return true;
-
+        return -1;
     }
 
     /**
-     * Carries out all necessary operations to open the specified file in the
-     * editor.
+     * Select the specified editor text line. Lines are numbered starting with
+     * 1, consistent with line numbers displayed by the editor.
      *
-     * @param file
-     * @return true if file was opened, false otherwise.
+     * @param line The desired line number of this TextPane's text. Numbering
+     * starts at 1, and nothing will happen if the parameter value is less than
+     * 1
      */
-    public boolean openFile(File file) {
+    public void selectLine(int line) {
+        if (line > 0) {
+            int lineStartPosition = convertLineColumnToStreamPosition(line, 1);
+            int lineEndPosition = convertLineColumnToStreamPosition(line + 1, 1) - 1;
+            if (lineEndPosition < 0) // DPS 19 Sept 2012.  Happens if "line" is last line of file.
+
+                lineEndPosition = sourceCode.getText().length() - 1;
+            if (lineStartPosition >= 0) {
+                sourceCode.select(lineStartPosition, lineEndPosition);
+                sourceCode.setSelectionVisible(true);
+            }
+        }
+    }
+
+    /**
+     * Select the specified editor text line. Lines are numbered starting with
+     * 1, consistent with line numbers displayed by the editor.
+     *
+     * @param line The desired line number of this TextPane's text. Numbering
+     * starts at 1, and nothing will happen if the parameter value is less than
+     * 1
+     * @param column Desired column at which to place the cursor.
+     */
+    public void selectLine(int line, int column) {
+        selectLine(line);
+        // Made one attempt at setting cursor; didn't work but here's the attempt
+        // (imagine using it in the one-parameter overloaded method above)
+        //sourceCode.setCaretPosition(lineStartPosition+column-1);        
+    }
+
+    /**
+     * Finds next occurrence of text in a forward search of a string. Search
+     * begins at the current cursor location, and wraps around when the end of
+     * the string is reached.
+     *
+     * @param find the text to locate in the string
+     * @param caseSensitive true if search is to be case-sensitive, false
+     * otherwise
+     * @return TEXT_FOUND or TEXT_NOT_FOUND, depending on the result.
+     */
+    public int doFindText(String find, boolean caseSensitive) {
+        return sourceCode.doFindText(find, caseSensitive);
+    }
+
+    /**
+     * Finds and replaces next occurrence of text in a string in a forward
+     * search. If cursor is initially at end of matching selection, will
+     * immediately replace then find and select the next occurrence if any.
+     * Otherwise it performs a find operation. The replace can be undone with
+     * one undo operation.
+     *
+     * @param find the text to locate in the string
+     * @param replace the text to replace the find text with - if the find text
+     * exists
+     * @param caseSensitive true for case sensitive. false to ignore case
+     * @return Returns TEXT_FOUND if not initially at end of selected match and
+     * matching occurrence is found. Returns TEXT_NOT_FOUND if the text is not
+     * matched. Returns TEXT_REPLACED_NOT_FOUND_NEXT if replacement is
+     * successful but there are no additional matches. Returns
+     * TEXT_REPLACED_FOUND_NEXT if reaplacement is successful and there is at
+     * least one additional match.
+     */
+    public int doReplace(String find, String replace, boolean caseSensitive) {
+        return sourceCode.doReplace(find, replace, caseSensitive);
+    }
+
+    /**
+     * Finds and replaces <B>ALL</B> occurrences of text in a string in a
+     * forward search. All replacements are bundled into one CompoundEdit, so
+     * one Undo operation will undo all of them.
+     *
+     * @param find the text to locate in the string
+     * @param replace the text to replace the find text with - if the find text
+     * exists
+     * @param caseSensitive true for case sensitive. false to ignore case
+     * @return the number of occurrences that were matched and replaced.
+     */
+    public int doReplaceAll(String find, String replace, boolean caseSensitive) {
+        return sourceCode.doReplaceAll(find, replace, caseSensitive);
+    }
+
+    /**
+     * Update, if source code is visible, when Font setting changes. This method
+     * is specified by the Observer interface.
+     *
+     * @param fontChanger
+     */
+    @Override
+    public void update(Observable fontChanger, Object arg) {
+        sourceCode.setFont(Main.getSettings().getEditorFont());
+        sourceCode.setLineHighlightEnabled(Main.getSettings().getBool(Settings.EDITOR_CURRENT_LINE_HIGHLIGHTING));
+        sourceCode.setCaretBlinkRate(Main.getSettings().getCaretBlinkRate());
+        sourceCode.setTabSize(Main.getSettings().getEditorTabSize());
+        sourceCode.updateSyntaxStyles();
+        sourceCode.revalidate();
+        // We want line numbers to be displayed same size but always PLAIN style.
+        // Easiest way to get same pixel height as source code is to set to same
+        // font family as the source code! It can get a bit complicated otherwise
+        // because different fonts will render the same font size in different
+        // pixel heights.  This is a factor because the line numbers as displayed
+        // in the editor form a separate column from the source code and if the
+        // pixel height is not the same then the numbers will not line up with
+        // the source lines.
+        lineNumbers.setFont(getLineNumberFont(sourceCode.getFont()));
+        lineNumbers.revalidate();
+    }
+
+    /* Private helper method.
+     * Determine font to use for editor line number display, given current
+     * font for source code.
+     */
+    private Font getLineNumberFont(Font sourceFont) {
+        return (sourceCode.getFont().getStyle() == Font.PLAIN)
+                ? sourceFont
+                : new Font(sourceFont.getFamily(), Font.PLAIN, sourceFont.getSize());
+    }
+
+    /**
+     * Saves the contents of this pane into its file.<p/>
+     * If the latter doesn't exist, or a "Save As" behavior is requested, the
+     * user will be asked for a valid pathname by means of a
+     * {@link JFileChooser}.
+     *
+     * @param doRename if true, will force "Save As" behavior
+     * @return true if the file has been successfully written, false otherwise
+     */
+    boolean save(boolean doRename) {
+
+        if (isNew() || doRename) {
+
+            //Setting up file chooser
+            JFileChooser saveDialog = new JFileChooser(isNew()
+                    ? Main.getGUI().editTabbedPane.getCurrentSaveDirectory()
+                    : file.getParent().toString());
+            saveDialog.setDialogTitle("Save As");
+            if (!isNew())
+                saveDialog.setSelectedFile(file.getFileName().toFile());
+
+            boolean doSave = false;
+            while (!doSave) {
+                if (saveDialog.showSaveDialog(Main.getGUI().mainFrame) != JFileChooser.APPROVE_OPTION)
+                    return false;
+
+                Path newFilename = saveDialog.getSelectedFile().toPath();
+
+                if (!Files.exists(newFilename)) {
+                    file = newFilename;
+                    doSave = true;
+                }
+                else switch (JOptionPane.showConfirmDialog(
+                            Main.getGUI().mainFrame,
+                            "File " + newFilename.getFileName() + " already exists.  Do you wish to overwrite it?",
+                            "Overwrite existing file?",
+                            JOptionPane.YES_NO_CANCEL_OPTION,
+                            JOptionPane.WARNING_MESSAGE)) {
+                        case JOptionPane.YES_OPTION:
+                            file = newFilename;
+                            doSave = true;
+                            break;
+                        case JOptionPane.NO_OPTION:
+                            break;
+                        case JOptionPane.CANCEL_OPTION:
+                            return false;
+                        default:
+                            throw new IllegalStateException("Unexpected exception: Illegal case on confirm dialog!");
+                    }
+            }
+        }
 
         try {
-            file = file.getCanonicalFile();
+            Files.write(file, sourceCode.getText().getBytes());
+            edited = false;
         }
-        catch (IOException ioe) {
-            // nothing to do, theFile will keep current value
-        }
-        String currentFilePath = file.getPath();
-        // If this file is currently already open, then simply select its tab
-        EditTab tab = getTabForFile(currentFilePath);
-        if (tab != null) {
-            setSelectedComponent(tab);
+        catch (IOException ex) {
+            Main.logger.log(Level.SEVERE, "Exception while writing file: " + file.toString(), ex);
             return false;
         }
 
-        if (file.canRead()) {
-
-            tab = new EditTab(file.toPath());
-
-            addTab(tab.getFilename(), tab);
-
-            setToolTipTextAt(indexOfComponent(tab), tab.getPathname());
-            setSelectedComponent(tab);
-
-            tab.tellEditingComponentToRequestFocusInWindow();
-            mostRecentlyOpenedFile = file;
-        }
+        Main.getGUI().updateGUIState();
         return true;
     }
 
     /**
-     * If there is an EditTab for the given file pathname, return it else return
-     * null.
-     *
-     * @param pathname Pathname for desired file
-     * @return the EditTab for this file if it is open in the editor, or null if
-     * not.
+     * Uses the HardcopyWriter class developed by David Flanagan for the book
+     * "Java Examples in a Nutshell". It will do basic printing of multi-page
+     * text documents. It displays a print dialog but does not act on any
+     * changes the user may have specified there, such as number of copies.
      */
-    public EditTab getTabForFile(String pathname) {
-        EditTab openPane = null;
-        for (int i = 0; i < getTabCount(); i++) {
-            EditTab pane = (EditTab) getComponentAt(i);
-            if (pathname.equals(pane.getPathname())) {
-                openPane = pane;
-                break;
+    void print() {
+        try (HardcopyWriter printer = new HardcopyWriter(Main.getGUI().mainFrame, getFilename(),
+                10, .5, .5, .5, .5)) {
+
+            UnaryOperator<String> mapper;
+            if (showLineNumbers.isSelected()) {
+                Iterator<String> lineNumber = Stream.iterate(1, n -> n + 1)
+                        .limit(getSourceLineCount())
+                        .map(n -> Integer.toString(n) + ": ")
+                        .iterator();
+                mapper = line -> lineNumber.next() + line + newline;
             }
+            else mapper = line -> line + newline;
+
+            Arrays.stream(getSource().split(newline + "", -1))
+                    .sequential()
+                    .map(mapper)
+                    .forEach(line -> printer.write(line.toCharArray(), 0, line.length()));
         }
-        return openPane;
-    }
-
-    /**
-     * Saves all files currently open in the editor.
-     *
-     * @return true if operation succeeded otherwise false.
-     */
-    public boolean saveAllFiles() {
-        int tabCount = getTabCount();
-        if (tabCount == 0)
-            throw new IllegalStateException("No tabs found on SaveAll action!");
-
-        EditTab savedPane = getSelectedComponent();
-        EditTab tab;
-        for (int i = 0; i < tabCount; i++) {
-            tab = getComponentAt(i);
-            if (tab.hasUnsavedEdits()) {
-                setSelectedComponent(tab);
-                if (!tab.save(false))
-                    return false;
-            }
-
-        }
-        setSelectedComponent(savedPane);
-        return true;
-    }
-
-    /**
-     * Carries out all necessary operations to implement the Close operation
-     * from the File menu. May return false, for instance when file has unsaved
-     * changes and user selects Cancel from the warning dialog.
-     *
-     * @return true if file was closed, false otherwise.
-     */
-    public boolean closeCurrentFile() {
-        EditTab tab = getSelectedComponent();
-        if (tab != null && editsSavedOrAbandoned(tab)) {
-            remove(tab);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Carries out all necessary operations to implement the Close All operation
-     * from the File menu.
-     *
-     * @return true if files closed, false otherwise.
-     */
-    public boolean closeAllFiles() {
-        boolean result = true;
-
-        int tabCount = getTabCount();
-        if (tabCount > 0) {
-
-            // Build tab array
-            boolean unsavedChanges = false;
-            EditTab[] tabs = new EditTab[tabCount];
-            for (int i = 0; i < tabCount; i++) {
-                tabs[i] = getComponentAt(i);
-                if (tabs[i].hasUnsavedEdits())
-                    unsavedChanges = true;
-            }
-
-            if (unsavedChanges) switch (confirm("one or more files")) {
-                case JOptionPane.YES_OPTION:
-                    boolean removedAll = true;
-                    for (int i = 0; i < tabCount; i++)
-                        if (tabs[i].hasUnsavedEdits()) {
-                            setSelectedComponent(tabs[i]);
-                            boolean saved = tabs[i].save(false);
-                            if (saved)
-                                remove(tabs[i]);
-                            else
-                                removedAll = false;
-                        }
-                        else
-                            remove(tabs[i]);
-                    return removedAll;
-                case JOptionPane.NO_OPTION:
-                    removeAll();
-                    return true;
-                case JOptionPane.CANCEL_OPTION:
-                    return false;
-                default: // should never occur
-                    throw new IllegalStateException("Unexpected return value while closing all files!");
-            }
-            else
-                removeAll();
-        }
-        return result;
-    }
-
-    /**
-     * Remove tab from the editor
-     *
-     * @param tab the tab to remove
-     */
-    public void remove(EditTab tab) {
-        super.remove(tab);
-
-        if (getTabCount() == 0) {
-            // Apparently, removing the last tab doesn't fire a changeEvent to this pane,
-            // so I'm leaving this here
-            // 20150525 - Andrea Proietto
-            Main.getGUI().setMenuStateInitial();
-            Main.getGUI().mainFrame.setTitle(Main.getGUI().baseTitle);
-            // When last file is closed, menu is unable to respond to mnemonics
-            // and accelerators.  Let's have it request focus so it may do so.
-            Main.getGUI().menuBar.requestFocus();
-        }
-
-    }
-
-    /**
-     * Check whether file has unsaved edits and, if so, check with user about
-     * saving them.<p/>
-     * 
-     * Specifically: if there is a current file open for editing
-     * and its modify flag is true, then give user a dialog box with choice to
-     * save, discard edits, or cancel and carry out the decision. This applies
-     * to File->New, File->Open, File->Close, and File->Exit.
-     *
-     * @return true if no unsaved edits or if user chooses to save them or not;
-     * false if there are unsaved edits and user cancels the operation.
-     */
-    boolean editsSavedOrAbandoned(EditTab currentPane) {
-        if (currentPane != null && currentPane.hasUnsavedEdits())
-            switch (confirm(currentPane.getFilename())) {
-                case JOptionPane.YES_OPTION:
-                    return currentPane.save(false);
-                case JOptionPane.NO_OPTION:
-                    return true;
-                case JOptionPane.CANCEL_OPTION:
-                    return false;
-                default: // should never occur
-                    return false;
-            }
-        else
-            return true;
-    }
-
-    private int confirm(String name) {
-        return JOptionPane.showConfirmDialog(Main.getGUI().mainFrame,
-                "Changes to " + name + " will be lost unless you save.  Do you wish to save all changes now?",
-                "Save program changes?",
-                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
-    }
-
-    // Private method to generate the file chooser's list of choosable file filters.
-    // It is called when the file chooser is created, and called again each time the Open
-    // dialog is activated.  We do this because the user may have added a new filter 
-    // during the previous dialog.  This can be done by entering e.g. *.txt in the file
-    // name text field.  Java is funny, however, in that if the user does this then
-    // cancels the dialog, the new filter will remain in the list BUT if the user does
-    // this then ACCEPTS the dialog, the new filter will NOT remain in the list.  However
-    // the act of entering it causes a property change event to occur, and we have a
-    // handler that will add the new filter to our internal filter list and "restore" it
-    // the next time this method is called.  Strangely, if the user then similarly
-    // adds yet another new filter, the new one becomes simply a description change
-    // to the previous one, the previous object is modified AND NO PROPERTY CHANGE EVENT 
-    // IS FIRED!  I could obviously deal with this situation if I wanted to, but enough
-    // is enough.  The limit will be one alternative filter at a time.
-    // DPS... 9 July 2008
-    private void setChoosableFileFilters() {
-        // See if a new filter has been added to the master list.  If so,
-        // regenerate the fileChooser list from the master list.
-        if (fileFilterCount < fileFilters.size()
-                || fileFilters.size() != fileChooser.getChoosableFileFilters().length) {
-            fileFilterCount = fileFilters.size();
-            // First, "deactivate" the listener, because our addChoosableFileFilter
-            // calls would otherwise activate it!  We want it to be triggered only
-            // by MARS user action.
-            boolean activeListener = false;
-            if (fileChooser.getPropertyChangeListeners().length > 0) {
-                fileChooser.removePropertyChangeListener(listenForUserAddedFileFilter);
-                activeListener = true;  // we'll note this, for re-activation later
-            }
-            // clear out the list and populate from our own ArrayList.
-            // Last one added becomes the default.
-            fileChooser.resetChoosableFileFilters();
-            for (FileFilter fileFilter : fileFilters)
-                fileChooser.addChoosableFileFilter(fileFilter);
-            // Restore listener.
-            if (activeListener)
-                fileChooser.addPropertyChangeListener(listenForUserAddedFileFilter);
+        catch (HardcopyWriter.PrintCanceledException ex) {
+            // TODO
         }
     }
-
-    private class TabTitleComponent extends JPanel {
-
-        private final JLabel titleLabel;
-
-        TabTitleComponent(EditTab tab) {
-            super(new FlowLayout(FlowLayout.LEFT, 0, 0));
-            titleLabel = new JLabel(tab.getFilename() + "  ");
-
-            setOpaque(false);
-            add(titleLabel);
-
-            JButton closeButton = new JButton("×");
-            closeButton.setMargin(new Insets(0, 2, 0, 2));
-            closeButton.addActionListener((event) -> {
-                if (editsSavedOrAbandoned(tab))
-                    EditPane.this.remove(tab);
-            });
-            add(closeButton);
-        }
-    }
-
 }

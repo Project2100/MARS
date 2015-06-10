@@ -1,6 +1,7 @@
 package mars;
 
 import java.awt.EventQueue;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Properties;
@@ -11,7 +12,6 @@ import mars.assembler.SymbolTable;
 import mars.mips.hardware.Memory;
 import mars.mips.instructions.InstructionSet;
 import mars.mips.instructions.syscalls.SyscallNumberOverride;
-import mars.util.PropertiesFile;
 import mars.venus.MarsSplashScreen;
 import mars.venus.VenusUI;
 
@@ -66,7 +66,7 @@ public class Main {
     private static final String syscallPropertiesFile = "Syscall";
 
     /**
-     * The status of implemented MIPS instructions. *
+     * The status of implemented MIPS instructions.
      */
     public static InstructionSet instructionSet;
     /**
@@ -75,26 +75,26 @@ public class Main {
      */
     public static MIPSprogram program;
     /**
-     * Symbol table for file currently being assembled. *
+     * Symbol table for file currently being assembled.
      */
     public static SymbolTable symbolTable;
     /**
-     * Simulated MIPS memory component. *
+     * Simulated MIPS memory component.
      */
     public static Memory memory;
     /**
      * Lock variable used at head of synchronized block to guard MIPS memory and
-     * registers *
+     * registers
      */
     public static Object memoryAndRegistersLock = new Object();
     /**
      * Flag to determine whether or not to produce internal debugging
-     * information. *
+     * information.
      */
     public static boolean debug = false;
     /**
      * Object that contains various settings that can be accessed modified
-     * internally. *
+     * internally.
      */
     static Settings settings;
     /**
@@ -103,17 +103,21 @@ public class Main {
      */
     public static String userInputAlert = "**** user input : ";
     /**
-     * Path to folder that contains images
+     * Path to folder that contains images. The leading "/" in file path
+     * prevents package name from being pre-pended.
      */
-    // The leading "/" in filepath prevents package name from being pre-pended.
     public static final String imagesPath = "/images/";
     /**
      * Path to folder that contains help text
      */
     public static final String helpPath = "/help/";
-    /* Flag that indicates whether or not instructionSet has been initialized. */
+    /**
+     * Flag that indicates whether or not instructionSet has been initialized.
+     */
     private static boolean initialized = false;
-    /* The GUI being used (if any) with this simulator. */
+    /**
+     * The GUI being used (if any) with this simulator.
+     */
     private static VenusUI gui = null;
     /**
      * The current MARS version number. Can't wait for "initialize()" call to
@@ -123,7 +127,7 @@ public class Main {
     /**
      * List of accepted file extensions for MIPS assembly source files.
      */
-    public static final ArrayList fileExtensions = getFileExtensions();
+    public static final ArrayList<String> fileExtensions = getFileExtensions();
     /**
      * Maximum length of scrolled message window (MARS Messages and Run I/O)
      */
@@ -242,7 +246,7 @@ public class Main {
     // Default value is returned if property file or name not found.
     private static int getIntegerProperty(String propertiesFile, String propertyName, int defaultValue) {
         int limit = defaultValue;  // just in case no entry is found
-        Properties properties = PropertiesFile.loadPropertiesFromFile(propertiesFile);
+        Properties properties = loadPropertiesFromFile(propertiesFile);
         try {
             limit = Integer.parseInt(properties.getProperty(propertyName, Integer.toString(defaultValue)));
         }
@@ -253,8 +257,8 @@ public class Main {
 
     // Read assembly language file extensions from properties file.  Resulting
     // string is tokenized into array list (assume StringTokenizer default delimiters).
-    private static ArrayList getFileExtensions() {
-        ArrayList extensionsList = new ArrayList();
+    private static ArrayList<String> getFileExtensions() {
+        ArrayList<String> extensionsList = new ArrayList<>();
         String extensions = getPropertyEntry(configPropertiesFile, "Extensions");
         if (extensions != null) {
             StringTokenizer st = new StringTokenizer(extensions);
@@ -272,8 +276,8 @@ public class Main {
      * @return ArrayList. Each item is file path to .class file of a class that
      * implements MarsTool. If none, returns empty list.
      */
-    public static ArrayList getExternalTools() {
-        ArrayList toolsList = new ArrayList();
+    public static ArrayList<String> getExternalTools() {
+        ArrayList<String> toolsList = new ArrayList<>();
         String delimiter = ";";
         String tools = getPropertyEntry(configPropertiesFile, "ExternalTools");
         if (tools != null) {
@@ -293,20 +297,40 @@ public class Main {
      * @return String containing associated value; null if property not found
      */
     public static String getPropertyEntry(String propertiesFile, String propertyName) {
-        return PropertiesFile.loadPropertiesFromFile(propertiesFile).getProperty(propertyName);
+        return loadPropertiesFromFile(propertiesFile).getProperty(propertyName);
     }
 
     /**
-     * Read any syscall number assignment overrides from config file.
+     * Produce Properties (a Hashtable) object containing key-value pairs from
+     * specified properties file. This may be used as an alternative to
+     * readPropertiesFile() which uses a different implementation.
+     *
+     * @param file Properties filename. Do NOT include the file extension as it
+     * is assumed to be ".properties" and is added here.
+     * @return Properties (Hashtable) of key-value pairs read from the file.
+     */
+    public static Properties loadPropertiesFromFile(String file) {
+        Properties properties = new Properties();
+        try {
+            properties.load(Main.class.getResourceAsStream("/" + file + ".properties"));
+        }
+        catch (NullPointerException | IOException ioe) {
+            // If it doesn't work, properties will be empty
+        }
+        return properties;
+    }
+
+    /**
+     * Read any syscall number assignment overrides from configuration file.
      *
      * @return ArrayList of SyscallNumberOverride objects
      */
-    public ArrayList getSyscallOverrides() {
-        ArrayList overrides = new ArrayList();
-        Properties properties = PropertiesFile.loadPropertiesFromFile(syscallPropertiesFile);
-        Enumeration keys = properties.keys();
+    public ArrayList<SyscallNumberOverride> getSyscallOverrides() {
+        ArrayList<SyscallNumberOverride> overrides = new ArrayList<>();
+        Properties properties = loadPropertiesFromFile(syscallPropertiesFile);
+        Enumeration<Object> keys = properties.keys();
         while (keys.hasMoreElements()) {
-            String key = (String) keys.nextElement();
+            String key = keys.nextElement().toString();
             overrides.add(new SyscallNumberOverride(key, properties.getProperty(key)));
         }
         return overrides;

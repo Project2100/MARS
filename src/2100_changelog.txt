@@ -1,3 +1,9 @@
+####1.6
+
+GENERAL:
+! Major reformatting of Venus source files and others
+! Code cleanup and modernization
+
 ####1.5
 
 GENERAL:

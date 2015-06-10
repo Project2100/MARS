@@ -13,9 +13,15 @@
         </data>
         <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
             <word>DEPND</word>
+            <word>initially</word>
             <word>launchIDE</word>
             <word>MarsLaunch</word>
             <word>register's</word>
+            <word>syscall</word>
+            <word>tokenized</word>
+            <word>Tokenizer</word>
+            <word>Tokenizes</word>
+            <word>tokenizing</word>
             <word>toolbar</word>
             <word>undoable</word>
             <word>VenusUI</word>

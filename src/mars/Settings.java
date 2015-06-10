@@ -53,7 +53,7 @@ import mars.venus.editors.jeditsyntax.SyntaxUtilities;
  * HKEY_CURRENT_USER\Software\JavaSoft\Prefs\mars
  *
  * @author Pete Sanderson
-	  *
+ *
  */
 public class Settings extends Observable {
     /* Properties file used to hold default settings. */
@@ -91,9 +91,8 @@ public class Settings extends Observable {
      */
     public static final int LABEL_WINDOW_VISIBILITY = 4;
     /**
-     * Default setting for displaying addresses and values in hexidecimal in the
-     * Execute 
-       pane.
+     * Default setting for displaying addresses and values in hexadecimal in the
+     * Execute pane.
      */
     public static final int DISPLAY_ADDRESSES_IN_HEX = 5;
     public static final int DISPLAY_VALUES_IN_HEX = 6;
@@ -168,13 +167,28 @@ public class Settings extends Observable {
     public static final int SELF_MODIFYING_CODE_ENABLED = 20;
 
     // NOTE: key sequence must match up with labels above which are used for array indexes!
-    private static String[] booleanSettingsKeys = {"ExtendedAssembler", "BareMachine", "AssembleOnOpen", "AssembleAll",
-        "LabelWindowVisibility", "DisplayAddressesInHex", "DisplayValuesInHex",
-        "LoadExceptionHandler", "DelayedBranching", "EditorLineNumbersDisplayed",
-        "WarningsAreErrors", "ProgramArguments", "DataSegmentHighlighting",
-        "RegistersHighlighting", "StartAtMain", "EditorCurrentLineHighlighting",
-        "PopupInstructionGuidance", "PopupSyscallInput", "GenericTextEditor",
-        "AutoIndent", "SelfModifyingCode"};
+    private static String[] booleanSettingsKeys = {
+        "ExtendedAssembler",
+        "BareMachine",
+        "AssembleOnOpen",
+        "AssembleAll",
+        "LabelWindowVisibility",
+        "DisplayAddressesInHex",
+        "DisplayValuesInHex",
+        "LoadExceptionHandler",
+        "DelayedBranching",
+        "EditorLineNumbersDisplayed",
+        "WarningsAreErrors",
+        "ProgramArguments",
+        "DataSegmentHighlighting",
+        "RegistersHighlighting",
+        "StartAtMain",
+        "EditorCurrentLineHighlighting",
+        "PopupInstructionGuidance",
+        "PopupSyscallInput",
+        "GenericTextEditor",
+        "AutoIndent",
+        "SelfModifyingCode"};
 
     /**
      * Last resort default values for boolean settings; will use only if neither
@@ -183,8 +197,27 @@ public class Settings extends Observable {
      * keys by list position.
      */
     public static boolean[] defaultBooleanSettingsValues = { // match the above list by position
-        true, false, false, false, false, true, true, false, false,
-        true, false, false, true, true, false, true, true, false, false, true, false};
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        true,
+        false,
+        false,
+        true,
+        true,
+        false,
+        true,
+        true,
+        false,
+        false,
+        true,
+        false};
 
     // STRING SETTINGS.  Each array position has associated name.
     /**
@@ -217,7 +250,14 @@ public class Settings extends Observable {
      */
     public static final int EDITOR_POPUP_PREFIX_LENGTH = 6;
     // Match the above by position.
-    private static final String[] stringSettingsKeys = {"ExceptionHandler", "TextColumnOrder", "LabelSortState", "MemoryConfiguration", "CaretBlinkRate", "EditorTabSize", "EditorPopupPrefixLength"};
+    private static final String[] stringSettingsKeys = {
+        "ExceptionHandler",
+        "TextColumnOrder",
+        "LabelSortState",
+        "MemoryConfiguration",
+        "CaretBlinkRate",
+        "EditorTabSize",
+        "EditorPopupPrefixLength"};
 
     /**
      * Last resort default values for String settings; will use only if neither
@@ -225,7 +265,14 @@ public class Settings extends Observable {
      * so before instantiating the Settings object. Must match key by list
      * position.
      */
-    private static String[] defaultStringSettingsValues = {"", "0 1 2 3 4", "0", "", "500", "8", "2"};
+    private static String[] defaultStringSettingsValues = {
+        "",
+        "0 1 2 3 4",
+        "0",
+        "",
+        "500",
+        "8",
+        "2"};
 
     // FONT SETTINGS.  Each array position has associated name.
     /**
@@ -257,17 +304,32 @@ public class Settings extends Observable {
      */
     public static final int REGISTER_HIGHLIGHT_FONT = 6;
 
-    private static final String[] fontFamilySettingsKeys = {"EditorFontFamily", "EvenRowFontFamily",
-        "OddRowFontFamily", " TextSegmentHighlightFontFamily", "TextSegmentDelayslotHighightFontFamily",
-        "DataSegmentHighlightFontFamily", "RegisterHighlightFontFamily"
+    private static final String[] fontFamilySettingsKeys = {
+        "EditorFontFamily",
+        "EvenRowFontFamily",
+        "OddRowFontFamily",
+        " TextSegmentHighlightFontFamily",
+        "TextSegmentDelayslotHighightFontFamily",
+        "DataSegmentHighlightFontFamily",
+        "RegisterHighlightFontFamily"
     };
-    private static final String[] fontStyleSettingsKeys = {"EditorFontStyle", "EvenRowFontStyle",
-        "OddRowFontStyle", " TextSegmentHighlightFontStyle", "TextSegmentDelayslotHighightFontStyle",
-        "DataSegmentHighlightFontStyle", "RegisterHighlightFontStyle"
+    private static final String[] fontStyleSettingsKeys = {
+        "EditorFontStyle",
+        "EvenRowFontStyle",
+        "OddRowFontStyle",
+        " TextSegmentHighlightFontStyle",
+        "TextSegmentDelayslotHighightFontStyle",
+        "DataSegmentHighlightFontStyle",
+        "RegisterHighlightFontStyle"
     };
-    private static final String[] fontSizeSettingsKeys = {"EditorFontSize", "EvenRowFontSize",
-        "OddRowFontSize", " TextSegmentHighlightFontSize", "TextSegmentDelayslotHighightFontSize",
-        "DataSegmentHighlightFontSize", "RegisterHighlightFontSize"
+    private static final String[] fontSizeSettingsKeys = {
+        "EditorFontSize",
+        "EvenRowFontSize",
+        "OddRowFontSize",
+        " TextSegmentHighlightFontSize",
+        "TextSegmentDelayslotHighightFontSize",
+        "DataSegmentHighlightFontSize",
+        "RegisterHighlightFontSize"
     };
 
     /**
@@ -276,17 +338,36 @@ public class Settings extends Observable {
      * so before instantiating the Settings object. Must match key by list
      * position shown above.
      */
-      // DPS 3-Oct-2012
+    // DPS 3-Oct-2012
     // Changed default font family from "Courier New" to "Monospaced" after receiving reports that Mac were not
     // correctly rendering the left parenthesis character in the editor or text segment display.
     // See http://www.mirthcorp.com/community/issues/browse/MIRTH-1921?page=com.atlassian.jira.plugin.system.issuetabpanels:all-tabpanel
-    private static final String[] defaultFontFamilySettingsValues = {"Monospaced", "Monospaced", "Monospaced",
-        "Monospaced", "Monospaced", "Monospaced", "Monospaced"
+    private static final String[] defaultFontFamilySettingsValues = {
+        "Monospaced",
+        "Monospaced",
+        "Monospaced",
+        "Monospaced",
+        "Monospaced",
+        "Monospaced",
+        "Monospaced"
     };
-    private static final String[] defaultFontStyleSettingsValues = {"Plain", "Plain", "Plain", "Plain",
-        "Plain", "Plain", "Plain"
+    private static final String[] defaultFontStyleSettingsValues = {
+        "Plain",
+        "Plain",
+        "Plain",
+        "Plain",
+        "Plain",
+        "Plain",
+        "Plain"
     };
-    private static final String[] defaultFontSizeSettingsValues = {"12", "12", "12", "12", "12", "12", "12",};
+    private static final String[] defaultFontSizeSettingsValues = {
+        "12",
+        "12",
+        "12",
+        "12",
+        "12",
+        "12",
+        "12",};
 
     // COLOR SETTINGS.  Each array position has associated name.
     /**
@@ -339,11 +420,18 @@ public class Settings extends Observable {
     public static final int REGISTER_HIGHLIGHT_FOREGROUND = 11;
     // Match the above by position.
     private static final String[] colorSettingsKeys = {
-        "EvenRowBackground", "EvenRowForeground", "OddRowBackground", "OddRowForeground",
-        "TextSegmentHighlightBackground", "TextSegmentHighlightForeground",
-        "TextSegmentDelaySlotHighlightBackground", "TextSegmentDelaySlotHighlightForeground",
-        "DataSegmentHighlightBackground", "DataSegmentHighlightForeground",
-        "RegisterHighlightBackground", "RegisterHighlightForeground"};
+        "EvenRowBackground",
+        "EvenRowForeground",
+        "OddRowBackground",
+        "OddRowForeground",
+        "TextSegmentHighlightBackground",
+        "TextSegmentHighlightForeground",
+        "TextSegmentDelaySlotHighlightBackground",
+        "TextSegmentDelaySlotHighlightForeground",
+        "DataSegmentHighlightBackground",
+        "DataSegmentHighlightForeground",
+        "RegisterHighlightBackground",
+        "RegisterHighlightForeground"};
     /**
      * Last resort default values for color settings; will use only if neither
      * the Preferences nor the properties file work. If you wish to change, do
@@ -351,7 +439,18 @@ public class Settings extends Observable {
      * position.
      */
     private static String[] defaultColorSettingsValues = {
-        "0x00e0e0e0", "0", "0x00ffffff", "0", "0x00ffff99", "0", "0x0033ff00", "0", "0x0099ccff", "0", "0x0099cc55", "0"};
+        "0x00e0e0e0",
+        "0",
+        "0x00ffffff",
+        "0",
+        "0x00ffff99",
+        "0",
+        "0x0033ff00",
+        "0",
+        "0x0099ccff",
+        "0",
+        "0x0099cc55",
+        "0"};
 
     private boolean[] booleanSettingsValues;
     private String[] stringSettingsValues;
@@ -374,10 +473,10 @@ public class Settings extends Observable {
         fontStyleSettingsValues = new String[fontStyleSettingsKeys.length];
         fontSizeSettingsValues = new String[fontSizeSettingsKeys.length];
         colorSettingsValues = new String[colorSettingsKeys.length];
-      	// This determines where the values are actually stored.  Actual implementation
+        // This determines where the values are actually stored.  Actual implementation
         // is platform-dependent.  For Windows, they are stored in Registry.  To see,
         // run regedit and browse to: HKEY_CURRENT_USER\Software\JavaSoft\Prefs\mars
-        preferences = Preferences.userNodeForPackage(this.getClass());
+        preferences = Preferences.userNodeForPackage(Settings.class);
         initialize();
     }
 
@@ -460,7 +559,7 @@ public class Settings extends Observable {
         }
     }
 
-      	// For syntax styles, need to initialize from SyntaxUtilities defaults.
+    // For syntax styles, need to initialize from SyntaxUtilities defaults.
     // Taking care not to explicitly create a Color object, since it may trigger
     // Swing initialization (that caused problems for UC Berkeley when we
     // created Font objects here).  It shouldn't, but then again Font shouldn't
@@ -502,7 +601,7 @@ public class Settings extends Observable {
     }
    // *********************************************************************************
 
-   	////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
     //  Setting Getters
     ////////////////////////////////////////////////////////////////////////   	
     /**
@@ -913,7 +1012,7 @@ public class Settings extends Observable {
         return getColorValueByPosition(position, defaultColorSettingsValues);
     }
 
-   	////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
     //  Setting Setters
     ////////////////////////////////////////////////////////////////////////
     /**
@@ -1154,7 +1253,7 @@ public class Settings extends Observable {
      * <code>Settings.DELAYED_BRANCHING_ENABLED</code>)
      */
     public void setDelayedBranchingEnabledNonPersistent(boolean value) {
-         // Note: Doing assignment to array results in non-persistent 
+        // Note: Doing assignment to array results in non-persistent 
         // setting (lost when MARS terminates).  For persistent, use
         // the internalSetBooleanSetting() method instead.
         booleanSettingsValues[DELAYED_BRANCHING_ENABLED] = value;
@@ -1199,9 +1298,9 @@ public class Settings extends Observable {
 
     /**
      * Set number of letters to be matched by editor's instruction guide before
-     * popup generated (if popup enabled). Should be 1 or 2. If 1, the popup
+     * pop-up generated (if pop-up enabled). Should be 1 or 2. If 1, the pop-up
      * will be generated after first letter typed, based on all matches; if 2,
-     * the popup will be generated after second letter typed.
+     * the pop-up will be generated after second letter typed.
      *
      * @param length number of letters (should be 1 or 2).
      */
@@ -1292,12 +1391,12 @@ public class Settings extends Observable {
             setColorSetting(position, color);
     }
 
-   /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
     //
     //     PRIVATE HELPER METHODS TO DO THE REAL WORK
     //
     /////////////////////////////////////////////////////////////////////////
-     // Initialize settings to default values.
+    // Initialize settings to default values.
     // Strategy: First set from properties file.  
     //           If that fails, set from array.
     //           In either case, use these values as defaults in call to Preferences.
@@ -1346,7 +1445,7 @@ public class Settings extends Observable {
         saveColorSetting(settingIndex);
     }
 
-      // Get Color object for this key value.  Get it from values array provided as argument (could be either
+    // Get Color object for this key value.  Get it from values array provided as argument (could be either
     // the current or the default settings array).
     private Color getColorValueByKey(String key, String[] values) {
         Color color = null;
@@ -1356,7 +1455,7 @@ public class Settings extends Observable {
         return null;
     }
 
-   	 // Get Color object for this key array position.  Get it from values array provided as argument (could be either
+    // Get Color object for this key array position.  Get it from values array provided as argument (could be either
     // the current or the default settings array).	
     private Color getColorValueByPosition(int position, String[] values) {
         Color color = null;
@@ -1370,7 +1469,7 @@ public class Settings extends Observable {
         return color;
     }
 
-      // Maybe someday I'll convert the whole shebang to use Maps.  In the meantime, we use
+    // Maybe someday I'll convert the whole shebang to use Maps.  In the meantime, we use
     // linear search of array.  Not a huge deal as settings are little-used.
     // Returns index or -1 if not found.
     private int getIndexOfKey(String key, String[] array) {
@@ -1383,7 +1482,7 @@ public class Settings extends Observable {
         return index;
     }
 
-   	// Establish the settings from the given properties file.  Return true if it worked,
+    // Establish the settings from the given properties file.  Return true if it worked,
     // false if it didn't.  Note the properties file exists only to provide default values
     // in case the Preferences fail or have not been recorded yet.
     //
@@ -1391,7 +1490,7 @@ public class Settings extends Observable {
     // defaultXSettingsValues arrays (x=boolean,string,color).  The latter will overwrite the 
     // last-resort default values hardcoded into the arrays above.
     //
-    // NOTE: If there is NO ENTRY for the specified property, Globals.getPropertyEntry() returns
+    // NOTE: If there is NO ENTRY for the specified property, Main.getPropertyEntry() returns
     // null.  This is no cause for alarm.  It will occur during system development or upon the 
     // first use of a new MARS release in which new settings have been defined.
     // In that case, this method will NOT make an assignment to the settings array!
@@ -1433,7 +1532,7 @@ public class Settings extends Observable {
         return true;
     }
 
-   	// Get settings values from Preferences object.  A key-value pair will only be written
+    // Get settings values from Preferences object.  A key-value pair will only be written
     // to Preferences if/when the value is modified.  If it has not been modified, the default value
     // will be returned here.
     //

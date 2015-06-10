@@ -17,6 +17,8 @@ import mars.Main;
 import mars.mips.dump.DumpFormat;
 import mars.mips.dump.DumpFormatLoader;
 import mars.mips.hardware.AddressErrorException;
+import mars.mips.hardware.Memory;
+import mars.util.Binary;
 
 /*
 Copyright (c) 2003-2008,  Pete Sanderson and Kenneth Vollmar
@@ -54,10 +56,54 @@ final class DumpMemoryDialog extends JDialog {
 
     private static final String title = "Dump Memory To File";
 
-    public DumpMemoryDialog(String[] segmentListArray, int[] segmentListBaseArray, int[] segmentListHighArray) {
+    DumpMemoryDialog() {
         super(Main.getGUI().mainFrame, title, true);
+        
+        String[] segments = Memory.getSegmentNames();
 
-        JComboBox<String> segmentListSelector = new JComboBox<>(segmentListArray);
+        String[] segNames = new String[segments.length];
+        int[] segBaseAddresses = new int[segments.length];
+        int[] segHighAddresses = new int[segments.length];
+
+        // Calculate the actual highest address to be dumped.  For text segment, this depends on the
+        // program length (number of machine code instructions).  For data segment, this depends on
+        // how many MARS 4K word blocks have been referenced during assembly and/or execution.
+        // Then generate label from concatentation of segmentArray[i], baseAddressArray[i]
+        // and highAddressArray[i].  This lets user know exactly what range will be dumped.  Initially not
+        // editable but maybe add this later.
+        // If there is nothing to dump (e.g. address of first null == base address), then
+        // the segment will not be listed.
+        int segmentCount = 0;
+        for (String segmentName : segments) {
+            int[] bounds = Memory.getSegmentBounds(segmentName);
+            int upperBound;
+            try {
+                upperBound = Main.memory.getAddressOfFirstNull(bounds[0], bounds[1]);
+            }
+            catch (AddressErrorException aee) {
+                upperBound = bounds[0];
+            }
+            upperBound -= Memory.WORD_LENGTH_BYTES;
+
+            if (upperBound >= bounds[0]) {
+                segBaseAddresses[segmentCount] = bounds[0];
+                segHighAddresses[segmentCount] = upperBound;
+                segNames[segmentCount] = segmentName + " (" + Binary.intToHexString(bounds[0]) + " - " + Binary.intToHexString(upperBound) + ")";
+                segmentCount++;
+            }
+        }
+        if (segmentCount == 0) {
+            JOptionPane.showMessageDialog(Main.getGUI().mainFrame, "There is nothing to dump!", "MARS", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        if (segmentCount < segNames.length) {
+            String[] tempArray = new String[segmentCount];
+            System.arraycopy(segNames, 0, tempArray, 0, segmentCount);
+            segNames = tempArray;
+        }
+
+        JComboBox<String> segmentListSelector = new JComboBox<>(segNames);
         segmentListSelector.setSelectedIndex(0);
 
         JComboBox<DumpFormat> formatListSelector = new JComboBox<>((new DumpFormatLoader()).getDumpFormatsArray());
@@ -90,7 +136,7 @@ final class DumpMemoryDialog extends JDialog {
 
         JButton dumpButton = new JButton("Dump To File...");
         dumpButton.addActionListener((event) -> {
-            if (performDump(segmentListBaseArray[segmentListSelector.getSelectedIndex()], segmentListHighArray[segmentListSelector.getSelectedIndex()], (DumpFormat) formatListSelector.getSelectedItem()))
+            if (performDump(segBaseAddresses[segmentListSelector.getSelectedIndex()], segHighAddresses[segmentListSelector.getSelectedIndex()], (DumpFormat) formatListSelector.getSelectedItem()))
                 DumpMemoryDialog.this.dispose();
         });
 

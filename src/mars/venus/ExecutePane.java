@@ -40,24 +40,16 @@ import mars.Settings;
  */
 public class ExecutePane extends JDesktopPane {
 
-    private RegistersWindow registerValues;
-    private Coprocessor1Window coprocessor1Values;
-    private Coprocessor0Window coprocessor0Values;
     private DataSegmentWindow dataSegment;
     private TextSegmentWindow textSegment;
     final LabelsWindow labelValues;
     private NumberDisplayBaseChooser valueDisplayBase;
     private NumberDisplayBaseChooser addressDisplayBase;
-//      private boolean labelWindowVisible;
 
     /**
      * initialize the Execute pane with major components
-     *
-     * @param regs window containing integer register set
-     * @param cop1Regs window containing Coprocessor 1 register set
-     * @param cop0Regs window containing Coprocessor 0 register set
      */
-    public ExecutePane(RegistersWindow regs, Coprocessor1Window cop1Regs, Coprocessor0Window cop0Regs) {
+    public ExecutePane() {
         // Although these are displayed in Data Segment, they apply to all three internal
         // windows within the Execute pane.  So they will be housed here.
         addressDisplayBase = new NumberDisplayBaseChooser("Hexadecimal Addresses",
@@ -67,16 +59,13 @@ public class ExecutePane extends JDesktopPane {
         addressDisplayBase.setToolTipText("If checked, displays all memory addresses in hexadecimal.  Otherwise, decimal.");
         valueDisplayBase.setToolTipText("If checked, displays all memory and register contents in hexadecimal.  Otherwise, decimal.");
         NumberDisplayBaseChooser[] choosers = {addressDisplayBase, valueDisplayBase};
-        registerValues = regs;
-        coprocessor1Values = cop1Regs;
-        coprocessor0Values = cop0Regs;
         textSegment = new TextSegmentWindow();
         dataSegment = new DataSegmentWindow(choosers);
         labelValues = new LabelsWindow();
         //labelWindowVisible = Main.getSettings().getLabelWindowVisibility();
-        this.add(textSegment);  // these 3 LOC moved up.  DPS 3-Sept-2014
-        this.add(dataSegment);
-        this.add(labelValues);
+        add(textSegment);  // these 3 LOC moved up.  DPS 3-Sept-2014
+        add(dataSegment);
+        add(labelValues);
         textSegment.pack();   // these 3 LOC added.  DPS 3-Sept-2014
         dataSegment.pack();
         labelValues.pack();
@@ -100,8 +89,8 @@ public class ExecutePane extends JDesktopPane {
      */
     public void setWindowBounds() {
 
-        int fullWidth = this.getPreferredSize().width - this.getInsets().left - this.getInsets().right;
-        int fullHeight = this.getPreferredSize().height - this.getInsets().top - this.getInsets().bottom;
+        int fullWidth = getPreferredSize().width - getInsets().left - getInsets().right;
+        int fullHeight = getPreferredSize().height - getInsets().top - getInsets().bottom;
         int halfHeight = fullHeight / 2;
         dataSegment.setBounds(0, halfHeight + 1, fullWidth, halfHeight);
         if (labelValues.isVisible()) {
@@ -117,17 +106,18 @@ public class ExecutePane extends JDesktopPane {
      * be done upon File->Close, Open, New.
      */
     public void clearPane() {
-        this.getTextSegmentWindow().clearWindow();
-        this.getDataSegmentWindow().clearWindow();
-        this.getLabelsWindow().clearWindow();
-        (Main.getGUI().registersTab).clearWindow();
-        (Main.getGUI().coprocessor1Tab).clearWindow();
-        (Main.getGUI().coprocessor0Tab).clearWindow();
+        getTextSegmentWindow().clearWindow();
+        getDataSegmentWindow().clearWindow();
+        getLabelsWindow().clearWindow();
+        Main.getGUI().registersTab.clearWindow();
+        Main.getGUI().coprocessor1Tab.clearWindow();
+        Main.getGUI().coprocessor0Tab.clearWindow();
     }
 
     /**
      * Access the text segment window.
-     * @return 
+     *
+     * @return
      */
     public TextSegmentWindow getTextSegmentWindow() {
         return textSegment;
@@ -135,7 +125,8 @@ public class ExecutePane extends JDesktopPane {
 
     /**
      * Access the data segment window.
-     * @return 
+     *
+     * @return
      */
     public DataSegmentWindow getDataSegmentWindow() {
         return dataSegment;
@@ -143,7 +134,8 @@ public class ExecutePane extends JDesktopPane {
 
     /**
      * Access the label values window.
-     * @return 
+     *
+     * @return
      */
     public LabelsWindow getLabelsWindow() {
         return labelValues;
@@ -152,7 +144,8 @@ public class ExecutePane extends JDesktopPane {
     /**
      * Retrieve the number system base for displaying values (mem/register
      * contents)
-     * @return 
+     *
+     * @return
      */
     public int getValueDisplayBase() {
         return valueDisplayBase.getBase();
@@ -160,7 +153,8 @@ public class ExecutePane extends JDesktopPane {
 
     /**
      * Retrieve the number system base for displaying memory addresses
-     * @return 
+     *
+     * @return
      */
     public int getAddressDisplayBase() {
         return addressDisplayBase.getBase();
@@ -196,9 +190,9 @@ public class ExecutePane extends JDesktopPane {
     public void numberDisplayBaseChanged(NumberDisplayBaseChooser chooser) {
         if (chooser == valueDisplayBase) {
             // Have all internal windows update their value columns
-            registerValues.updateRegisters();
-            coprocessor1Values.updateRegisters();
-            coprocessor0Values.updateRegisters();
+            Main.getGUI().registersTab.updateRegisters();
+            Main.getGUI().coprocessor1Tab.updateRegisters();
+            Main.getGUI().coprocessor0Tab.updateRegisters();
             dataSegment.updateValues();
             textSegment.updateBasicStatements();
         }

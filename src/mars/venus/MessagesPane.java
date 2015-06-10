@@ -239,8 +239,8 @@ public class MessagesPane extends JTabbedPane {
      * @param column Column number for error message
      */
     public void selectEditorTextLine(String fileName, int line, int column) {
-        EditPane editTabbedPane = Main.getGUI().editTabbedPane;
-        EditTab editPane, currentPane = null;
+        EditTabbedPane editTabbedPane = Main.getGUI().editTabbedPane;
+        EditPane editPane, currentPane = null;
         editPane = editTabbedPane.getTabForFile(new java.io.File(fileName).getPath());
         if (editPane != null) {
             if (editPane != editTabbedPane.getSelectedComponent())

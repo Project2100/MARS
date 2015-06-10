@@ -22,7 +22,6 @@ import mars.mips.hardware.RegisterFile;
 import mars.simulator.ProgramArgumentList;
 import mars.util.Binary;
 import mars.util.FilenameFinder;
-import mars.util.MemoryDump;
 
 /*
  Copyright (c) 2003-2012,  Pete Sanderson and Kenneth Vollmar
@@ -138,15 +137,15 @@ public class MarsLaunch {
     private static final int DECIMAL = 0; // memory and register display format
     private static final int HEXADECIMAL = 1;// memory and register display format
     private static final int ASCII = 2;// memory and register display format
-    private ArrayList registerDisplayList;
-    private ArrayList memoryDisplayList;
-    private ArrayList filenameList;
+    private ArrayList<String> registerDisplayList;
+    private ArrayList<String> memoryDisplayList;
+    private ArrayList<String> filenameList;
     private MIPSprogram code;
     private int maxSteps;
     private int instructionCount;
     private PrintStream out; // stream for display of command line output
-    private ArrayList dumpTriples = null; // each element holds 3 arguments for dump option
-    private ArrayList programArgumentList; // optional program args for MIPS program (becomes argc, argv)
+    private ArrayList<String[]> dumpTriples = null; // each element holds 3 arguments for dump option
+    private ArrayList<String> programArgumentList; // optional program args for MIPS program (becomes argc, argv)
     private int assembleErrorExitCode;  // MARS command exit code to return if assemble error occurs
     private int simulateErrorExitCode;// MARS command exit code to return if simulation error occurs
 
@@ -171,9 +170,9 @@ public class MarsLaunch {
         instructionCount = 0;
         assembleErrorExitCode = 0;
         simulateErrorExitCode = 0;
-        registerDisplayList = new ArrayList();
-        memoryDisplayList = new ArrayList();
-        filenameList = new ArrayList();
+        registerDisplayList = new ArrayList<>();
+        memoryDisplayList = new ArrayList<>();
+        filenameList = new ArrayList<>();
         MemoryConfigurations.setCurrentConfiguration(MemoryConfigurations.getDefaultConfiguration());
         // do NOT use Globals.program for command line MARS -- it triggers 'backstep' log.
         code = new MIPSprogram();
@@ -199,17 +198,16 @@ public class MarsLaunch {
         if (dumpTriples == null)
             return;
 
-        for (int i = 0; i < dumpTriples.size(); i++) {
-            String[] triple = (String[]) dumpTriples.get(i);
+        for (String[] triple : dumpTriples) {
             File file = new File(triple[2]);
-            Integer[] segInfo = MemoryDump.getSegmentBounds(triple[0]);
+            int[] segInfo = Memory.getSegmentBounds(triple[0]);
             // If not segment name, see if it is address range instead.  DPS 14-July-2008
             if (segInfo == null)
                 try {
                     String[] memoryRange = checkMemoryAddressRange(triple[0]);
-                    segInfo = new Integer[2];
-                    segInfo[0] = new Integer(Binary.stringToInt(memoryRange[0])); // low end of range
-                    segInfo[1] = new Integer(Binary.stringToInt(memoryRange[1])); // high end of range
+                    segInfo = new int[2];
+                    segInfo[0] = Binary.stringToInt(memoryRange[0]); // low end of range
+                    segInfo[1] = Binary.stringToInt(memoryRange[1]); // high end of range
                 }
                 catch (NumberFormatException nfe) {
                     segInfo = null;
@@ -227,12 +225,12 @@ public class MarsLaunch {
                 continue;
             }
             try {
-                int highAddress = Main.memory.getAddressOfFirstNull(segInfo[0].intValue(), segInfo[1].intValue()) - Memory.WORD_LENGTH_BYTES;
-                if (highAddress < segInfo[0].intValue()) {
+                int highAddress = Main.memory.getAddressOfFirstNull(segInfo[0], segInfo[1]) - Memory.WORD_LENGTH_BYTES;
+                if (highAddress < segInfo[0]) {
                     out.println("This segment has not been written to, there is nothing to dump.");
                     continue;
                 }
-                format.dumpMemoryRange(file, segInfo[0].intValue(), highAddress);
+                format.dumpMemoryRange(file, segInfo[0], highAddress);
             }
             catch (FileNotFoundException e) {
                 out.println("Error while attempting to save dump, file " + file + " was not found!");
@@ -258,19 +256,19 @@ public class MarsLaunch {
     private boolean parseCommandArgs(String[] args) {
         String noCopyrightSwitch = "nc";
         String displayMessagesToErrSwitch = "me";
-        
+
         boolean argsOK = true;
         boolean inProgramArgumentList = false;
-        
+
         programArgumentList = null;
         if (args.length == 0) return true; // should not get here...
-        
+
         // If the option to display MARS messages to standard erro is used,
         // it must be processed before any others (since messages may be
         // generated during option parsing).
         processDisplayMessagesToErrSwitch(args, displayMessagesToErrSwitch);
         displayCopyright(args, noCopyrightSwitch);  // ..or not..
-        
+
         if (args.length == 1 && args[0].equals("h")) {
             displayHelp();
             return false;
@@ -280,7 +278,7 @@ public class MarsLaunch {
             // that will become "argc" and "argv" for the MIPS program.
             if (inProgramArgumentList) {
                 if (programArgumentList == null)
-                    programArgumentList = new ArrayList();
+                    programArgumentList = new ArrayList<>();
                 programArgumentList.add(args[i]);
                 continue;
             }
@@ -303,7 +301,7 @@ public class MarsLaunch {
                 }
                 else {
                     if (dumpTriples == null)
-                        dumpTriples = new ArrayList();
+                        dumpTriples = new ArrayList<>();
                     dumpTriples.add(new String[]{args[++i], args[++i], args[++i]});
                     //simulate = false;
                 }
@@ -324,7 +322,7 @@ public class MarsLaunch {
             if (args[i].toLowerCase().indexOf("ae") == 0) {
                 String s = args[i].substring(2);
                 try {
-                    assembleErrorExitCode = Integer.decode(s).intValue();
+                    assembleErrorExitCode = Integer.parseInt(s);
                     continue;
                 }
                 catch (NumberFormatException nfe) {
@@ -335,7 +333,7 @@ public class MarsLaunch {
             if (args[i].toLowerCase().indexOf("se") == 0) {
                 String s = args[i].substring(2);
                 try {
-                    simulateErrorExitCode = Integer.decode(s).intValue();
+                    simulateErrorExitCode = Integer.parseInt(s);
                     continue;
                 }
                 catch (NumberFormatException nfe) {
@@ -422,7 +420,7 @@ public class MarsLaunch {
             // Check for stand-alone integer, which is the max execution steps option
             try {
                 Integer.decode(args[i]);
-                maxSteps = Integer.decode(args[i]).intValue(); // if we got here, it has to be OK 
+                maxSteps = Integer.parseInt(args[i]); // if we got here, it has to be OK 
                 continue;
             }
             catch (NumberFormatException nfe) {
@@ -453,20 +451,20 @@ public class MarsLaunch {
     // Returns false if no simulation (run) occurs, true otherwise. 	
     private boolean runCommand() {
         boolean programRan = false;
-        if (filenameList.size() == 0)
+        if (filenameList.isEmpty())
             return programRan;
         try {
             Main.getSettings().setBooleanSettingNonPersistent(Settings.DELAYED_BRANCHING_ENABLED, delayedBranching);
             Main.getSettings().setBooleanSettingNonPersistent(Settings.SELF_MODIFYING_CODE_ENABLED, selfModifyingCode);
-            File mainFile = new File((String) filenameList.get(0)).getAbsoluteFile();// First file is "main" file
-            ArrayList filesToAssemble;
+            File mainFile = new File(filenameList.get(0)).getAbsoluteFile();// First file is "main" file
+            ArrayList<String> filesToAssemble;
             if (assembleProject) {
                 filesToAssemble = FilenameFinder.getFilenameList(mainFile.getParent(), Main.fileExtensions);
                 if (filenameList.size() > 1) {
                     // Using "p" project option PLUS listing more than one filename on command line.
                     // Add the additional files, avoiding duplicates.
                     filenameList.remove(0); // first one has already been processed
-                    ArrayList moreFilesToAssemble = FilenameFinder.getFilenameList(filenameList, FilenameFinder.MATCH_ALL_EXTENSIONS);
+                    ArrayList<String> moreFilesToAssemble = FilenameFinder.getFilenameList(filenameList, FilenameFinder.MATCH_ALL_EXTENSIONS);
                     // Remove any duplicates then merge the two lists.
                     for (int index2 = 0; index2 < moreFilesToAssemble.size(); index2++)
                         for (int index1 = 0; index1 < filesToAssemble.size(); index1++)
@@ -541,11 +539,12 @@ public class MarsLaunch {
     // Required for counting instructions executed, if that option is specified.
     // DPS 19 July 2012
     private void establishObserver() {
-        if (countInstructions) {
-            Observer instructionCounter
-                    = new Observer() {
+        if (countInstructions) try {
+            Main.memory.addObserver(
+                    new Observer() {
                         private int lastAddress = 0;
 
+                        @Override
                         public void update(Observable o, Object obj) {
                             if (obj instanceof AccessNotice) {
                                 AccessNotice notice = (AccessNotice) obj;
@@ -561,13 +560,12 @@ public class MarsLaunch {
                                 instructionCount++;
                             }
                         }
-                    };
-            try {
-                Main.memory.addObserver(instructionCounter, Memory.textBaseAddress, Memory.textLimitAddress);
-            }
-            catch (AddressErrorException aee) {
-                out.println("Internal error: MarsLaunch uses incorrect text segment address for instruction observer");
-            }
+                    },
+                    Memory.textBaseAddress,
+                    Memory.textLimitAddress);
+        }
+        catch (AddressErrorException aee) {
+            out.println("Internal error: MarsLaunch uses incorrect text segment address for instruction observer");
         }
     }
 
@@ -586,9 +584,10 @@ public class MarsLaunch {
         String strValue;
         // Display requested register contents
         out.println();
-        Iterator regIter = registerDisplayList.iterator();
+        Iterator<String> regIter = registerDisplayList.iterator();
+        String reg;
         while (regIter.hasNext()) {
-            String reg = regIter.next().toString();
+            reg = regIter.next();
             if (RegisterFile.getUserRegister(reg) != null) {
                 // integer register
                 if (verbose)
@@ -670,12 +669,12 @@ public class MarsLaunch {
     private void displayMemoryPostMortem() {
         int value;
         // Display requested memory range contents
-        Iterator memIter = memoryDisplayList.iterator();
+        Iterator<String> memIter = memoryDisplayList.iterator();
         int addressStart = 0, addressEnd = 0;
         while (memIter.hasNext()) {
             try { // This will succeed; error would have been caught during command arg parse
-                addressStart = Binary.stringToInt(memIter.next().toString());
-                addressEnd = Binary.stringToInt(memIter.next().toString());
+                addressStart = Binary.stringToInt(memIter.next());
+                addressEnd = Binary.stringToInt(memIter.next());
             }
             catch (NumberFormatException nfe) {
             }
@@ -731,17 +730,17 @@ public class MarsLaunch {
     ///////////////////////////////////////////////////////////////////////
     //  Display command line help text
     private void displayHelp() {
-        String[] segmentNames = MemoryDump.getSegmentNames();
+        String[] segmentNames = Memory.getSegmentNames();
         String segments = "";
         for (int i = 0; i < segmentNames.length; i++) {
             segments += segmentNames[i];
             if (i < segmentNames.length - 1)
                 segments += ", ";
         }
-        ArrayList dumpFormats = (new DumpFormatLoader()).loadDumpFormats();
+        ArrayList<DumpFormat> dumpFormats = (new DumpFormatLoader()).loadDumpFormats();
         String formats = "";
         for (int i = 0; i < dumpFormats.size(); i++) {
-            formats += ((DumpFormat) dumpFormats.get(i)).getCommandDescriptor();
+            formats += dumpFormats.get(i).getCommandDescriptor();
             if (i < dumpFormats.size() - 1)
                 formats += ", ";
         }

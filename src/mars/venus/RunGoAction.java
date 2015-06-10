@@ -1,11 +1,16 @@
 package mars.venus;
 
-import mars.*;
-import mars.simulator.*;
-import mars.mips.hardware.*;
-import mars.util.*;
-import java.awt.event.*;
-import javax.swing.*;
+import java.awt.event.ActionEvent;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
+import mars.Main;
+import mars.ProcessingException;
+import mars.mips.hardware.RegisterFile;
+import mars.simulator.ProgramArgumentList;
+import mars.simulator.Simulator;
+import mars.util.SystemIO;
 
 /*
  Copyright (c) 2003-2007,  Pete Sanderson and Kenneth Vollmar
@@ -42,7 +47,6 @@ public class RunGoAction extends GuiAction {
     public static int defaultMaxSteps = -1; // "forever", formerly 10000000; // 10 million
     public static int maxSteps = defaultMaxSteps;
     private String name;
-    private ExecutePane executePane;
 
     public RunGoAction(String name, Icon icon, String descrip,
             Integer mnemonic, KeyStroke accel, VenusUI gui) {
@@ -55,8 +59,7 @@ public class RunGoAction extends GuiAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         name = this.getValue(Action.NAME).toString();
-        executePane = mainUI.executeTab;
-        if (executePane.isShowing()) {
+        if (Main.getGUI().executePane.isShowing()) {
             if (!VenusUI.getStarted())
                 processProgramArgumentsIfAny(); // DPS 17-July-2008
             if (VenusUI.getReset() || VenusUI.getStarted()) {
@@ -65,12 +68,12 @@ public class RunGoAction extends GuiAction {
 
                 mainUI.messagesPane.postMarsMessage(
                         name + ": running " + Main.getGUI().editTabbedPane.getSelectedComponent().getFilename() + "\n\n");
-                (mainUI.messagesPane).selectRunMessageTab();
-                executePane.getTextSegmentWindow().setCodeHighlighting(false);
-                executePane.getTextSegmentWindow().unhighlightAllSteps();
+                mainUI.messagesPane.selectRunMessageTab();
+                Main.getGUI().executePane.getTextSegmentWindow().setCodeHighlighting(false);
+                Main.getGUI().executePane.getTextSegmentWindow().unhighlightAllSteps();
                 Main.getGUI().setMenuStateRunning();
                 try {
-                    int[] breakPoints = executePane.getTextSegmentWindow().getSortedBreakPointsArray();
+                    int[] breakPoints = Main.getGUI().executePane.getTextSegmentWindow().getSortedBreakPointsArray();
                     boolean done = Main.program.simulateFromPC(breakPoints, maxSteps, this);
                 }
                 catch (ProcessingException pe) {
@@ -91,6 +94,7 @@ public class RunGoAction extends GuiAction {
      * (FileStatus.RUNNING). See VenusUI.java for enabled status of menu items
      * based on FileStatus. Set GUI as if at breakpoint or executing step by
      * step.
+     *
      * @param done
      * @param pauseReason
      * @param pe
@@ -109,13 +113,13 @@ public class RunGoAction extends GuiAction {
             //TODO
             mainUI.messagesPane.postMarsMessage(
                     name + ": execution paused by user: " + Main.getGUI().editTabbedPane.getSelectedComponent().getFilename() + "\n\n");
-        (mainUI.messagesPane).selectMarsMessageTab();
-        executePane.getTextSegmentWindow().setCodeHighlighting(true);
-        executePane.getTextSegmentWindow().highlightStepAtPC();
-        (Main.getGUI().registersTab).updateRegisters();
-        (Main.getGUI().coprocessor1Tab).updateRegisters();
-        (Main.getGUI().coprocessor0Tab).updateRegisters();
-        executePane.getDataSegmentWindow().updateValues();
+        mainUI.messagesPane.selectMarsMessageTab();
+        Main.getGUI().executePane.getTextSegmentWindow().setCodeHighlighting(true);
+        Main.getGUI().executePane.getTextSegmentWindow().highlightStepAtPC();
+        Main.getGUI().registersTab.updateRegisters();
+        Main.getGUI().coprocessor1Tab.updateRegisters();
+        Main.getGUI().coprocessor0Tab.updateRegisters();
+        Main.getGUI().executePane.getDataSegmentWindow().updateValues();
         Main.getGUI().setMenuStateRunnable();
         VenusUI.setReset(false);
     }
@@ -126,56 +130,57 @@ public class RunGoAction extends GuiAction {
      * (FileStatus.RUNNING). See VenusUI.java for enabled status of menu items
      * based on FileStatus. Display finalized values as if execution terminated
      * due to completion or exception.
+     *
      * @param pe
      * @param reason
      */
     public void stopped(ProcessingException pe, int reason) {
         // show final register and data segment values.
-        (Main.getGUI().registersTab).updateRegisters();
-        (Main.getGUI().coprocessor1Tab).updateRegisters();
-        (Main.getGUI().coprocessor0Tab).updateRegisters();
-        executePane.getDataSegmentWindow().updateValues();
+        Main.getGUI().registersTab.updateRegisters();
+        Main.getGUI().coprocessor1Tab.updateRegisters();
+        Main.getGUI().coprocessor0Tab.updateRegisters();
+        Main.getGUI().executePane.getDataSegmentWindow().updateValues();
         Main.getGUI().setMenuStateTerminated();
         SystemIO.resetFiles(); // close any files opened in MIPS program
         // Bring coprocessor 0 to the front if terminated due to exception.
         if (pe != null) {
-            (mainUI.registersPane).setSelectedComponent(Main.getGUI().coprocessor0Tab);
-            executePane.getTextSegmentWindow().setCodeHighlighting(true);
-            executePane.getTextSegmentWindow().unhighlightAllSteps();
-            executePane.getTextSegmentWindow().highlightStepAtAddress(RegisterFile.getProgramCounter() - 4);
+            mainUI.registersPane.setSelectedComponent(Main.getGUI().coprocessor0Tab);
+            Main.getGUI().executePane.getTextSegmentWindow().setCodeHighlighting(true);
+            Main.getGUI().executePane.getTextSegmentWindow().unhighlightAllSteps();
+            Main.getGUI().executePane.getTextSegmentWindow().highlightStepAtAddress(RegisterFile.getProgramCounter() - 4);
         }
         switch (reason) {
             case Simulator.NORMAL_TERMINATION:
-                (mainUI.messagesPane).postMarsMessage(
+                mainUI.messagesPane.postMarsMessage(
                         "\n" + name + ": execution completed successfully.\n\n");
-                (mainUI.messagesPane).postRunMessage(
+                mainUI.messagesPane.postRunMessage(
                         "\n-- program is finished running --\n\n");
-                (mainUI.messagesPane).selectRunMessageTab();
+                mainUI.messagesPane.selectRunMessageTab();
                 break;
             case Simulator.CLIFF_TERMINATION:
-                (mainUI.messagesPane).postMarsMessage(
+                mainUI.messagesPane.postMarsMessage(
                         "\n" + name + ": execution terminated by null instruction.\n\n");
-                (mainUI.messagesPane).postRunMessage(
+                mainUI.messagesPane.postRunMessage(
                         "\n-- program is finished running (dropped off bottom) --\n\n");
-                (mainUI.messagesPane).selectRunMessageTab();
+                mainUI.messagesPane.selectRunMessageTab();
                 break;
             case Simulator.EXCEPTION:
-                (mainUI.messagesPane).postMarsMessage(
+                mainUI.messagesPane.postMarsMessage(
                         pe.errors().generateErrorReport());
-                (mainUI.messagesPane).postMarsMessage(
+                mainUI.messagesPane.postMarsMessage(
                         "\n" + name + ": execution terminated with errors.\n\n");
                 break;
             case Simulator.PAUSE_OR_STOP:
-                (mainUI.messagesPane).postMarsMessage(
+                mainUI.messagesPane.postMarsMessage(
                         "\n" + name + ": execution terminated by user.\n\n");
-                (mainUI.messagesPane).selectMarsMessageTab();
+                mainUI.messagesPane.selectMarsMessageTab();
                 break;
             case Simulator.MAX_STEPS:
-                (mainUI.messagesPane).postMarsMessage(
+                mainUI.messagesPane.postMarsMessage(
                         "\n" + name + ": execution step limit of " + maxSteps + " exceeded.\n\n");
-                (mainUI.messagesPane).selectMarsMessageTab();
+                mainUI.messagesPane.selectMarsMessageTab();
                 break;
-            case Simulator.BREAKPOINT: // should never getStatus here
+            case Simulator.BREAKPOINT: // should never get here
                 break;
         }
         RunGoAction.resetMaxSteps();
@@ -190,13 +195,13 @@ public class RunGoAction extends GuiAction {
         maxSteps = defaultMaxSteps;
     }
 
-		////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////
     // Method to store any program arguments into MIPS memory and registers before
     // execution begins. Arguments go into the gap between $sp and kernel memory.  
     // Argument pointers and count go into runtime stack and $sp is adjusted accordingly.
     // $a0 gets argument count (argc), $a1 gets stack address of first arg pointer (argv).
     private void processProgramArgumentsIfAny() {
-        String programArguments = executePane.getTextSegmentWindow().getProgramArguments();
+        String programArguments = Main.getGUI().executePane.getTextSegmentWindow().getProgramArguments();
         if (programArguments == null || programArguments.length() == 0
                 || !Main.getSettings().getProgramArguments())
             return;

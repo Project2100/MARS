@@ -59,14 +59,14 @@ import mars.util.Binary;
  *
  * @author Project2100
  */
-class MemoryConfigurationDialog extends JDialog implements ActionListener {
+final class MemoryConfigurationDialog extends JDialog implements ActionListener {
 
     JTextField[] addressDisplay;
     JLabel[] nameDisplay;
     ConfigurationButton selectedConfigurationButton, initialConfigurationButton;
     GuiAction thisAction;
 
-    public MemoryConfigurationDialog(GuiAction action) {
+    MemoryConfigurationDialog(GuiAction action) {
         super(Main.getGUI().mainFrame, "MIPS Memory Configuration", true);
         thisAction = action;
 
@@ -97,9 +97,9 @@ class MemoryConfigurationDialog extends JDialog implements ActionListener {
     private Component buildConfigChooser() {
         JPanel chooserPanel = new JPanel(new GridLayout(4, 1));
         ButtonGroup choices = new ButtonGroup();
-        Iterator configurationsIterator = MemoryConfigurations.getConfigurationsIterator();
+        Iterator<MemoryConfiguration> configurationsIterator = MemoryConfigurations.getConfigurationsIterator();
         while (configurationsIterator.hasNext()) {
-            MemoryConfiguration config = (MemoryConfiguration) configurationsIterator.next();
+            MemoryConfiguration config = configurationsIterator.next();
             ConfigurationButton button = new ConfigurationButton(config);
             button.addActionListener(this);
             if (button.isSelected()) {
@@ -196,10 +196,10 @@ class MemoryConfigurationDialog extends JDialog implements ActionListener {
             Main.getSettings().setMemoryConfiguration(this.selectedConfigurationButton.getConfiguration().getConfigurationIdentifier());
             Main.getGUI().registersTab.clearHighlighting();
             Main.getGUI().registersTab.updateRegisters();
-            Main.getGUI().executeTab.getDataSegmentWindow().updateBaseAddressComboBox();
+            Main.getGUI().executePane.getDataSegmentWindow().updateBaseAddressComboBox();
             // 21 July 2009 Re-assemble if the situation demands it to maintain consistency.
             // 20150519 - Do reassemble if executePane is visible
-            if (Main.getGUI().executeTab.isShowing()) {
+            if (Main.getGUI().executePane.isShowing()) {
                 // Stop execution if executing -- should NEVER happen because this 
                 // Action's widget is disabled during MIPS execution.
                 // 20150519 - Actually leaving this here as a feature
@@ -231,16 +231,17 @@ class MemoryConfigurationDialog extends JDialog implements ActionListener {
         // results.  There can be duplicate addresses, so I concatenate the name
         // onto the address to make each key unique.  Then slice off the name upon
         // extraction. 
-        TreeMap treeSortedByAddress = new TreeMap();
+        TreeMap<String, String> treeSortedByAddress = new TreeMap<>();
         for (int i = 0; i < configurationItemValues.length; i++)
             treeSortedByAddress.put(Binary.intToHexString(configurationItemValues[i]) + configurationItemNames[i], configurationItemNames[i]);
-        Iterator setSortedByAddress = treeSortedByAddress.entrySet().iterator();
-        Map.Entry pair;
+        Iterator<Map.Entry<String, String>> setSortedByAddress = treeSortedByAddress.entrySet().iterator();
+        
+        Map.Entry<String, String> pair;
         int addressStringLength = Binary.intToHexString(configurationItemValues[0]).length();
         for (int i = 0; i < configurationItemValues.length; i++) {
-            pair = (Map.Entry) setSortedByAddress.next();
-            nameDisplay[i].setText((String) pair.getValue());
-            addressDisplay[i].setText(((String) pair.getKey()).substring(0, addressStringLength));
+            pair = setSortedByAddress.next();
+            nameDisplay[i].setText(pair.getValue());
+            addressDisplay[i].setText(pair.getKey().substring(0, addressStringLength));
         }
     }
 

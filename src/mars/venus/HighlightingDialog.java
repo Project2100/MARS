@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package mars.venus;
 
 import java.awt.BorderLayout;
@@ -31,10 +26,38 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import mars.Main;
 import mars.Settings;
+/*
+ Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
+
+ Developed by Pete Sanderson (psanderson@otterbein.edu)
+ and Kenneth Vollmar (kenvollmar@missouristate.edu)
+
+ Permission is hereby granted, free of charge, to any person obtaining 
+ a copy of this software and associated documentation files (the 
+ "Software"), to deal in the Software without restriction, including 
+ without limitation the rights to use, copy, modify, merge, publish, 
+ distribute, sublicense, and/or sell copies of the Software, and to 
+ permit persons to whom the Software is furnished to do so, subject 
+ to the following conditions:
+
+ The above copyright notice and this permission notice shall be 
+ included in all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
+ ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+ CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+ (MIT license, http://www.opensource.org/licenses/mit-license.html)
+ */
 
 /**
  *
- * @author Project2100
+ * @author Pete Sanderson
+ * @author Kenneth Vollmar
  */
 final class HighlightingDialog extends JDialog {
 
@@ -308,10 +331,10 @@ final class HighlightingDialog extends JDialog {
         }
         settings.setDataSegmentHighlighting(currentDataHighlightSetting);
         settings.setRegistersHighlighting(currentRegisterHighlightSetting);
-        ExecutePane executePane = Main.getGUI().executeTab;
-        (Main.getGUI().registersTab).refresh();
-        (Main.getGUI().coprocessor0Tab).refresh();
-        (Main.getGUI().coprocessor1Tab).refresh();
+        ExecutePane executePane = Main.getGUI().executePane;
+        Main.getGUI().registersTab.refresh();
+        Main.getGUI().coprocessor0Tab.refresh();
+        Main.getGUI().coprocessor1Tab.refresh();
         // If a successful assembly has occured, the various panes will be populated with tables
         // and we want to apply the new settings.  If it has NOT occurred, there are no tables
         // in the Data and Text segment windows so we don't want to disturb them.  

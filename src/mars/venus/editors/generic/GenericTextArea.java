@@ -1,7 +1,7 @@
    package mars.venus.editors.generic;
 
    import mars.Main;
-   import mars.venus.EditTab;
+   import mars.venus.EditPane;
    import mars.venus.editors.MARSTextEditingArea;
    import java.awt.*;
    import javax.swing.*;
@@ -40,7 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     public class GenericTextArea extends JTextArea implements MARSTextEditingArea {
     
    
-      private EditTab editPane;
+      private EditPane editPane;
       private UndoManager undoManager;
       private UndoableEditListener undoableEditListener;
       private JTextArea sourceCode;
@@ -49,7 +49,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       private boolean isCompoundEdit = false;
       private CompoundEdit compoundEdit;
      
-       public GenericTextArea(EditTab editPain, JComponent lineNumbers) {
+       public GenericTextArea(EditPane editPain, JComponent lineNumbers) {
          this.editPane = editPain;
          this.sourceCode = this;
          this.setFont(Main.getSettings().getEditorFont());

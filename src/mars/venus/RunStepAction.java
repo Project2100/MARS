@@ -52,7 +52,7 @@ public class RunStepAction extends GuiAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         name = this.getValue(Action.NAME).toString();
-        executePane = mainUI.executeTab;
+        executePane = mainUI.executePane;
         boolean done = false;
         if (executePane.isShowing()) {
             if (!VenusUI.getStarted()) // DPS 17-July-2008
@@ -74,9 +74,9 @@ public class RunStepAction extends GuiAction {
    	// When step is completed, control returns here (from execution thread, indirectly) 
     // to simUpdate the GUI.
     public void stepped(boolean done, int reason, ProcessingException pe) {
-        (Main.getGUI().registersTab).updateRegisters();
-        (Main.getGUI().coprocessor1Tab).updateRegisters();
-        (Main.getGUI().coprocessor0Tab).updateRegisters();
+        Main.getGUI().registersTab.updateRegisters();
+        Main.getGUI().coprocessor1Tab.updateRegisters();
+        Main.getGUI().coprocessor0Tab.updateRegisters();
         executePane.getDataSegmentWindow().updateValues();
         if (!done) {
             executePane.getTextSegmentWindow().highlightStepAtPC();
