@@ -29,6 +29,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import mars.MIPSprogram;
 import mars.Main;
+import mars.Settings;
 import mars.assembler.Symbol;
 import mars.assembler.SymbolTable;
 import mars.mips.hardware.Memory;
@@ -147,7 +148,7 @@ public class LabelsWindow extends JInternalFrame {
     public LabelsWindow() {
         super("Labels", true, false, true, true);
         try {
-            sortState = Integer.parseInt(Main.getSettings().getLabelSortState());
+            sortState = Settings.IntegerSettings.LABEL_SORT_STATE.get();
         }
         catch (NumberFormatException nfe) {
             sortState = 0;
@@ -498,7 +499,8 @@ public class LabelsWindow extends JInternalFrame {
                     sortState = sortStateTransitions[sortState][realIndex];
                     tableSortComparator = tableSortingComparators[sortState];
                     columnNames = sortColumnHeadings[sortState];
-                    Main.getSettings().setLabelSortState(Integer.toString(sortState));
+                    Settings.IntegerSettings.LABEL_SORT_STATE.set(sortState);
+//                    Main.getSettings().setLabelSortState(Integer.toString(sortState));
                     setupTable();
                     LabelsWindow.this.validate();
                 }

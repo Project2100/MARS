@@ -149,17 +149,17 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
         int addressBase = (Main.getGUI().executePane).getAddressDisplayBase();
         codeHighlighting = true;
         breakpointsEnabled = true;
-        ArrayList sourceStatementList = Main.program.getMachineList();
+        ArrayList<ProgramStatement> sourceStatementList = Main.program.getMachineList();
         data = new Object[sourceStatementList.size()][columnNames.length];
         intAddresses = new int[data.length];
-        addressRows = new Hashtable(data.length);
-        executeMods = new Hashtable<Integer, ModifiedCode>(data.length);
+        addressRows = new Hashtable<>(data.length);
+        executeMods = new Hashtable<>(data.length);
         // Get highest source line number to determine #leading spaces so line numbers will vertically align
         // In multi-file situation, this will not necessarily be the last line b/c sourceStatementList contains
         // source lines from all files.  DPS 3-Oct-10
         int maxSourceLineNumber = 0;
         for (int i = sourceStatementList.size() - 1; i >= 0; i--) {
-            ProgramStatement statement = (ProgramStatement) sourceStatementList.get(i);
+            ProgramStatement statement = sourceStatementList.get(i);
             if (statement.getSourceLine() > maxSourceLineNumber)
                 maxSourceLineNumber = statement.getSourceLine();
         }
@@ -167,7 +167,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
         int leadingSpaces;
         int lastLine = -1;
         for (int i = 0; i < sourceStatementList.size(); i++) {
-            ProgramStatement statement = (ProgramStatement) sourceStatementList.get(i);
+            ProgramStatement statement = sourceStatementList.get(i);
             intAddresses[i] = statement.getAddress();
             addressRows.put(intAddresses[i], i);
             data[i][BREAK_COLUMN] = Boolean.FALSE;
@@ -182,7 +182,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
                 if (statement.getSourceLine() == lastLine)
                     lineNumber = "          ".substring(0, sourceLineDigits) + "  ";
                 sourceString = lineNumber
-                        + mars.util.EditorFont.substituteSpacesForTabs(statement.getSource());
+                        + mars.venus.EditorFont.substituteSpacesForTabs(statement.getSource());
             }
             data[i][SOURCE_COLUMN] = sourceString;
             lastLine = statement.getSourceLine();
@@ -227,11 +227,11 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
         tableScroller = new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         contentPane.add(tableScroller);
-        if (Main.getSettings().getProgramArguments())
+        if (Settings.BooleanSettings.PROGRAM_ARGUMENTS.isSet())
             addProgramArgumentsPanel();
 
         deleteAsTextSegmentObserver();
-        if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED))
+        if (Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet())
             addAsTextSegmentObserver();
     }
 
@@ -307,26 +307,25 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
     public void updateBasicStatements() {
         if (contentPane.getComponentCount() == 0)
             return; // ignore if no content to change
-        ArrayList sourceStatementList = Main.program.getMachineList();
+        ArrayList<ProgramStatement> sourceStatementList = Main.program.getMachineList();
         for (int i = 0; i < sourceStatementList.size(); i++)
             // Loop has been extended to cover self-modifying code.  If code at this memory location has been
             // modified at runtime, construct a ProgramStatement from the current address and binary code
             // then display its basic code.  DPS 11-July-2013
             if (executeMods.get(i) == null) { // not modified, so use original logic.
-                ProgramStatement statement = (ProgramStatement) sourceStatementList.get(i);
+                ProgramStatement statement = sourceStatementList.get(i);
                 table.getModel().setValueAt(statement.getPrintableBasicAssemblyStatement(), i, BASIC_COLUMN);
             }
-            else
-                try {
-                    ProgramStatement statement = new ProgramStatement(
-                            mars.util.Binary.stringToInt((String) table.getModel().getValueAt(i, CODE_COLUMN)),
-                            mars.util.Binary.stringToInt((String) table.getModel().getValueAt(i, ADDRESS_COLUMN))
-                    );
-                    table.getModel().setValueAt(statement.getPrintableBasicAssemblyStatement(), i, BASIC_COLUMN);
-                }
-                catch (NumberFormatException e) { // should never happen but just in case...
-                    table.getModel().setValueAt("", i, BASIC_COLUMN);
-                }
+            else try {
+                ProgramStatement statement = new ProgramStatement(
+                        mars.util.Binary.stringToInt((String) table.getModel().getValueAt(i, CODE_COLUMN)),
+                        mars.util.Binary.stringToInt((String) table.getModel().getValueAt(i, ADDRESS_COLUMN))
+                );
+                table.getModel().setValueAt(statement.getPrintableBasicAssemblyStatement(), i, BASIC_COLUMN);
+            }
+            catch (NumberFormatException e) { // should never happen but just in case...
+                table.getModel().setValueAt("", i, BASIC_COLUMN);
+            }
     }
 
     /**
@@ -351,13 +350,13 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
                 // Seems reasonable for text segment display to be accurate in cases where existing code is overwritten
                 // even when running at unlimited speed.  DPS 10-July-2013
                 deleteAsTextSegmentObserver();
-                if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) // && (notice.getRunSpeed() != RunSpeedPanel.UNLIMITED_SPEED || notice.getMaxSteps()==1)) {
+                if (Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet()) // && (notice.getRunSpeed() != RunSpeedPanel.UNLIMITED_SPEED || notice.getMaxSteps()==1)) {
                     addAsTextSegmentObserver();
             }
         }
         else if (observable == Main.getSettings()) {
             deleteAsTextSegmentObserver();
-            if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED))
+            if (Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet())
                 addAsTextSegmentObserver();
         }
         else if (obj instanceof MemoryAccessNotice) {
@@ -500,7 +499,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
                 tableModel.setValueAt(Boolean.FALSE, i, BREAK_COLUMN);
         // Handles an obscure situation: if you click to set some breakpoints then "immediately" clear them
         // all using the shortcut (CTRL-K), the last checkmark set is not removed even though the breakpoint
-        // is removed (tableModel.setValueAt(Boolean.FALSE, i, BREAK_COLUMN)) and all the other checkmarks 
+        // is removed (tableModel.setValueAt(BooleanSettings.FALSE, i, BREAK_COLUMN)) and all the other checkmarks 
         // are removed.  The checkmark remains although if you subsequently run the program it will blow 
         // through because the data model cell really has been cleared (contains false).  Occurs only when 
         // the last checked breakpoint check box still has the "focus".  There is but one renderer and editor 
@@ -634,8 +633,8 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
                 (int) sourceCell.getX() + 1,
                 (int) sourceCell.getY() + 1, 1, false);
         MouseListener[] mouseListeners = table.getMouseListeners();
-        for (int i = 0; i < mouseListeners.length; i++)
-            mouseListeners[i].mousePressed(fakeMouseEvent);
+        for (MouseListener mouseListener : mouseListeners)
+            mouseListener.mousePressed(fakeMouseEvent);
     }
 
     /**
@@ -650,8 +649,8 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
                 new Date().getTime(), MouseEvent.BUTTON1_MASK,
                 (int) rect.getX(), (int) rect.getY(), 1, false);
         MouseListener[] mouseListeners = ((MyTippedJTable) table).tableHeader.getMouseListeners();
-        for (int i = 0; i < mouseListeners.length; i++)
-            mouseListeners[i].mouseClicked(fakeMouseEvent);
+        for (MouseListener mouseListener : mouseListeners)
+            mouseListener.mouseClicked(fakeMouseEvent);
 
     }
 
@@ -679,7 +678,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
     private void reorderColumns() {
         TableColumnModel oldtcm = table.getColumnModel();
         TableColumnModel newtcm = new DefaultTableColumnModel();
-        int[] savedColumnOrder = Main.getSettings().getTextColumnOrder();
+        int[] savedColumnOrder = Settings.StringSettings.getTextColumnOrder();
         // Apply ordering only if correct number of columns.
         if (savedColumnOrder.length == table.getColumnCount()) {
             for (int i = 0; i < savedColumnOrder.length; i++)
@@ -697,7 +696,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
     private int findRowForAddress(int address) throws IllegalArgumentException {
         int addressRow = 0;
         try {
-            addressRow = ((Integer) addressRows.get(new Integer(address))).intValue();
+            addressRow = ((Integer) addressRows.get(address));
         }
         catch (NullPointerException e) {
             throw new IllegalArgumentException(); // address not found in map
@@ -744,7 +743,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
          * rather than a check box.
          */
         @Override
-        public Class getColumnClass(int c) {
+        public Class<?> getColumnClass(int c) {
             return getValueAt(0, c).getClass();
         }
 
@@ -756,7 +755,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
         public boolean isCellEditable(int row, int col) {
             //Note that the data/cell address is constant,
             //no matter where the cell appears onscreen.
-            return col == BREAK_COLUMN || (col == CODE_COLUMN && Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED));
+            return col == BREAK_COLUMN || (col == CODE_COLUMN && Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet());
         }
 
         /**
@@ -771,7 +770,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
                 return;
             }
             // Handle changes in the Code column.		 
-            int val = 0;
+            int val;
             int address = 0;
             if (value.equals(data[row][col]))
                 return;
@@ -865,24 +864,24 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
 
             if (highlighting && textSegment.getIntCodeAddressAtRow(row) == highlightAddress)
                 if (mars.simulator.Simulator.inDelaySlot() || textSegment.inDelaySlot) {
-                    cell.setBackground(settings.getColorSettingByPosition(Settings.TEXTSEGMENT_DELAYSLOT_HIGHLIGHT_BACKGROUND));
-                    cell.setForeground(settings.getColorSettingByPosition(Settings.TEXTSEGMENT_DELAYSLOT_HIGHLIGHT_FOREGROUND));
-                    cell.setFont(settings.getFontByPosition(Settings.TEXTSEGMENT_DELAYSLOT_HIGHLIGHT_FONT));
+                    cell.setBackground(Settings.ColorSettings.TEXTSEGMENT_DELAYSLOT_HIGHLIGHT.getBackground());
+                    cell.setForeground(Settings.ColorSettings.TEXTSEGMENT_DELAYSLOT_HIGHLIGHT.getForeground());
+                    cell.setFont(Settings.FontSettings.TEXTSEGMENT_DELAYSLOT_HIGHLIGHT_FONT.get());
                 }
                 else {
-                    cell.setBackground(settings.getColorSettingByPosition(Settings.TEXTSEGMENT_HIGHLIGHT_BACKGROUND));
-                    cell.setForeground(settings.getColorSettingByPosition(Settings.TEXTSEGMENT_HIGHLIGHT_FOREGROUND));
-                    cell.setFont(settings.getFontByPosition(Settings.TEXTSEGMENT_HIGHLIGHT_FONT));
+                    cell.setBackground(Settings.ColorSettings.TEXTSEGMENT_HIGHLIGHT.getBackground());
+                    cell.setForeground(Settings.ColorSettings.TEXTSEGMENT_HIGHLIGHT.getForeground());
+                    cell.setFont(Settings.FontSettings.TEXTSEGMENT_HIGHLIGHT_FONT.get());
                 }
             else if (row % 2 == 0) {
-                cell.setBackground(settings.getColorSettingByPosition(Settings.EVEN_ROW_BACKGROUND));
-                cell.setForeground(settings.getColorSettingByPosition(Settings.EVEN_ROW_FOREGROUND));
-                cell.setFont(settings.getFontByPosition(Settings.EVEN_ROW_FONT));
+                cell.setBackground(Settings.ColorSettings.EVEN_ROW.getBackground());
+                cell.setForeground(Settings.ColorSettings.EVEN_ROW.getForeground());
+                cell.setFont(Settings.FontSettings.EVEN_ROW_FONT.get());
             }
             else {
-                cell.setBackground(settings.getColorSettingByPosition(Settings.ODD_ROW_BACKGROUND));
-                cell.setForeground(settings.getColorSettingByPosition(Settings.ODD_ROW_FOREGROUND));
-                cell.setFont(settings.getFontByPosition(Settings.ODD_ROW_FONT));
+                cell.setBackground(Settings.ColorSettings.ODD_ROW.getBackground());
+                cell.setForeground(Settings.ColorSettings.ODD_ROW.getForeground());
+                cell.setFont(Settings.FontSettings.ODD_ROW_FONT.get());
             }
             return cell;
         }
@@ -895,6 +894,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
      */
     class MachineCodeCellRenderer extends DefaultTableCellRenderer {
 
+        @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
             JLabel cell = (JLabel) super.getTableCellRendererComponent(table, value,
@@ -902,12 +902,12 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
             cell.setFont(MonoRightCellRenderer.MONOSPACED_PLAIN_12POINT);
             cell.setHorizontalAlignment(SwingConstants.RIGHT);
             if (row % 2 == 0) {
-                cell.setBackground(Main.getSettings().getColorSettingByPosition(Settings.EVEN_ROW_BACKGROUND));
-                cell.setForeground(Main.getSettings().getColorSettingByPosition(Settings.EVEN_ROW_FOREGROUND));
+                cell.setBackground(Settings.ColorSettings.EVEN_ROW.getBackground());
+                cell.setForeground(Settings.ColorSettings.EVEN_ROW.getForeground());
             }
             else {
-                cell.setBackground(Main.getSettings().getColorSettingByPosition(Settings.ODD_ROW_BACKGROUND));
-                cell.setForeground(Main.getSettings().getColorSettingByPosition(Settings.ODD_ROW_FOREGROUND));
+                cell.setBackground(Settings.ColorSettings.ODD_ROW.getBackground());
+                cell.setForeground(Settings.ColorSettings.ODD_ROW.getForeground());
             }
             return cell;
         }
@@ -1148,10 +1148,10 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
             // If movement is slow, this event may fire multiple times w/o
             // actually changing the column order.  If new column order is 
             // same as previous, do not save changes to persistent store.
-            int[] oldOrder = Main.getSettings().getTextColumnOrder();
+            int[] oldOrder = Settings.StringSettings.getTextColumnOrder();
             for (int i = 0; i < columnOrder.length; i++)
                 if (oldOrder[i] != columnOrder[i]) {
-                    Main.getSettings().setTextColumnOrder(columnOrder);
+                    Settings.StringSettings.setTextColumnOrder(columnOrder);
                     break;
                 }
         }

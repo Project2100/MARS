@@ -533,15 +533,15 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
                     // temporarily enabling the setting as "non persistent" so it won't write through to the registry.
                     if (Memory.inTextSegment(address)) {
                         int displayValue = 0;
-                        if (!Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) {
-                            Main.getSettings().setBooleanSettingNonPersistent(Settings.SELF_MODIFYING_CODE_ENABLED, true);
+                        if (!Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
+                            Settings.BooleanSettings.SELF_MODIFYING_CODE.setNoPersist(true);
                             try {
                                 displayValue = Main.memory.getWordNoNotify(address);
                             }
                             catch (AddressErrorException e) {
                                 // Still got an exception?  Doesn't seem possible but if we drop through it will write default value 0.
                             }
-                            Main.getSettings().setBooleanSettingNonPersistent(Settings.SELF_MODIFYING_CODE_ENABLED, false);
+                            Settings.BooleanSettings.SELF_MODIFYING_CODE.setNoPersist(false);
                         }
                         ((DataTableModel) dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(displayValue, valueBase), row, column);
                     }
@@ -650,7 +650,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
         heapButton.setEnabled(true);
         extnButton.setEnabled(true);
         mmioButton.setEnabled(true);
-        textButton.setEnabled(settings.getBool(Settings.SELF_MODIFYING_CODE_ENABLED));
+        textButton.setEnabled(Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet());
         kernButton.setEnabled(true);
         prevButton.setEnabled(true);
         nextButton.setEnabled(true);
@@ -823,7 +823,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
         else if (observable == settings) {
             // Suspended work in progress. Intended to disable combobox item for text segment. DPS 9-July-2013.
             //baseAddressSelector.getModel().getElementAt(TEXT_BASE_ADDRESS_INDEX)
-            //*.setEnabled(settings.getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED));
+            //*.setEnabled(settings.getBooleanSetting(Settings.SELF_MODIFYING_CODE));
         }
         else if (obj instanceof MemoryAccessNotice) {          	// NOTE: observable != Memory.getInstance() because Memory class delegates notification duty.
             MemoryAccessNotice access = (MemoryAccessNotice) obj;
@@ -990,20 +990,20 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
 
             cell.setHorizontalAlignment(SwingConstants.RIGHT);
             int rowFirstAddress = Binary.stringToInt(table.getValueAt(row, ADDRESS_COLUMN).toString());
-            if (settings.getDataSegmentHighlighting() && addressHighlighting && rowFirstAddress == addressRowFirstAddress && column == addressColumn) {
-                cell.setBackground(settings.getColorSettingByPosition(Settings.DATASEGMENT_HIGHLIGHT_BACKGROUND));
-                cell.setForeground(settings.getColorSettingByPosition(Settings.DATASEGMENT_HIGHLIGHT_FOREGROUND));
-                cell.setFont(settings.getFontByPosition(Settings.DATASEGMENT_HIGHLIGHT_FONT));
+            if (Settings.BooleanSettings.DATA_SEGMENT_HIGHLIGHTING.isSet() && addressHighlighting && rowFirstAddress == addressRowFirstAddress && column == addressColumn) {
+                cell.setBackground(Settings.ColorSettings.DATASEGMENT_HIGHLIGHT.getBackground());
+                cell.setForeground(Settings.ColorSettings.DATASEGMENT_HIGHLIGHT.getForeground());
+                cell.setFont(Settings.FontSettings.DATASEGMENT_HIGHLIGHT_FONT.get());
             }
             else if (row % 2 == 0) {
-                cell.setBackground(settings.getColorSettingByPosition(Settings.EVEN_ROW_BACKGROUND));
-                cell.setForeground(settings.getColorSettingByPosition(Settings.EVEN_ROW_FOREGROUND));
-                cell.setFont(settings.getFontByPosition(Settings.EVEN_ROW_FONT));
+                cell.setBackground(Settings.ColorSettings.EVEN_ROW.getBackground());
+                cell.setForeground(Settings.ColorSettings.EVEN_ROW.getForeground());
+                cell.setFont(Settings.FontSettings.EVEN_ROW_FONT.get());
             }
             else {
-                cell.setBackground(settings.getColorSettingByPosition(Settings.ODD_ROW_BACKGROUND));
-                cell.setForeground(settings.getColorSettingByPosition(Settings.ODD_ROW_FOREGROUND));
-                cell.setFont(settings.getFontByPosition(Settings.ODD_ROW_FONT));
+                cell.setBackground(Settings.ColorSettings.ODD_ROW.getBackground());
+                cell.setForeground(Settings.ColorSettings.ODD_ROW.getForeground());
+                cell.setFont(Settings.FontSettings.ODD_ROW_FONT.get());
             }
             return cell;
         }

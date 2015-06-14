@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import mars.Main;
+import mars.Settings;
 
 /*
  Copyright (c) 2003-2013,  Pete Sanderson and Kenneth Vollmar
@@ -57,11 +58,11 @@ final class ExceptionHandlerDialog extends JDialog {
     ExceptionHandlerDialog() {
 
         super(Main.getGUI().mainFrame, "Exception Handler", true);
-        initialSelected = Main.getSettings().getExceptionHandlerEnabled();
-        initialPathname = Main.getSettings().getExceptionHandler();
+        initialSelected = Settings.BooleanSettings.EXCEPTION_HANDLER.isSet();
+        initialPathname = Settings.StringSettings.EXCEPTION_HANDLER_FILE.get();
 
         exceptionHandlerSetting = new JCheckBox("Include this exception handler file in all assemble operations");
-        exceptionHandlerSetting.setSelected(Main.getSettings().getExceptionHandlerEnabled());
+        exceptionHandlerSetting.setSelected(Settings.BooleanSettings.EXCEPTION_HANDLER.isSet());
         exceptionHandlerSetting.addActionListener((ActionEvent e) -> {
             boolean selected = ((JCheckBox) e.getSource()).isSelected();
             exceptionHandlerSelectionButton.setEnabled(selected);
@@ -72,7 +73,7 @@ final class ExceptionHandlerDialog extends JDialog {
         exceptionHandlerSelectionButton.setEnabled(exceptionHandlerSetting.isSelected());
         exceptionHandlerSelectionButton.addActionListener((ActionEvent e) -> {
             JFileChooser chooser = new JFileChooser();
-            String pathname = Main.getSettings().getExceptionHandler();
+            String pathname = Settings.StringSettings.EXCEPTION_HANDLER_FILE.get();
             if (pathname != null) {
                 File file = new File(pathname);
                 if (file.exists()) chooser.setSelectedFile(file);
@@ -84,7 +85,7 @@ final class ExceptionHandlerDialog extends JDialog {
             }
         });
 
-        exceptionHandlerDisplay = new JTextField(Main.getSettings().getExceptionHandler(), 30);
+        exceptionHandlerDisplay = new JTextField(Settings.StringSettings.EXCEPTION_HANDLER_FILE.get(), 30);
         exceptionHandlerDisplay.setEditable(false);
         exceptionHandlerDisplay.setEnabled(exceptionHandlerSetting.isSelected());
 
@@ -99,9 +100,10 @@ final class ExceptionHandlerDialog extends JDialog {
             boolean finalSelected = exceptionHandlerSetting.isSelected();
             String finalPathname = exceptionHandlerDisplay.getText();
             if (initialSelected != finalSelected || initialPathname == null && finalPathname != null || initialPathname != null && !initialPathname.equals(finalPathname)) {
-                Main.getSettings().setExceptionHandlerEnabled(finalSelected);
+                Settings.BooleanSettings.EXCEPTION_HANDLER.set(finalSelected);
                 if (finalSelected)
-                    Main.getSettings().setExceptionHandler(finalPathname);
+                    Settings.StringSettings.EXCEPTION_HANDLER_FILE.set(finalPathname);
+//                    Main.getSettings().setExceptionHandler(finalPathname);
             }
             dispose();
         });

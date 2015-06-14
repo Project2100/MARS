@@ -173,9 +173,6 @@ public class Main {
         return "Pete Sanderson and Kenneth Vollmar";
     }
 
-//    public static void setGui(VenusUI g) {
-//        gui = g;
-//    }
     public static VenusUI getGUI() {
         return gui;
     }
@@ -318,6 +315,17 @@ public class Main {
             // If it doesn't work, properties will be empty
         }
         return properties;
+    }
+
+    /**
+     * Return whether backstepping is permitted at this time. Backstepping is
+     * ability to undo execution steps one at a time. Available only in the IDE.
+     * This is not a persistent setting and is not under MARS user control.
+     *
+     * @return true if backstepping is permitted, false otherwise.
+     */
+    public static boolean isBackSteppingEnabled() {
+        return program != null && program.getBackStepper() != null && program.getBackStepper().enabled();
     }
 
     /**

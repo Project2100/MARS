@@ -7,6 +7,7 @@ import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import mars.Main;
 import mars.ProcessingException;
+import mars.Settings;
 import mars.mips.hardware.RegisterFile;
 import mars.simulator.ProgramArgumentList;
 import mars.simulator.Simulator;
@@ -203,7 +204,7 @@ public class RunGoAction extends GuiAction {
     private void processProgramArgumentsIfAny() {
         String programArguments = Main.getGUI().executePane.getTextSegmentWindow().getProgramArguments();
         if (programArguments == null || programArguments.length() == 0
-                || !Main.getSettings().getProgramArguments())
+                || !Settings.BooleanSettings.PROGRAM_ARGUMENTS.isSet())
             return;
         new ProgramArgumentList(programArguments).storeProgramArguments();
     }

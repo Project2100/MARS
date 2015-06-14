@@ -329,7 +329,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          int old = 0;
          for (int i=0; i< registers.length; i++){
             if(registers[i].getNumber()== num) {
-               old = (Main.getSettings().getBackSteppingEnabled())
+               old = (Main.isBackSteppingEnabled())
                         ? Main.program.getBackStepper().addCoprocessor1Restore(num,registers[i].setValue(val))
                   		: registers[i].setValue(val);
                break;
@@ -441,7 +441,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          if (flag >= 0 && flag < numConditionFlags) {
             old = getConditionFlag(flag);
             condition.setValue(Binary.setBit(condition.getValue(),flag));
-            if (Main.getSettings().getBackSteppingEnabled())
+            if (Main.isBackSteppingEnabled())
                if (old==0) {
                   Main.program.getBackStepper().addConditionFlagClear(flag);
                } 
@@ -463,7 +463,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          if (flag >= 0 && flag < numConditionFlags) {
             old = getConditionFlag(flag);
             condition.setValue(Binary.clearBit(condition.getValue(),flag));
-            if (Main.getSettings().getBackSteppingEnabled())
+            if (Main.isBackSteppingEnabled())
                if (old==0) {
                   Main.program.getBackStepper().addConditionFlagClear(flag);
                } 

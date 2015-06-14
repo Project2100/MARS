@@ -99,7 +99,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          int old = 0;
          for (int i=0; i< registers.length; i++){
             if(registers[i].getNumber()== num) {
-               old = (Main.getSettings().getBackSteppingEnabled())
+               old = (Main.isBackSteppingEnabled())
                         ? Main.program.getBackStepper().addCoprocessor0Restore(num,registers[i].setValue(val))
                   		: registers[i].setValue(val);
                break;

@@ -441,7 +441,7 @@ public class Memory extends Observable {
             // Burch Mod (Jan 2013): replace throw with call to setStatement 
             // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
 
-            if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
                 ProgramStatement oldStatement = getStatementNoNotify(address);
                 if (oldStatement != null)
                     oldValue = oldStatement.getBinaryStatement();
@@ -505,7 +505,7 @@ public class Memory extends Observable {
         else if (inTextSegment(address))
             // Burch Mod (Jan 2013): replace throw with call to setStatement 
             // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
-            if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
                 ProgramStatement oldStatement = getStatementNoNotify(address);
                 if (oldStatement != null)
                     oldValue = oldStatement.getBinaryStatement();
@@ -535,7 +535,7 @@ public class Memory extends Observable {
             throw new AddressErrorException("store address out of range ",
                     Exceptions.ADDRESS_EXCEPTION_STORE, address);
         notifyAnyObservers(AccessNotice.WRITE, address, WORD_LENGTH_BYTES, value);
-        if (Main.getSettings().getBackSteppingEnabled())
+        if (Main.isBackSteppingEnabled())
             Main.program.getBackStepper().addMemoryRestoreRawWord(address, oldValue);
         return oldValue;
     }
@@ -556,7 +556,7 @@ public class Memory extends Observable {
             throw new AddressErrorException(
                     "store address not aligned on word boundary ",
                     Exceptions.ADDRESS_EXCEPTION_STORE, address);
-        return (Main.getSettings().getBackSteppingEnabled())
+        return (Main.isBackSteppingEnabled())
                 ? Main.program.getBackStepper().addMemoryRestoreWord(address, set(address, value, WORD_LENGTH_BYTES))
                 : set(address, value, WORD_LENGTH_BYTES);
     }
@@ -577,7 +577,7 @@ public class Memory extends Observable {
         if (address % 2 != 0)
             throw new AddressErrorException("store address not aligned on halfword boundary ",
                     Exceptions.ADDRESS_EXCEPTION_STORE, address);
-        return (Main.getSettings().getBackSteppingEnabled())
+        return (Main.isBackSteppingEnabled())
                 ? Main.program.getBackStepper().addMemoryRestoreHalf(address, set(address, value, 2))
                 : set(address, value, 2);
     }
@@ -594,7 +594,7 @@ public class Memory extends Observable {
      *
      */
     public int setByte(int address, int value) throws AddressErrorException {
-        return (Main.getSettings().getBackSteppingEnabled())
+        return (Main.isBackSteppingEnabled())
                 ? Main.program.getBackStepper().addMemoryRestoreByte(address, set(address, value, 1))
                 : set(address, value, 1);
     }
@@ -690,7 +690,7 @@ public class Memory extends Observable {
         else if (inTextSegment(address))
             // Burch Mod (Jan 2013): replace throw with calls to getStatementNoNotify & getBinaryStatement 
             // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
-            if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
                 ProgramStatement stmt = getStatementNoNotify(address);
                 value = stmt == null ? 0 : stmt.getBinaryStatement();
             }
@@ -757,7 +757,7 @@ public class Memory extends Observable {
         else if (inTextSegment(address))
             // Burch Mod (Jan 2013): replace throw with calls to getStatementNoNotify & getBinaryStatement 
             // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
-            if (Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)) {
+            if (Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
                 ProgramStatement stmt = getStatementNoNotify(address);
                 value = stmt == null ? 0 : stmt.getBinaryStatement();
             }
@@ -997,7 +997,7 @@ public class Memory extends Observable {
             throw new AddressErrorException(
                     "fetch address for text segment not aligned to word boundary ",
                     Exceptions.ADDRESS_EXCEPTION_LOAD, address);
-        if (!Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED)
+        if (!Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet()
                 && !(inTextSegment(address) || inKernelTextSegment(address)))
             throw new AddressErrorException(
                     "fetch address for text segment out of range ",

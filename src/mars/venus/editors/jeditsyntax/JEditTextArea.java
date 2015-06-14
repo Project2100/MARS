@@ -2253,7 +2253,7 @@ public class JEditTextArea extends JComponent
 	  * @return String containing auto-indent characters to be inserted into text
 	  */    
    public String getAutoIndent() {
-      return (Main.getSettings().getBool(Settings.AUTO_INDENT)) ? getLeadingWhiteSpace() : "";
+      return Settings.BooleanSettings.AUTO_INDENT.isSet() ? getLeadingWhiteSpace() : "";
    }
 
     /**
@@ -2340,7 +2340,7 @@ public class JEditTextArea extends JComponent
     // Compose and display syntax-sensitive help. Typically invoked upon typing a key.
 	 // Results in popup menu.  Is not used for creating tool tips.
    private void applySyntaxSensitiveHelp() {
-      if (!mars.Main.getSettings().getBool(mars.Settings.POPUP_INSTRUCTION_GUIDANCE)) {
+      if (!Settings.BooleanSettings.POPUP_INSTRUCTION_GUIDANCE.isSet()) {
          return;
       }
       int line = getCaretLine(); 

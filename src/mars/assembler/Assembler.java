@@ -10,6 +10,7 @@ import mars.Main;
 import mars.MIPSprogram;
 import mars.ProcessingException;
 import mars.ProgramStatement;
+import mars.Settings;
 import mars.mips.hardware.AddressErrorException;
 import mars.mips.hardware.Memory;
 import mars.mips.instructions.BasicInstruction;
@@ -406,8 +407,7 @@ public class Assembler {
                 errors.add(new ErrorMessage(ps2.getSourceMIPSprogram(), ps2.getSourceLine(), 0,
                         "Duplicate text segment address: "
                         + mars.venus.NumberDisplayBaseChooser.formatUnsignedInteger(ps2
-                                .getAddress(), (Main.getSettings()
-                                .getDisplayAddressesInHex()) ? 16 : 10)
+                                .getAddress(), (Settings.BooleanSettings.DISPLAY_ADDRESSES_IN_HEX.isSet()) ? 16 : 10)
                         + " already occupied by " + ps1.getSourceFile() + " line "
                         + ps1.getSourceLine() + " (caused by use of "
                         + ((Memory.inTextSegment(ps2.getAddress())) ? ".text" : ".ktext")

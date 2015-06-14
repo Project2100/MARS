@@ -66,8 +66,8 @@ class ExecuteAction extends GuiAction {
 
     public static boolean assemble() {
         String name = "Assemble";
-        extendedAssemblerEnabled = Main.getSettings().getBool(Settings.EXTENDED_ASSEMBLER_ENABLED);
-        warningsAreErrors = Main.getSettings().getBool(Settings.WARNINGS_ARE_ERRORS);
+        extendedAssemblerEnabled = Settings.BooleanSettings.EXTENDED_ASSEMBLER.isSet();
+        warningsAreErrors = Settings.BooleanSettings.WARNINGS_ARE_ERRORS.isSet();
 
         EditPane current = Main.getGUI().editTabbedPane.getSelectedComponent();
 
@@ -80,13 +80,15 @@ class ExecuteAction extends GuiAction {
 
         Main.program = new MIPSprogram();
         ArrayList<String> filesToAssemble;
-        if (Main.getSettings().getAssembleAllEnabled())
+        if (Settings.BooleanSettings.ASSEMBLE_ALL.isSet())
             filesToAssemble = FilenameFinder.getFilenameList(current.getParentDirectory(), Main.fileExtensions);
         else
             (filesToAssemble = new ArrayList<>()).add(current.getPathname());
         String exceptionHandler = null;
-        if (Main.getSettings().getExceptionHandlerEnabled() && Main.getSettings().getExceptionHandler() != null && Main.getSettings().getExceptionHandler().length() > 0)
-            exceptionHandler = Main.getSettings().getExceptionHandler();
+        if (Settings.BooleanSettings.EXCEPTION_HANDLER.isSet()
+                && Settings.StringSettings.EXCEPTION_HANDLER_FILE.get() != null
+                && Settings.StringSettings.EXCEPTION_HANDLER_FILE.get().length() > 0)
+            exceptionHandler = Settings.StringSettings.EXCEPTION_HANDLER_FILE.get();
 
         try {
             MIPSprogramsToAssemble = Main.program.prepareFilesForAssembly(filesToAssemble, current.getPathname(), exceptionHandler);

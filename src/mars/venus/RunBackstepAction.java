@@ -65,7 +65,7 @@ public class RunBackstepAction extends GuiAction {
         Main.getGUI().messagesPane.setSelectedComponent(Main.getGUI().messagesPane.runTab);
         Main.getGUI().executePane.getTextSegmentWindow().setCodeHighlighting(true);
 
-        if (Main.getSettings().getBackSteppingEnabled()) {
+        if (Main.isBackSteppingEnabled()) {
             boolean inDelaySlot = Main.program.getBackStepper().inDelaySlot(); // Added 25 June 2007
             Memory.getInstance().addObserver(Main.getGUI().executePane.getDataSegmentWindow());
             RegisterFile.addRegistersObserver(Main.getGUI().registersTab);

@@ -357,7 +357,7 @@ public class Simulator extends Observable {
                         instruction.getSimulationCode().simulate(statement);
 
                         // IF statement added 7/26/06 (explanation above)
-                        if (Main.getSettings().getBackSteppingEnabled())
+                        if (Main.isBackSteppingEnabled())
                             Main.program.getBackStepper().addDoNothing(pc);
                     }
                     catch (ProcessingException pe) {

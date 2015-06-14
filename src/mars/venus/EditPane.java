@@ -108,10 +108,10 @@ public class EditPane extends JPanel implements Observer {
         showLineNumbers.setToolTipText("If checked, will display line number for each line of text.");
         showLineNumbers.setEnabled(false);
         // Show line numbers by default.
-        showLineNumbers.setSelected(Main.getSettings().getBool(Settings.EDITOR_LINE_NUMBERS_DISPLAYED));
+        showLineNumbers.setSelected(Settings.BooleanSettings.EDITOR_LINE_NUMBERS.isSet());
 
         // sourceCode uses caretPositionLabel
-        sourceCode = Main.getSettings().getBool(Settings.GENERIC_TEXT_EDITOR)
+        sourceCode = Settings.BooleanSettings.GENERIC_TEXT_EDITOR.isSet()
                 ? new GenericTextArea(this, lineNumbers)
                 : new JEditBasedTextArea(this, lineNumbers);
 
@@ -171,7 +171,7 @@ public class EditPane extends JPanel implements Observer {
 
             lineNumbers.setText(isSelected ? getLineNumbers() : "");
             lineNumbers.setVisible(isSelected);
-            Main.getSettings().setBool(Settings.EDITOR_LINE_NUMBERS_DISPLAYED, isSelected);
+            Settings.BooleanSettings.EDITOR_LINE_NUMBERS.set(isSelected);
 
             sourceCode.revalidate(); // added 16 Jan 2012 to assure label redrawn.
             // needed because caret disappears when checkbox clicked
@@ -512,10 +512,10 @@ public class EditPane extends JPanel implements Observer {
      */
     @Override
     public void update(Observable fontChanger, Object arg) {
-        sourceCode.setFont(Main.getSettings().getEditorFont());
-        sourceCode.setLineHighlightEnabled(Main.getSettings().getBool(Settings.EDITOR_CURRENT_LINE_HIGHLIGHTING));
-        sourceCode.setCaretBlinkRate(Main.getSettings().getCaretBlinkRate());
-        sourceCode.setTabSize(Main.getSettings().getEditorTabSize());
+        sourceCode.setFont(Settings.FontSettings.EDITOR_FONT.get());
+        sourceCode.setLineHighlightEnabled(Settings.BooleanSettings.EDITOR_CURRENT_LINE_HIGHLIGHTING.isSet());
+        sourceCode.setCaretBlinkRate(Settings.IntegerSettings.CARET_BLINK_RATE.get());
+        sourceCode.setTabSize(Settings.IntegerSettings.EDITOR_TAB_SIZE.get());
         sourceCode.updateSyntaxStyles();
         sourceCode.revalidate();
         // We want line numbers to be displayed same size but always PLAIN style.

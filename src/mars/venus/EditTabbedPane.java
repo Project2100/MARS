@@ -117,7 +117,7 @@ public final class EditTabbedPane extends JTabbedPane {
                 // New IF statement to permit free traversal of edit panes w/o invalidating
                 // assembly if assemble-all is selected.  DPS 9-Aug-2011
                 //20150520 - Modes implicitly invalid assembled status on swap
-//                if (Main.getSettings().getBool(mars.Settings.ASSEMBLE_ALL_ENABLED))
+//                if (Main.getSettings().getBool(mars.Settings.ASSEMBLE_ALL))
 //                    updateTitles(tab);
 //                else {
 //                tab.updateTitlesAndMenuState();
@@ -241,7 +241,7 @@ public final class EditTabbedPane extends JTabbedPane {
         // Set default to previous file opened, if any.  This is useful in conjunction
         // with option to assemble file automatically upon opening.  File likely to have
         // been edited externally (e.g. by Mipster).
-        if (Main.getSettings().getBool(Settings.ASSEMBLE_ON_OPEN_ENABLED) && mostRecentlyOpenedFile != null)
+        if (Settings.BooleanSettings.ASSEMBLE_ON_OPEN.isSet() && mostRecentlyOpenedFile != null)
             fileChooser.setSelectedFile(mostRecentlyOpenedFile);
 
         if (fileChooser.showOpenDialog(Main.getGUI().mainFrame) == JFileChooser.APPROVE_OPTION) {
@@ -252,7 +252,7 @@ public final class EditTabbedPane extends JTabbedPane {
                 return false;
 
             // possibly send this file right through to the assembler by switching mode
-            if (theFile.canRead() && Main.getSettings().getBool(Settings.ASSEMBLE_ON_OPEN_ENABLED))
+            if (theFile.canRead() && Settings.BooleanSettings.ASSEMBLE_ON_OPEN.isSet())
                 Main.getGUI().toggleGUIMode();
         }
         return true;

@@ -63,32 +63,31 @@ final class HighlightingDialog extends JDialog {
 
     // NOTE: These must follow same sequence and buttons must
     //       follow this sequence too!
-    private static final int[] backgroundSettingPositions = {
-        Settings.TEXTSEGMENT_HIGHLIGHT_BACKGROUND,
-        Settings.TEXTSEGMENT_DELAYSLOT_HIGHLIGHT_BACKGROUND,
-        Settings.DATASEGMENT_HIGHLIGHT_BACKGROUND,
-        Settings.REGISTER_HIGHLIGHT_BACKGROUND,
-        Settings.EVEN_ROW_BACKGROUND,
-        Settings.ODD_ROW_BACKGROUND
-    };
-
-    private static final int[] foregroundSettingPositions = {
-        Settings.TEXTSEGMENT_HIGHLIGHT_FOREGROUND,
-        Settings.TEXTSEGMENT_DELAYSLOT_HIGHLIGHT_FOREGROUND,
-        Settings.DATASEGMENT_HIGHLIGHT_FOREGROUND,
-        Settings.REGISTER_HIGHLIGHT_FOREGROUND,
-        Settings.EVEN_ROW_FOREGROUND,
-        Settings.ODD_ROW_FOREGROUND
-    };
-
-    private static final int[] fontSettingPositions = {
-        Settings.TEXTSEGMENT_HIGHLIGHT_FONT,
-        Settings.TEXTSEGMENT_DELAYSLOT_HIGHLIGHT_FONT,
-        Settings.DATASEGMENT_HIGHLIGHT_FONT,
-        Settings.REGISTER_HIGHLIGHT_FONT,
-        Settings.EVEN_ROW_FONT,
-        Settings.ODD_ROW_FONT
-    };
+//    private static final Settings.ColorSettings[] backgroundSettingPositions = {
+//        Settings.ColorSettings.TEXTSEGMENT_HIGHLIGHT_BACKGROUND,
+//        Settings.ColorSettings.TEXTSEGMENT_DELAYSLOT_HIGHLIGHT_BACKGROUND,
+//        Settings.ColorSettings.DATASEGMENT_HIGHLIGHT_BACKGROUND,
+//        Settings.ColorSettings.REGISTER_HIGHLIGHT_BACKGROUND,
+//        Settings.ColorSettings.EVEN_ROW_BACKGROUND,
+//        Settings.ColorSettings.ODD_ROW_BACKGROUND
+//    };
+//
+//    private static final Settings.ColorSettings[] foregroundSettingPositions = {
+//        Settings.ColorSettings.TEXTSEGMENT_HIGHLIGHT_FOREGROUND,
+//        Settings.ColorSettings.TEXTSEGMENT_DELAYSLOT_HIGHLIGHT_FOREGROUND,
+//        Settings.ColorSettings.DATASEGMENT_HIGHLIGHT_FOREGROUND,
+//        Settings.ColorSettings.REGISTER_HIGHLIGHT_FOREGROUND,
+//        Settings.ColorSettings.EVEN_ROW_FOREGROUND,
+//        Settings.ColorSettings.ODD_ROW_FOREGROUND
+//    };
+//    private static final int[] fontSettingPositions = {
+//        Settings.TEXTSEGMENT_HIGHLIGHT_FONT,
+//        Settings.TEXTSEGMENT_DELAYSLOT_HIGHLIGHT_FONT,
+//        Settings.DATASEGMENT_HIGHLIGHT_FONT,
+//        Settings.REGISTER_HIGHLIGHT_FONT,
+//        Settings.EVEN_ROW_FONT,
+//        Settings.ODD_ROW_FONT
+//    };
 
     JButton[] backgroundButtons;
     JButton[] foregroundButtons;
@@ -133,21 +132,21 @@ final class HighlightingDialog extends JDialog {
     private JPanel buildDialogPanel() {
         JPanel contents = new JPanel(new BorderLayout(20, 20));
         contents.setBorder(new EmptyBorder(10, 10, 10, 10));
-        JPanel patches = new JPanel(new GridLayout(backgroundSettingPositions.length, 4, gridVGap, gridHGap));
-        currentNondefaultBackground = new Color[backgroundSettingPositions.length];
-        currentNondefaultForeground = new Color[backgroundSettingPositions.length];
-        initialSettingsBackground = new Color[backgroundSettingPositions.length];
-        initialSettingsForeground = new Color[backgroundSettingPositions.length];
-        initialFont = new Font[backgroundSettingPositions.length];
-        currentFont = new Font[backgroundSettingPositions.length];
-        currentNondefaultFont = new Font[backgroundSettingPositions.length];
+        JPanel patches = new JPanel(new GridLayout(Settings.ColorSettings.values().length, 4, gridVGap, gridHGap));
+        currentNondefaultBackground = new Color[Settings.ColorSettings.values().length];
+        currentNondefaultForeground = new Color[Settings.ColorSettings.values().length];
+        initialSettingsBackground = new Color[Settings.ColorSettings.values().length];
+        initialSettingsForeground = new Color[Settings.ColorSettings.values().length];
+        initialFont = new Font[Settings.ColorSettings.values().length];
+        currentFont = new Font[Settings.ColorSettings.values().length];
+        currentNondefaultFont = new Font[Settings.ColorSettings.values().length];
 
-        backgroundButtons = new JButton[backgroundSettingPositions.length];
-        foregroundButtons = new JButton[backgroundSettingPositions.length];
-        fontButtons = new JButton[backgroundSettingPositions.length];
-        defaultCheckBoxes = new JCheckBox[backgroundSettingPositions.length];
-        samples = new JLabel[backgroundSettingPositions.length];
-        for (int i = 0; i < backgroundSettingPositions.length; i++) {
+        backgroundButtons = new JButton[Settings.ColorSettings.values().length];
+        foregroundButtons = new JButton[Settings.ColorSettings.values().length];
+        fontButtons = new JButton[Settings.ColorSettings.values().length];
+        defaultCheckBoxes = new JCheckBox[Settings.ColorSettings.values().length];
+        samples = new JLabel[Settings.ColorSettings.values().length];
+        for (int i = 0; i < Settings.ColorSettings.values().length; i++) {
             backgroundButtons[i] = new ColorSelectButton();
             foregroundButtons[i] = new ColorSelectButton();
             fontButtons[i] = new JButton(fontButtonText);
@@ -166,14 +165,14 @@ final class HighlightingDialog extends JDialog {
 
         initializeButtonColors();
 
-        for (int i = 0; i < backgroundSettingPositions.length; i++) {
+        for (int i = 0; i < Settings.ColorSettings.values().length; i++) {
             patches.add(backgroundButtons[i]);
             patches.add(foregroundButtons[i]);
             patches.add(fontButtons[i]);
             patches.add(defaultCheckBoxes[i]);
         }
 
-        JPanel descriptions = new JPanel(new GridLayout(backgroundSettingPositions.length, 1, gridVGap, gridHGap));
+        JPanel descriptions = new JPanel(new GridLayout(Settings.ColorSettings.values().length, 1, gridVGap, gridHGap));
         // Note the labels have to match buttons by position...
         descriptions.add(new JLabel("Text Segment highlighting", SwingConstants.RIGHT));
         descriptions.add(new JLabel("Text Segment Delay Slot highlighting", SwingConstants.RIGHT));
@@ -182,8 +181,8 @@ final class HighlightingDialog extends JDialog {
         descriptions.add(new JLabel("Even row normal", SwingConstants.RIGHT));
         descriptions.add(new JLabel("Odd row normal", SwingConstants.RIGHT));
 
-        JPanel sample = new JPanel(new GridLayout(backgroundSettingPositions.length, 1, gridVGap, gridHGap));
-        for (int i = 0; i < backgroundSettingPositions.length; i++)
+        JPanel sample = new JPanel(new GridLayout(Settings.ColorSettings.values().length, 1, gridVGap, gridHGap));
+        for (int i = 0; i < Settings.ColorSettings.values().length; i++)
             sample.add(samples[i]);
 
         JPanel instructions = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -290,10 +289,10 @@ final class HighlightingDialog extends JDialog {
         LineBorder lineBorder = new LineBorder(Color.BLACK);
         Color backgroundSetting, foregroundSetting;
         Font fontSetting;
-        for (int i = 0; i < backgroundSettingPositions.length; i++) {
-            backgroundSetting = settings.getColorSettingByPosition(backgroundSettingPositions[i]);
-            foregroundSetting = settings.getColorSettingByPosition(foregroundSettingPositions[i]);
-            fontSetting = settings.getFontByPosition(fontSettingPositions[i]);
+        for (int i = 0; i < Settings.ColorSettings.values().length; i++) {
+            backgroundSetting = Settings.ColorSettings.values()[i].getBackground();//settings.getColorSettingByPosition(backgroundSettingPositions[i]);
+            foregroundSetting = Settings.ColorSettings.values()[i].getForeground();//settings.getColorSettingByPosition(foregroundSettingPositions[i]);
+            fontSetting = Settings.FontSettings.values()[i].get();
             backgroundButtons[i].setBackground(backgroundSetting);
             foregroundButtons[i].setBackground(foregroundSetting);
             fontButtons[i].setFont(MonoRightCellRenderer.MONOSPACED_PLAIN_12POINT); //fontSetting);
@@ -309,28 +308,28 @@ final class HighlightingDialog extends JDialog {
             samples[i].setBackground(backgroundSetting);
             samples[i].setForeground(foregroundSetting);
             samples[i].setFont(fontSetting);
-            boolean usingDefaults = backgroundSetting.equals(settings.getDefaultColorSettingByPosition(backgroundSettingPositions[i]))
-                    && foregroundSetting.equals(settings.getDefaultColorSettingByPosition(foregroundSettingPositions[i]))
-                    && fontSetting.equals(settings.getDefaultFontByPosition(fontSettingPositions[i]));
+            boolean usingDefaults = backgroundSetting.equals(Settings.ColorSettings.values()[i].getDefaultBackground()/*settings.getDefaultColorSettingByPosition(backgroundSettingPositions[i])*/)
+                    && foregroundSetting.equals(Settings.ColorSettings.values()[i].getDefaultForeground()/*settings.getDefaultColorSettingByPosition(foregroundSettingPositions[i])*/)
+                    && fontSetting.equals(Settings.FontSettings.values()[i].getDefault());
             defaultCheckBoxes[i].setSelected(usingDefaults);
             backgroundButtons[i].setEnabled(!usingDefaults);
             foregroundButtons[i].setEnabled(!usingDefaults);
             fontButtons[i].setEnabled(!usingDefaults);
         }
-        currentDataHighlightSetting = initialDataHighlightSetting = settings.getDataSegmentHighlighting();
-        currentRegisterHighlightSetting = initialRegisterHighlightSetting = settings.getRegistersHighlighting();
+        currentDataHighlightSetting = initialDataHighlightSetting = Settings.BooleanSettings.DATA_SEGMENT_HIGHLIGHTING.isSet();
+        currentRegisterHighlightSetting = initialRegisterHighlightSetting = Settings.BooleanSettings.REGISTERS_HIGHLIGHTING.isSet();
     }
 
     // Set the color settings according to current button colors.  Occurs when "Apply" selected.
     private void setHighlightingSettings() {
         Settings settings = Main.getSettings();
-        for (int i = 0; i < backgroundSettingPositions.length; i++) {
-            settings.setColorSettingByPosition(backgroundSettingPositions[i], backgroundButtons[i].getBackground());
-            settings.setColorSettingByPosition(foregroundSettingPositions[i], foregroundButtons[i].getBackground());
-            settings.setFontByPosition(fontSettingPositions[i], samples[i].getFont());//fontButtons[i].getFont());			
+        for (int i = 0; i < Settings.ColorSettings.values().length; i++) {
+            Settings.ColorSettings.values()[i].setBackground(backgroundButtons[i].getBackground());
+            Settings.ColorSettings.values()[i].setForeground(foregroundButtons[i].getBackground());
+            Settings.FontSettings.values()[i].set(samples[i].getFont());//fontButtons[i].getFont());			
         }
-        settings.setDataSegmentHighlighting(currentDataHighlightSetting);
-        settings.setRegistersHighlighting(currentRegisterHighlightSetting);
+        Settings.BooleanSettings.DATA_SEGMENT_HIGHLIGHTING.set(currentDataHighlightSetting);
+        Settings.BooleanSettings.REGISTERS_HIGHLIGHTING.set(currentRegisterHighlightSetting);
         ExecutePane executePane = Main.getGUI().executePane;
         Main.getGUI().registersTab.refresh();
         Main.getGUI().coprocessor0Tab.refresh();
@@ -353,7 +352,7 @@ final class HighlightingDialog extends JDialog {
         registerHighlightButton.setText(getHighlightControlText(initialRegisterHighlightSetting));
         Color backgroundSetting, foregroundSetting;
         Font fontSetting;
-        for (int i = 0; i < backgroundSettingPositions.length; i++) {
+        for (int i = 0; i < Settings.ColorSettings.values().length; i++) {
             backgroundSetting = initialSettingsBackground[i];
             foregroundSetting = initialSettingsForeground[i];
             fontSetting = initialFont[i];
@@ -363,9 +362,9 @@ final class HighlightingDialog extends JDialog {
             samples[i].setBackground(backgroundSetting);
             samples[i].setForeground(foregroundSetting);
             samples[i].setFont(fontSetting);
-            boolean usingDefaults = backgroundSetting.equals(settings.getDefaultColorSettingByPosition(backgroundSettingPositions[i]))
-                    && foregroundSetting.equals(settings.getDefaultColorSettingByPosition(foregroundSettingPositions[i]))
-                    && fontSetting.equals(settings.getDefaultFontByPosition(fontSettingPositions[i]));
+            boolean usingDefaults = backgroundSetting.equals(Settings.ColorSettings.values()[i].getDefaultBackground())
+                    && foregroundSetting.equals(Settings.ColorSettings.values()[i].getDefaultForeground())
+                    && fontSetting.equals(Settings.FontSettings.values()[i].getDefault());
             defaultCheckBoxes[i].setSelected(usingDefaults);
             backgroundButtons[i].setEnabled(!usingDefaults);
             foregroundButtons[i].setEnabled(!usingDefaults);
@@ -466,9 +465,9 @@ final class HighlightingDialog extends JDialog {
                 backgroundButtons[position].setEnabled(false);
                 foregroundButtons[position].setEnabled(false);
                 fontButtons[position].setEnabled(false);
-                newBackground = Main.getSettings().getDefaultColorSettingByPosition(backgroundSettingPositions[position]);
-                newForeground = Main.getSettings().getDefaultColorSettingByPosition(foregroundSettingPositions[position]);
-                newFont = Main.getSettings().getDefaultFontByPosition(fontSettingPositions[position]);
+                newBackground = Settings.ColorSettings.values()[position].getDefaultBackground();
+                newForeground = Settings.ColorSettings.values()[position].getDefaultForeground();
+                newFont = Settings.FontSettings.values()[position].getDefault();
                 currentNondefaultBackground[position] = backgroundButtons[position].getBackground();
                 currentNondefaultForeground[position] = foregroundButtons[position].getBackground();
                 currentNondefaultFont[position] = samples[position].getFont();

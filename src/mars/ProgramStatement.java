@@ -721,8 +721,8 @@ public class ProgramStatement {
 
         @Override
         public String toString() {
-            int addressBase = (Main.getSettings().getBool(Settings.DISPLAY_ADDRESSES_IN_HEX)) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
-            int valueBase = (Main.getSettings().getBool(Settings.DISPLAY_VALUES_IN_HEX)) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
+            int addressBase = (Settings.BooleanSettings.DISPLAY_ADDRESSES_IN_HEX.isSet()) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
+            int valueBase = (Settings.BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet()) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
 
             StringBuilder result = new StringBuilder();
             for (ListElement elem : list) switch (elem.type) {

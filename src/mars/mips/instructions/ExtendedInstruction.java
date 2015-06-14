@@ -215,7 +215,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       	// additional changes, so for now I will generate "nop" in either case, then come back to it for the
       	// next major release.
          if (instruction.indexOf("DBNOP")>=0) {
-            return Main.getSettings().getDelayedBranchingEnabled() ? "nop" : "";
+            return Settings.BooleanSettings.DELAYED_BRANCHING.isSet() ? "nop" : "";
          }
       	// substitute first operand token for template's RG1 or OP1, second for RG2 or OP2, etc
          for (int op=1; op<theTokenList.size(); op++) {
@@ -504,7 +504,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                String disabled = instruction.substring(index+5, index+6);
                String enabled  = instruction.substring(index+6, index+7);
                instruction = substitute(instruction,"BROFF"+disabled+enabled,
-                          Main.getSettings().getDelayedBranchingEnabled() ? enabled : disabled );
+                          Settings.BooleanSettings.DELAYED_BRANCHING.isSet() ? enabled : disabled );
             } 
                 catch (IndexOutOfBoundsException iooe) {
                   instruction = substitute(instruction,"BROFF", "BAD_PSEUDO_OP_SPEC");
@@ -628,7 +628,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        // then don't count the nop in the instruction length.   DPS 23-Jan-2008
          int instructionCount = 0;
          for (int i=0; i<translationList.size(); i++) {
-            if (((String)translationList.get(i)).indexOf("DBNOP")>=0 && !Main.getSettings().getDelayedBranchingEnabled()) 
+            if (((String)translationList.get(i)).indexOf("DBNOP")>=0 && !Settings.BooleanSettings.DELAYED_BRANCHING.isSet()) 
                continue;
             instructionCount++;
          }

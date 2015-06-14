@@ -5,6 +5,7 @@
    import mars.util.Binary;
    import mars.mips.hardware.*;
    import java.io.*;
+import mars.Settings;
 /*
 Copyright (c) 2003-2008,  Pete Sanderson and Kenneth Vollmar
 
@@ -82,11 +83,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       
          PrintStream out = new PrintStream(new FileOutputStream(file));
       
-         boolean hexAddresses = Main.getSettings().getDisplayAddressesInHex();
+         boolean hexAddresses = Settings.BooleanSettings.DISPLAY_ADDRESSES_IN_HEX.isSet();
       	
       	// If address in data segment, print in same format as Data Segment Window
          if (Memory.inDataSegment(firstAddress)) {
-            boolean hexValues = Main.getSettings().getDisplayValuesInHex();
+            boolean hexValues = Settings.BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet();
             int offset = 0;
             String string="";
             try {

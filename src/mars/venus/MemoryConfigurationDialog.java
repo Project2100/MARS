@@ -23,6 +23,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import mars.Main;
+import mars.Settings;
 import mars.mips.hardware.MemoryConfiguration;
 import mars.mips.hardware.MemoryConfigurations;
 import mars.simulator.Simulator;
@@ -193,7 +194,8 @@ final class MemoryConfigurationDialog extends JDialog implements ActionListener 
 
     private void performApply() {
         if (MemoryConfigurations.setCurrentConfiguration(this.selectedConfigurationButton.getConfiguration())) {
-            Main.getSettings().setMemoryConfiguration(this.selectedConfigurationButton.getConfiguration().getConfigurationIdentifier());
+            Settings.StringSettings.MEMORY_CONFIGURATION.set(selectedConfigurationButton.getConfiguration().getConfigurationIdentifier());
+//            Main.getSettings().setMemoryConfiguration(this.selectedConfigurationButton.getConfiguration().getConfigurationIdentifier());
             Main.getGUI().registersTab.clearHighlighting();
             Main.getGUI().registersTab.updateRegisters();
             Main.getGUI().executePane.getDataSegmentWindow().updateBaseAddressComboBox();

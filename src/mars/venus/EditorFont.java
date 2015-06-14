@@ -1,9 +1,9 @@
-package mars.util;
+package mars.venus;
 
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.util.Arrays;
-import mars.Main;
+import mars.Settings;
 
 /*
  Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -39,7 +39,7 @@ import mars.Main;
  * @author Pete Sanderson
  * @version July 2007
  */
-public class EditorFont {
+class EditorFont {
 
     // Note: These are parallel arrays so corresponding elements must match up.
     private static final String[] styleStrings = {"Plain", "Bold", "Italic", "Bold + Italic"};
@@ -185,7 +185,7 @@ public class EditorFont {
     private static final String SPACES = "                                                  ";
 
     public static String substituteSpacesForTabs(String string) {
-        return substituteSpacesForTabs(string, Main.getSettings().getEditorTabSize());
+        return substituteSpacesForTabs(string, Settings.IntegerSettings.EDITOR_TAB_SIZE.get());
     }
 
     /**

@@ -179,16 +179,16 @@ class GuiAction extends AbstractAction {
     }
 
     void toggleWarningsAreErrors(ActionEvent e) {
-        Main.getSettings().setBool(Settings.WARNINGS_ARE_ERRORS, ((JCheckBoxMenuItem) e.getSource()).isSelected());
+        Settings.BooleanSettings.WARNINGS_ARE_ERRORS.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void togglePopupInput(ActionEvent e) {
-        Main.getSettings().setBool(Settings.POPUP_SYSCALL_INPUT, ((JCheckBoxMenuItem) e.getSource()).isSelected());
+        Settings.BooleanSettings.POPUP_SYSCALL_INPUT.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleProgramArguments(ActionEvent e) {
         boolean selected = ((JCheckBoxMenuItem) e.getSource()).isSelected();
-        Main.getSettings().setBool(Settings.PROGRAM_ARGUMENTS, selected);
+        Settings.BooleanSettings.PROGRAM_ARGUMENTS.set(selected);
         if (selected)
             Main.getGUI().executePane.getTextSegmentWindow().addProgramArgumentsPanel();
         else
@@ -196,11 +196,11 @@ class GuiAction extends AbstractAction {
     }
 
     void toggleSelfModifyingCode(ActionEvent e) {
-        Main.getSettings().setBool(Settings.SELF_MODIFYING_CODE_ENABLED, ((JCheckBoxMenuItem) e.getSource()).isSelected());
+        Settings.BooleanSettings.SELF_MODIFYING_CODE.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleExtendedInstructionSet(ActionEvent e) {
-        Main.getSettings().setBool(Settings.EXTENDED_ASSEMBLER_ENABLED, ((JCheckBoxMenuItem) e.getSource()).isSelected());
+        Settings.BooleanSettings.EXTENDED_ASSEMBLER.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     /**
@@ -210,15 +210,15 @@ class GuiAction extends AbstractAction {
     void toggleLabelWindow(ActionEvent e) {
         boolean visibility = ((JCheckBoxMenuItem) e.getSource()).isSelected();
         Main.getGUI().executePane.labelValues.setVisible(visibility);
-        Main.getSettings().setBool(Settings.LABEL_WINDOW_VISIBILITY, visibility);
+        Settings.BooleanSettings.LABEL_WINDOW_VISIBILITY.set(visibility);
     }
 
     void toggleStartAtMain(ActionEvent e) {
-        Main.getSettings().setBool(Settings.START_AT_MAIN, ((JCheckBoxMenuItem) e.getSource()).isSelected());
+        Settings.BooleanSettings.START_AT_MAIN.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleDelayedBranching(ActionEvent e) {
-        Main.getSettings().setBool(Settings.DELAYED_BRANCHING_ENABLED,
+        Settings.BooleanSettings.DELAYED_BRANCHING.set(
                 ((JCheckBoxMenuItem) e.getSource()).isSelected());
         // 25 June 2007 Re-assemble if the situation demands it to maintain consistency.
         if (Main.getGUI().executePane.isShowing()) {
@@ -231,23 +231,23 @@ class GuiAction extends AbstractAction {
     }
 
     void toggleAssembleOnOpen(ActionEvent e) {
-        Main.getSettings().setBool(Settings.ASSEMBLE_ON_OPEN_ENABLED, ((JCheckBoxMenuItem) e.getSource()).isSelected());
+        Settings.BooleanSettings.ASSEMBLE_ON_OPEN.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleAssembleAll(ActionEvent e) {
-        Main.getSettings().setBool(Settings.ASSEMBLE_ALL_ENABLED, ((JCheckBoxMenuItem) e.getSource()).isSelected());
+        Settings.BooleanSettings.ASSEMBLE_ALL.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleValueDisplayBase(ActionEvent e) {
         boolean isHex = ((JCheckBoxMenuItem) e.getSource()).isSelected();
         Main.getGUI().executePane.getValueDisplayBaseChooser().setSelected(isHex);
-        Main.getSettings().setBool(Settings.DISPLAY_VALUES_IN_HEX, isHex);
+        Settings.BooleanSettings.DISPLAY_VALUES_IN_HEX.set(isHex);
     }
 
     void toggleAddressDisplayBase(ActionEvent e) {
         boolean isHex = ((JCheckBoxMenuItem) e.getSource()).isSelected();
         Main.getGUI().executePane.getAddressDisplayBaseChooser().setSelected(isHex);
-        Main.getSettings().setBool(Settings.DISPLAY_ADDRESSES_IN_HEX, isHex);
+        Settings.BooleanSettings.DISPLAY_ADDRESSES_IN_HEX.set(isHex);
     }
 
     void editorSettings(ActionEvent event) {

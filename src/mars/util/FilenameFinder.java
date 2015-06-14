@@ -176,7 +176,7 @@ public class FilenameFinder {
      * as separator but do NOT include starting or ending "/" (e.g. mars/tools)
      * @param fileExtensions ArrayList of Strings containing file extensions.
      * Only files with an extension in this list will be added to the list. Do
-     * NOT include the ".", eg "class" not ".class". If Arraylist or extension
+     * NOT include the ".", e.g. "class" not ".class". If ArrayList or extension
      * null or empty, all files are added.
      * @return array list of matching file names as Strings. If none, list is
      * empty.
@@ -226,13 +226,13 @@ public class FilenameFinder {
     /**
      * Locate files and return list of file names. Given a known directory path,
      * it will locate it and build list of all names of files in that directory
-     * having the given file extension. If file extenion is null or empty, all
+     * having the given file extension. If file extension is null or empty, all
      * filenames are returned. Returned list contains absolute filename paths.
      *
      * @param directoryPath Search will be confined to this directory.
      * @param fileExtensions ArrayList of Strings containing file extensions.
      * Only files with an extension in this list will be added to the list. Do
-     * NOT include the "." in extensions. If Arraylist or extension null or
+     * NOT include the "." in extensions. If ArrayList or extension null or
      * empty, all files are added.
      * @return array list of matching file names (absolute path). If none, list
      * is empty.

@@ -52,6 +52,7 @@
    /**
     * Returns a new TextAreaDefaults object with the default values filled
     * in.
+     * @return 
     */
        public static TextAreaDefaults getDefaults()
       {
@@ -63,9 +64,9 @@
       
          DEFAULTS.blockCaret = false;
          DEFAULTS.caretVisible = true;
-         DEFAULTS.caretBlinks = (mars.Main.getSettings().getCaretBlinkRate() != 0);
-         DEFAULTS.caretBlinkRate = mars.Main.getSettings().getCaretBlinkRate();
-         DEFAULTS.tabSize = mars.Main.getSettings().getEditorTabSize();
+         DEFAULTS.caretBlinks = (Settings.IntegerSettings.CARET_BLINK_RATE.get() != 0);
+         DEFAULTS.caretBlinkRate = Settings.IntegerSettings.CARET_BLINK_RATE.get();
+         DEFAULTS.tabSize = Settings.IntegerSettings.EDITOR_TAB_SIZE.get();
          DEFAULTS.electricScroll = 0;// was 3.  Will begin scrolling when cursor is this many lines from the edge.
       
          DEFAULTS.cols = 80;
@@ -74,7 +75,7 @@
          DEFAULTS.caretColor = Color.black; // Color.red;
          DEFAULTS.selectionColor = new Color(0xccccff);
          DEFAULTS.lineHighlightColor = new Color(0xeeeeee);//0xe0e0e0);
-         DEFAULTS.lineHighlight = mars.Main.getSettings().getBool(Settings.EDITOR_CURRENT_LINE_HIGHLIGHTING);
+         DEFAULTS.lineHighlight = Settings.BooleanSettings.EDITOR_CURRENT_LINE_HIGHLIGHTING.isSet();
          DEFAULTS.bracketHighlightColor = Color.black;
          DEFAULTS.bracketHighlight = false; // assembly language doesn't need this.
          DEFAULTS.eolMarkerColor = new Color(0x009999);

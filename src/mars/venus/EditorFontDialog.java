@@ -36,33 +36,32 @@ import mars.venus.editors.jeditsyntax.SyntaxUtilities;
 import mars.venus.editors.jeditsyntax.tokenmarker.MIPSTokenMarker;
 
 /*
-Copyright (c) 2003-2010,  Pete Sanderson and Kenneth Vollmar
+ Copyright (c) 2003-2010,  Pete Sanderson and Kenneth Vollmar
 
-Developed by Pete Sanderson (psanderson@otterbein.edu)
-and Kenneth Vollmar (kenvollmar@missouristate.edu)
+ Developed by Pete Sanderson (psanderson@otterbein.edu)
+ and Kenneth Vollmar (kenvollmar@missouristate.edu)
 
-Permission is hereby granted, free of charge, to any person obtaining 
-a copy of this software and associated documentation files (the 
-"Software"), to deal in the Software without restriction, including 
-without limitation the rights to use, copy, modify, merge, publish, 
-distribute, sublicense, and/or sell copies of the Software, and to 
-permit persons to whom the Software is furnished to do so, subject 
-to the following conditions:
+ Permission is hereby granted, free of charge, to any person obtaining 
+ a copy of this software and associated documentation files (the 
+ "Software"), to deal in the Software without restriction, including 
+ without limitation the rights to use, copy, modify, merge, publish, 
+ distribute, sublicense, and/or sell copies of the Software, and to 
+ permit persons to whom the Software is furnished to do so, subject 
+ to the following conditions:
 
-The above copyright notice and this permission notice shall be 
-included in all copies or substantial portions of the Software.
+ The above copyright notice and this permission notice shall be 
+ included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
-ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
-CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
+ ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+ CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-(MIT license, http://www.opensource.org/licenses/mit-license.html)
+ (MIT license, http://www.opensource.org/licenses/mit-license.html)
  */
-
 final class EditorFontDialog extends AbstractFontSettingDialog {
 
     private static final int gridVGap = 2;
@@ -118,8 +117,8 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
     private boolean initialLineHighlighting, initialGenericTextEditor, initialAutoIndent;
 
     public EditorFontDialog() {
-        super(Main.getGUI().mainFrame, "Text Editor Settings", true, Main.getSettings().getEditorFont());
-        if (Main.getSettings().getBool(Settings.GENERIC_TEXT_EDITOR)) {
+        super(Main.getGUI().mainFrame, "Text Editor Settings", true, Settings.FontSettings.EDITOR_FONT.get());
+        if (Settings.BooleanSettings.GENERIC_TEXT_EDITOR.isSet()) {
             syntaxStylePanel.setVisible(false);
             otherSettingsPanel.setVisible(false);
         }
@@ -145,6 +144,7 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
     }
 
     // Row of control buttons to be placed along the button of the dialog
+    @Override
     protected Component buildControlPanel() {
         Box controlPanel = Box.createHorizontalBox();
         JButton okButton = new JButton("Apply and Close");
@@ -168,7 +168,7 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
         resetButton.addActionListener((ActionEvent e) -> {
             reset();
         });
-        initialGenericTextEditor = Main.getSettings().getBool(Settings.GENERIC_TEXT_EDITOR);
+        initialGenericTextEditor = Settings.BooleanSettings.GENERIC_TEXT_EDITOR.isSet();
         genericEditorCheck = new JCheckBox("Use Generic Editor", initialGenericTextEditor);
         genericEditorCheck.setToolTipText(GENERIC_TOOL_TIP_TEXT);
         genericEditorCheck.addItemListener((ItemEvent e) -> {
@@ -200,11 +200,13 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
     // abstract in superclass.
     @Override
     protected void apply(Font font) {
-        Main.getSettings().setBool(Settings.GENERIC_TEXT_EDITOR, genericEditorCheck.isSelected());
-        Main.getSettings().setBool(Settings.EDITOR_CURRENT_LINE_HIGHLIGHTING, lineHighlightCheck.isSelected());
-        Main.getSettings().setBool(Settings.AUTO_INDENT, autoIndentCheck.isSelected());
-        Main.getSettings().setCaretBlinkRate(((Integer) blinkRateSpinSelector.getValue()).intValue());
-        Main.getSettings().setEditorTabSize(tabSizeSelector.getValue());
+        Settings.BooleanSettings.GENERIC_TEXT_EDITOR.set(genericEditorCheck.isSelected());
+        Settings.BooleanSettings.EDITOR_CURRENT_LINE_HIGHLIGHTING.set(lineHighlightCheck.isSelected());
+        Settings.BooleanSettings.AUTO_INDENT.set(autoIndentCheck.isSelected());
+        Settings.IntegerSettings.CARET_BLINK_RATE.set((Integer) blinkRateSpinSelector.getValue());
+//        Main.getSettings().setCaretBlinkRate(((Integer) blinkRateSpinSelector.getValue()).intValue());
+        Settings.IntegerSettings.EDITOR_TAB_SIZE.set(tabSizeSelector.getValue());
+//        Main.getSettings().setEditorTabSize(tabSizeSelector.getValue());
         if (syntaxStylesAction) {
             for (int i = 0; i < syntaxStyleIndex.length; i++)
                 Main.getSettings().setEditorSyntaxStyleByPosition(syntaxStyleIndex[i],
@@ -212,14 +214,15 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
                                 italic[i].isSelected(), bold[i].isSelected()));
             syntaxStylesAction = false; // reset
         }
-        Main.getSettings().setEditorFont(font);
+        Settings.FontSettings.EDITOR_FONT.set(font);
         for (int i = 0; i < popupGuidanceOptions.length; i++)
             if (popupGuidanceOptions[i].isSelected()) {
                 if (i == 0)
-                    Main.getSettings().setBool(Settings.POPUP_INSTRUCTION_GUIDANCE, false);
+                    Settings.BooleanSettings.POPUP_INSTRUCTION_GUIDANCE.set(false);
                 else {
-                    Main.getSettings().setBool(Settings.POPUP_INSTRUCTION_GUIDANCE, true);
-                    Main.getSettings().setEditorPopupPrefixLength(i);
+                    Settings.BooleanSettings.POPUP_INSTRUCTION_GUIDANCE.set(true);
+                    Settings.IntegerSettings.EDITOR_POPUP_PREFIX_LENGTH.set(i);
+//                    Main.getSettings().setEditorPopupPrefixLength(i);
                 }
                 break;
             }
@@ -251,11 +254,11 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
         JPanel otherSettingsPanel = new JPanel();
 
         // Tab size selector
-        initialEditorTabSize = Main.getSettings().getEditorTabSize();
+        initialEditorTabSize = Settings.IntegerSettings.EDITOR_TAB_SIZE.get();
         tabSizeSelector = new JSlider(MIN_TAB_SIZE, MAX_TAB_SIZE, initialEditorTabSize);
         tabSizeSelector.setToolTipText("Use slider to select tab size from " + MIN_TAB_SIZE + " to " + MAX_TAB_SIZE + ".");
         tabSizeSelector.addChangeListener((ChangeEvent e) -> {
-            Integer value = new Integer(((JSlider) e.getSource()).getValue());
+            Integer value = ((JSlider) e.getSource()).getValue();
             tabSizeSpinSelector.setValue(value);
         });
         SpinnerNumberModel tabSizeSpinnerModel = new SpinnerNumberModel(initialEditorTabSize, MIN_TAB_SIZE, MAX_TAB_SIZE, 1);
@@ -263,23 +266,23 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
         tabSizeSpinSelector.setToolTipText(TAB_SIZE_TOOL_TIP_TEXT);
         tabSizeSpinSelector.addChangeListener((ChangeEvent e) -> {
             Object value = ((JSpinner) e.getSource()).getValue();
-            tabSizeSelector.setValue(((Integer) value).intValue());
+            tabSizeSelector.setValue(((Integer) value));
         });
 
         // highlighting of current line
-        initialLineHighlighting = Main.getSettings().getBool(Settings.EDITOR_CURRENT_LINE_HIGHLIGHTING);
+        initialLineHighlighting = Settings.BooleanSettings.EDITOR_CURRENT_LINE_HIGHLIGHTING.isSet();
         lineHighlightCheck = new JCheckBox("Highlight the line currently being edited");
         lineHighlightCheck.setSelected(initialLineHighlighting);
         lineHighlightCheck.setToolTipText(CURRENT_LINE_HIGHLIGHT_TOOL_TIP_TEXT);
 
         // auto-indent 
-        initialAutoIndent = Main.getSettings().getBool(Settings.AUTO_INDENT);
+        initialAutoIndent = Settings.BooleanSettings.AUTO_INDENT.isSet();
         autoIndentCheck = new JCheckBox("Auto-Indent");
         autoIndentCheck.setSelected(initialAutoIndent);
         autoIndentCheck.setToolTipText(AUTO_INDENT_TOOL_TIP_TEXT);
 
         // cursor blink rate selector
-        initialCaretBlinkRate = Main.getSettings().getCaretBlinkRate();
+        initialCaretBlinkRate = Settings.IntegerSettings.CARET_BLINK_RATE.get();
         blinkSample = new JTextField("     ");
         blinkSample.setCaretPosition(2);
         blinkSample.setToolTipText(BLINK_SAMPLE_TOOL_TIP_TEXT);
@@ -326,8 +329,8 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
             popupGuidanceOptions[i].setToolTipText(POPUP_GUIDANCE_TOOL_TIP_TEXT[i]);
             popupGuidanceButtons.add(popupGuidanceOptions[i]);
         }
-        initialPopupGuidance = Main.getSettings().getBool(Settings.POPUP_INSTRUCTION_GUIDANCE)
-                ? Main.getSettings().getEditorPopupPrefixLength()
+        initialPopupGuidance = Settings.BooleanSettings.POPUP_INSTRUCTION_GUIDANCE.isSet()
+                ? Settings.IntegerSettings.EDITOR_POPUP_PREFIX_LENGTH.get()
                 : 0;
         popupGuidanceOptions[initialPopupGuidance].setSelected(true);
         JPanel popupPanel = new JPanel(new GridLayout(3, 1));
@@ -351,9 +354,7 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
         syntaxStylesAction = false;
         int count = 0;
         // Count the number of actual styles specified
-        for (int i = 0; i < labels.length; i++)
-            if (labels[i] != null)
-                count++;
+        for (String label : labels) if (label != null) count++;
         // create new arrays (no gaps) for grid display, refer to original index
         syntaxStyleIndex = new int[count];
         currentStyles = new SyntaxStyle[count];

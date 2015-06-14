@@ -553,33 +553,36 @@ public final class VenusUI {
         run.add(runToggleBreakpoints);
 
         settingsLabel = new JCheckBoxMenuItem(settingsLabelAction);
-        settingsLabel.setSelected(Main.getSettings().getLabelWindowVisibility());
+        settingsLabel.setSelected(Settings.BooleanSettings.LABEL_WINDOW_VISIBILITY.isSet());
+//        settingsLabel.setSelected(Main.getSettings().getLabelWindowVisibility());
         settingsPopupInput = new JCheckBoxMenuItem(settingsPopupInputAction);
-        settingsPopupInput.setSelected(Main.getSettings().getBool(Settings.POPUP_SYSCALL_INPUT));
+        settingsPopupInput.setSelected(Settings.BooleanSettings.POPUP_SYSCALL_INPUT.isSet());
+//        settingsPopupInput.setSelected(Main.getSettings().getBool(Settings.POPUP_SYSCALL_INPUT));
         settingsValueDisplayBase = new JCheckBoxMenuItem(settingsValueDisplayBaseAction);
-        settingsValueDisplayBase.setSelected(Main.getSettings().getDisplayValuesInHex());//mainPane.getExecutePane().getValueDisplayBaseChooser().isSelected());
+        settingsValueDisplayBase.setSelected(Settings.BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet());
+//        settingsValueDisplayBase.setSelected(Main.getSettings().getDisplayValuesInHex());//mainPane.getExecutePane().getValueDisplayBaseChooser().isSelected());
         // Tell the corresponding JCheckBox in the Execute Pane about me -- it has already been created.
         executePane.getValueDisplayBaseChooser().setSettingsMenuItem(settingsValueDisplayBase);
         settingsAddressDisplayBase = new JCheckBoxMenuItem(settingsAddressDisplayBaseAction);
-        settingsAddressDisplayBase.setSelected(Main.getSettings().getDisplayAddressesInHex());//mainPane.getExecutePane().getValueDisplayBaseChooser().isSelected());
+        settingsAddressDisplayBase.setSelected(Settings.BooleanSettings.DISPLAY_ADDRESSES_IN_HEX.isSet());//mainPane.getExecutePane().getValueDisplayBaseChooser().isSelected());
         // Tell the corresponding JCheckBox in the Execute Pane about me -- it has already been created.
         executePane.getAddressDisplayBaseChooser().setSettingsMenuItem(settingsAddressDisplayBase);
         settingsExtended = new JCheckBoxMenuItem(settingsExtendedAction);
-        settingsExtended.setSelected(Main.getSettings().getExtendedAssemblerEnabled());
+        settingsExtended.setSelected(Settings.BooleanSettings.EXTENDED_ASSEMBLER.isSet());
         settingsDelayedBranching = new JCheckBoxMenuItem(settingsDelayedBranchingAction);
-        settingsDelayedBranching.setSelected(Main.getSettings().getDelayedBranchingEnabled());
+        settingsDelayedBranching.setSelected(Settings.BooleanSettings.DELAYED_BRANCHING.isSet());
         settingsSelfModifyingCode = new JCheckBoxMenuItem(settingsSelfModifyingCodeAction);
-        settingsSelfModifyingCode.setSelected(Main.getSettings().getBool(Settings.SELF_MODIFYING_CODE_ENABLED));
+        settingsSelfModifyingCode.setSelected(Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet());
         settingsAssembleOnOpen = new JCheckBoxMenuItem(settingsAssembleOnOpenAction);
-        settingsAssembleOnOpen.setSelected(Main.getSettings().getAssembleOnOpenEnabled());
+        settingsAssembleOnOpen.setSelected(Settings.BooleanSettings.ASSEMBLE_ON_OPEN.isSet());
         settingsAssembleAll = new JCheckBoxMenuItem(settingsAssembleAllAction);
-        settingsAssembleAll.setSelected(Main.getSettings().getAssembleAllEnabled());
+        settingsAssembleAll.setSelected(Settings.BooleanSettings.ASSEMBLE_ALL.isSet());
         settingsWarningsAreErrors = new JCheckBoxMenuItem(settingsWarningsAreErrorsAction);
-        settingsWarningsAreErrors.setSelected(Main.getSettings().getWarningsAreErrors());
+        settingsWarningsAreErrors.setSelected(Settings.BooleanSettings.WARNINGS_ARE_ERRORS.isSet());
         settingsStartAtMain = new JCheckBoxMenuItem(settingsStartAtMainAction);
-        settingsStartAtMain.setSelected(Main.getSettings().getStartAtMain());
+        settingsStartAtMain.setSelected(Settings.BooleanSettings.START_AT_MAIN.isSet());
         settingsProgramArguments = new JCheckBoxMenuItem(settingsProgramArgumentsAction);
-        settingsProgramArguments.setSelected(Main.getSettings().getProgramArguments());
+        settingsProgramArguments.setSelected(Settings.BooleanSettings.PROGRAM_ARGUMENTS.isSet());
         settingsEditor = new JMenuItem(settingsEditorAction);
         settingsHighlighting = new JMenuItem(settingsHighlightingAction);
         settingsExceptionHandler = new JMenuItem(settingsExceptionHandlerAction);
@@ -829,7 +832,7 @@ public final class VenusUI {
         settingsMemoryConfigurationAction.setEnabled(true);
         // If assemble-all, allow previous Run menu settings to remain.
         // Otherwise, clear them out.  DPS 9-Aug-2011
-        if (!Main.getSettings().getBool(mars.Settings.ASSEMBLE_ALL_ENABLED))
+        if (!Settings.BooleanSettings.ASSEMBLE_ALL.isSet())
             disableRunMenu();
     }
 
@@ -872,7 +875,7 @@ public final class VenusUI {
         runGoAction.setEnabled(true);
         runStepAction.setEnabled(true);
         runBackstepAction.setEnabled(
-                Main.getSettings().getBackSteppingEnabled() && !Main.program.getBackStepper().empty()
+                Main.isBackSteppingEnabled() && !Main.program.getBackStepper().empty()
         );
         runResetAction.setEnabled(true);
         runStopAction.setEnabled(false);
@@ -930,7 +933,7 @@ public final class VenusUI {
         runGoAction.setEnabled(false);
         runStepAction.setEnabled(false);
         runBackstepAction.setEnabled(
-                Main.getSettings().getBackSteppingEnabled() && !Main.program.getBackStepper().empty()
+                Main.isBackSteppingEnabled() && !Main.program.getBackStepper().empty()
         );
         runResetAction.setEnabled(true);
         runStopAction.setEnabled(false);
@@ -1077,7 +1080,7 @@ public final class VenusUI {
     /**
      * To setStatusMenu whether the register values are reset.
      *
-     * @param b Boolean true if the register values have been reset.
+     * @param b BooleanSettings true if the register values have been reset.
      *
      */
     public static void setReset(boolean b) {
@@ -1097,7 +1100,7 @@ public final class VenusUI {
     /**
      * To find out whether the register values are reset.
      *
-     * @return Boolean true if the register values have been reset.
+     * @return BooleanSettings true if the register values have been reset.
      *
      */
     public static boolean getReset() {

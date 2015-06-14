@@ -3263,7 +3263,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 // the bottom (currently line 194, heavily commented).
    	 
        private void processBranch(int displacement) {
-         if (Main.getSettings().getDelayedBranchingEnabled()) {
+         if (Settings.BooleanSettings.DELAYED_BRANCHING.isSet()) {
             // Register the branch target address (absolute byte address).
             DelayedBranch.register(RegisterFile.getProgramCounter() + (displacement << 2));
          } 
@@ -3286,7 +3286,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 */
    	 
        private void processJump(int targetAddress) {
-         if (Main.getSettings().getDelayedBranchingEnabled()) {
+         if (Settings.BooleanSettings.DELAYED_BRANCHING.isSet()) {
             DelayedBranch.register(targetAddress);
          } 
          else {
@@ -3308,7 +3308,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	 
        private void processReturnAddress(int register) {
          RegisterFile.updateRegister(register, RegisterFile.getProgramCounter() +
-                 ((Main.getSettings().getDelayedBranchingEnabled()) ? 
+                 (Settings.BooleanSettings.DELAYED_BRANCHING.isSet() ? 
             	  Instruction.INSTRUCTION_LENGTH : 0) );	 
       }
 

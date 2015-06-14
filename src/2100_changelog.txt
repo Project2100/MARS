@@ -1,3 +1,9 @@
+####1.7
+
+GENERAL:
+! Refactored Settings class
+! Moved EditorFont class
+
 ####1.6
 
 GENERAL:

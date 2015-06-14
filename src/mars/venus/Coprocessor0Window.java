@@ -67,7 +67,6 @@ public class Coprocessor0Window extends JPanel implements Observer {
     private Object[][] tableData;
     private boolean highlighting;
     private int highlightRow;
-    private ExecutePane executePane;
     private int[] rowGivenRegNumber; // translate register number to table row.
     private static final int NAME_COLUMN = 0;
     private static final int NUMBER_COLUMN = 1;
@@ -110,7 +109,7 @@ public class Coprocessor0Window extends JPanel implements Observer {
             rowGivenRegNumber[registers[i].getNumber()] = i;
             tableData[i][0] = registers[i].getName();
             tableData[i][1] = new Integer(registers[i].getNumber());
-            tableData[i][2] = NumberDisplayBaseChooser.formatNumber(registers[i].getValue(), NumberDisplayBaseChooser.getBase(settings.getDisplayValuesInHex()));
+            tableData[i][2] = NumberDisplayBaseChooser.formatNumber(registers[i].getValue(), NumberDisplayBaseChooser.getBase(Settings.BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet()));
         }
         return tableData;
     }
@@ -251,20 +250,20 @@ public class Coprocessor0Window extends JPanel implements Observer {
                     isSelected, hasFocus, row, column);
             cell.setFont(font);
             cell.setHorizontalAlignment(alignment);
-            if (settings.getRegistersHighlighting() && highlighting && row == highlightRow) {
-                cell.setBackground(settings.getColorSettingByPosition(Settings.REGISTER_HIGHLIGHT_BACKGROUND));
-                cell.setForeground(settings.getColorSettingByPosition(Settings.REGISTER_HIGHLIGHT_FOREGROUND));
-                cell.setFont(settings.getFontByPosition(Settings.REGISTER_HIGHLIGHT_FONT));
+            if (Settings.BooleanSettings.REGISTERS_HIGHLIGHTING.isSet() && highlighting && row == highlightRow) {
+                cell.setBackground(Settings.ColorSettings.REGISTER_HIGHLIGHT.getBackground());
+                cell.setForeground(Settings.ColorSettings.REGISTER_HIGHLIGHT.getForeground());
+                cell.setFont(Settings.FontSettings.REGISTER_HIGHLIGHT_FONT.get());
             }
             else if (row % 2 == 0) {
-                cell.setBackground(settings.getColorSettingByPosition(Settings.EVEN_ROW_BACKGROUND));
-                cell.setForeground(settings.getColorSettingByPosition(Settings.EVEN_ROW_FOREGROUND));
-                cell.setFont(settings.getFontByPosition(Settings.EVEN_ROW_FONT));
+                cell.setBackground(Settings.ColorSettings.EVEN_ROW.getBackground());
+                cell.setForeground(Settings.ColorSettings.EVEN_ROW.getForeground());
+                cell.setFont(Settings.FontSettings.EVEN_ROW_FONT.get());
             }
             else {
-                cell.setBackground(settings.getColorSettingByPosition(Settings.ODD_ROW_BACKGROUND));
-                cell.setForeground(settings.getColorSettingByPosition(Settings.ODD_ROW_FOREGROUND));
-                cell.setFont(settings.getFontByPosition(Settings.ODD_ROW_FONT));
+                cell.setBackground(Settings.ColorSettings.ODD_ROW.getBackground());
+                cell.setForeground(Settings.ColorSettings.ODD_ROW.getForeground());
+                cell.setFont(Settings.FontSettings.ODD_ROW_FONT.get());
             }
             return cell;
         }

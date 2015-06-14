@@ -113,7 +113,7 @@ public class Coprocessor1Window extends JPanel implements ActionListener, Observ
         // "responsive" to user clicking on it (it is responsive anyway but looks
         // dead when drawn in gray.
         //Object saveBG = UIManager.getColor("CheckBox.interiorBackground");
-        //UIManager.put("CheckBox.interiorBackground", Color.WHITE);
+        //UIManager.put("CheckBox.interiorBackground", ColorSettings.WHITE);
         for (int i = 0; i < numFlags; i++) {
             conditionFlagCheckBox[i] = new JCheckBox(Integer.toString(i));
             conditionFlagCheckBox[i].addActionListener(this);
@@ -158,7 +158,7 @@ public class Coprocessor1Window extends JPanel implements ActionListener, Observ
         tableData = new Object[registers.length][3];
         for (int i = 0; i < registers.length; i++) {
             tableData[i][0] = registers[i].getName();
-            tableData[i][1] = NumberDisplayBaseChooser.formatFloatNumber(registers[i].getValue(), NumberDisplayBaseChooser.getBase(settings.getDisplayValuesInHex()));//formatNumber(floatValue,NumberDisplayBaseChooser.getBase(settings.getDisplayValuesInHex()));
+            tableData[i][1] = NumberDisplayBaseChooser.formatFloatNumber(registers[i].getValue(), NumberDisplayBaseChooser.getBase(Settings.BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet()));//formatNumber(floatValue,NumberDisplayBaseChooser.getBase(settings.getDisplayValuesInHex()));
             if (i % 2 == 0) { // even numbered double registers
                 long longValue = 0;
                 try {
@@ -166,7 +166,7 @@ public class Coprocessor1Window extends JPanel implements ActionListener, Observ
                 }
                 catch (InvalidRegisterAccessException e) {
                 } // cannot happen since i must be even
-                tableData[i][2] = NumberDisplayBaseChooser.formatDoubleNumber(longValue, NumberDisplayBaseChooser.getBase(settings.getDisplayValuesInHex()));
+                tableData[i][2] = NumberDisplayBaseChooser.formatDoubleNumber(longValue, NumberDisplayBaseChooser.getBase(Settings.BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet()));
             }
             else
                 tableData[i][2] = "";
@@ -353,20 +353,20 @@ public class Coprocessor1Window extends JPanel implements ActionListener, Observ
                     isSelected, hasFocus, row, column);
             cell.setFont(font);
             cell.setHorizontalAlignment(alignment);
-            if (settings.getRegistersHighlighting() && highlighting && row == highlightRow) {
-                cell.setBackground(settings.getColorSettingByPosition(Settings.REGISTER_HIGHLIGHT_BACKGROUND));
-                cell.setForeground(settings.getColorSettingByPosition(Settings.REGISTER_HIGHLIGHT_FOREGROUND));
-                cell.setFont(settings.getFontByPosition(Settings.REGISTER_HIGHLIGHT_FONT));
+            if (Settings.BooleanSettings.REGISTERS_HIGHLIGHTING.isSet() && highlighting && row == highlightRow) {
+                cell.setBackground(Settings.ColorSettings.REGISTER_HIGHLIGHT.getBackground());
+                cell.setForeground(Settings.ColorSettings.REGISTER_HIGHLIGHT.getForeground());
+                cell.setFont(Settings.FontSettings.REGISTER_HIGHLIGHT_FONT.get());
             }
             else if (row % 2 == 0) {
-                cell.setBackground(settings.getColorSettingByPosition(Settings.EVEN_ROW_BACKGROUND));
-                cell.setForeground(settings.getColorSettingByPosition(Settings.EVEN_ROW_FOREGROUND));
-                cell.setFont(settings.getFontByPosition(Settings.EVEN_ROW_FONT));
+                cell.setBackground(Settings.ColorSettings.EVEN_ROW.getBackground());
+                cell.setForeground(Settings.ColorSettings.EVEN_ROW.getForeground());
+                cell.setFont(Settings.FontSettings.EVEN_ROW_FONT.get());
             }
             else {
-                cell.setBackground(settings.getColorSettingByPosition(Settings.ODD_ROW_BACKGROUND));
-                cell.setForeground(settings.getColorSettingByPosition(Settings.ODD_ROW_FOREGROUND));
-                cell.setFont(settings.getFontByPosition(Settings.ODD_ROW_FONT));
+                cell.setBackground(Settings.ColorSettings.ODD_ROW.getBackground());
+                cell.setForeground(Settings.ColorSettings.ODD_ROW.getForeground());
+                cell.setFont(Settings.FontSettings.ODD_ROW_FONT.get());
             }
             return cell;
         }

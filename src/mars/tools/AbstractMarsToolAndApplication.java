@@ -696,10 +696,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
            // boolean warningsAreErrors = false;           // Ditto.
            
             String exceptionHandler = null;
-            if (Main.getSettings().getExceptionHandlerEnabled() &&
-                   Main.getSettings().getExceptionHandler() != null &&
-                   Main.getSettings().getExceptionHandler().length() > 0) {
-               exceptionHandler = Main.getSettings().getExceptionHandler();
+            if (Settings.BooleanSettings.EXCEPTION_HANDLER.isSet() &&
+                   Settings.StringSettings.EXCEPTION_HANDLER_FILE.get() != null &&
+                   Settings.StringSettings.EXCEPTION_HANDLER_FILE.get().length() > 0) {
+               exceptionHandler = Settings.StringSettings.EXCEPTION_HANDLER_FILE.get();
             }
            
             Thread.currentThread().setPriority(Thread.NORM_PRIORITY-1);
@@ -727,7 +727,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                } 
          
             try {
-               program.assemble(programsToAssemble, Main.getSettings().getExtendedAssemblerEnabled(), Main.getSettings().getWarningsAreErrors());
+               program.assemble(programsToAssemble, Settings.BooleanSettings.EXTENDED_ASSEMBLER.isSet(), Settings.BooleanSettings.WARNINGS_ARE_ERRORS.isSet());
             }
                 catch (mars.ProcessingException pe) {
                   operationStatusMessages.displayTerminatingMessage("Assembly Error: "+fileToAssemble);

@@ -53,9 +53,9 @@ public class ExecutePane extends JDesktopPane {
         // Although these are displayed in Data Segment, they apply to all three internal
         // windows within the Execute pane.  So they will be housed here.
         addressDisplayBase = new NumberDisplayBaseChooser("Hexadecimal Addresses",
-                Main.getSettings().getDisplayAddressesInHex());
+                Settings.BooleanSettings.DISPLAY_ADDRESSES_IN_HEX.isSet());
         valueDisplayBase = new NumberDisplayBaseChooser("Hexadecimal Values",
-                Main.getSettings().getDisplayValuesInHex());//VenusUI.DEFAULT_NUMBER_BASE);
+                Settings.BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet());//VenusUI.DEFAULT_NUMBER_BASE);
         addressDisplayBase.setToolTipText("If checked, displays all memory addresses in hexadecimal.  Otherwise, decimal.");
         valueDisplayBase.setToolTipText("If checked, displays all memory and register contents in hexadecimal.  Otherwise, decimal.");
         NumberDisplayBaseChooser[] choosers = {addressDisplayBase, valueDisplayBase};
@@ -71,7 +71,7 @@ public class ExecutePane extends JDesktopPane {
         labelValues.pack();
         textSegment.setVisible(true);
         dataSegment.setVisible(true);
-        labelValues.setVisible(Main.getSettings().getBool(Settings.LABEL_WINDOW_VISIBILITY));
+        labelValues.setVisible(Settings.BooleanSettings.LABEL_WINDOW_VISIBILITY.isSet());
     }
 
     /**
