@@ -1,10 +1,18 @@
 package mars.venus;
 
-import mars.*;
-import mars.simulator.*;
-import mars.mips.hardware.*;
-import java.awt.event.*;
-import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
+import mars.Main;
+import mars.ProcessingException;
+import mars.mips.hardware.RegisterFile;
+import mars.settings.BooleanSettings;
+import mars.simulator.ProgramArgumentList;
+import mars.simulator.Simulator;
 
 /*
  Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
@@ -36,32 +44,41 @@ import javax.swing.*;
 /**
  * Action for the Run -> Step menu item
  */
-public class RunStepAction extends GuiAction {
+public class RunStepAction extends AbstractAction {
 
-    String name;
-    ExecutePane executePane;
+    public RunStepAction() {
+        super("Step", new ImageIcon(GuiAction.class.getResource(Main.imagesPath + "StepForward16.png")));
 
-    public RunStepAction(String name, Icon icon, String descrip,
-            Integer mnemonic, KeyStroke accel, VenusUI gui) {
-        super(name, icon, descrip, mnemonic, accel, gui);
+        putValue(LARGE_ICON_KEY, new ImageIcon(GuiAction.class.getResource(Main.imagesPath + "StepForward22.png")));
+        putValue(SHORT_DESCRIPTION, "Run one step at a time");
+        putValue(MNEMONIC_KEY, KeyEvent.VK_T);
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0));
     }
 
     /**
      * perform next simulated instruction step.
+     *
+     * @param e
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        name = this.getValue(Action.NAME).toString();
-        executePane = mainUI.executePane;
-        boolean done = false;
-        if (executePane.isShowing()) {
-            if (!VenusUI.getStarted()) // DPS 17-July-2008
-                processProgramArgumentsIfAny();
+        if (Main.getGUI().executePane.isShowing()) {
+            if (!VenusUI.getStarted()) { // DPS 17-July-2008
+                ////////////////////////////////////////////////////////////////////////////////////
+                // Store any program arguments into MIPS memory and registers before
+                // execution begins. Arguments go into the gap between $sp and kernel memory.  
+                // Argument pointers and count go into runtime stack and $sp is adjusted accordingly.
+                // $a0 gets argument count (argc), $a1 gets stack address of first arg pointer (argv).
+                String programArguments = Main.getGUI().textSegment.getProgramArguments();
+                if (programArguments != null && programArguments.length() != 0
+                        && BooleanSettings.PROGRAM_ARGUMENTS.isSet())
+                    new ProgramArgumentList(programArguments).storeProgramArguments();
+            }
             VenusUI.setStarted(true);
-            mainUI.messagesPane.setSelectedComponent(mainUI.messagesPane.runTab);
-            executePane.getTextSegmentWindow().setCodeHighlighting(true);
+            Main.getGUI().messagesPane.setSelectedComponent(Main.getGUI().messagesPane.runTab);
+            Main.getGUI().textSegment.setCodeHighlighting(true);
             try {
-                done = Main.program.simulateStepAtPC(this);
+                Main.program.simulateStepAtPC(this);
             }
             catch (ProcessingException ev) {
             }
@@ -71,57 +88,45 @@ public class RunStepAction extends GuiAction {
             JOptionPane.showMessageDialog(Main.getGUI().mainFrame, "The program must be assembled before it can be run.");
     }
 
-   	// When step is completed, control returns here (from execution thread, indirectly) 
-    // to simUpdate the GUI.
+    // When step is completed, control returns here (from execution thread, indirectly) 
+    // to update the GUI.
     public void stepped(boolean done, int reason, ProcessingException pe) {
         Main.getGUI().registersTab.updateRegisters();
         Main.getGUI().coprocessor1Tab.updateRegisters();
         Main.getGUI().coprocessor0Tab.updateRegisters();
-        executePane.getDataSegmentWindow().updateValues();
+        Main.getGUI().dataSegment.updateValues();
         if (!done) {
-            executePane.getTextSegmentWindow().highlightStepAtPC();
+            Main.getGUI().textSegment.highlightStepAtPC();
             Main.getGUI().setMenuStateRunnable();
         }
         if (done) {
             RunGoAction.resetMaxSteps();
-            executePane.getTextSegmentWindow().unhighlightAllSteps();
+            Main.getGUI().textSegment.unhighlightAllSteps();
             Main.getGUI().setMenuStateTerminated();
         }
         if (done && pe == null) {
-            (mainUI.messagesPane).postMarsMessage(
-                    "\n" + name + ": execution "
+            Main.getGUI().messagesPane.postMarsMessage(
+                    "\n" + getValue(Action.NAME) + ": execution "
                     + ((reason == Simulator.CLIFF_TERMINATION) ? "terminated due to null instruction."
                             : "completed successfully.") + "\n\n");
-            (mainUI.messagesPane).postRunMessage(
+            Main.getGUI().messagesPane.postRunMessage(
                     "\n-- program is finished running "
                     + ((reason == Simulator.CLIFF_TERMINATION) ? "(dropped off bottom)" : "") + " --\n\n");
-            (mainUI.messagesPane).selectRunMessageTab();
+            Main.getGUI().messagesPane.selectRunMessageTab();
         }
         if (pe != null) {
             RunGoAction.resetMaxSteps();
-            (mainUI.messagesPane).postMarsMessage(
+            Main.getGUI().messagesPane.postMarsMessage(
                     pe.errors().generateErrorReport());
-            (mainUI.messagesPane).postMarsMessage(
-                    "\n" + name + ": execution terminated with errors.\n\n");
-            (mainUI.registersPane).setSelectedComponent(Main.getGUI().coprocessor0Tab);
+            Main.getGUI().messagesPane.postMarsMessage(
+                    "\n" + getValue(Action.NAME) + ": execution terminated with errors.\n\n");
+            Main.getGUI().registersPane.setSelectedComponent(Main.getGUI().coprocessor0Tab);
             Main.getGUI().setMenuStateTerminated(); // should be redundant.
-            executePane.getTextSegmentWindow().setCodeHighlighting(true);
-            executePane.getTextSegmentWindow().unhighlightAllSteps();
-            executePane.getTextSegmentWindow().highlightStepAtAddress(RegisterFile.getProgramCounter() - 4);
+            Main.getGUI().textSegment.setCodeHighlighting(true);
+            Main.getGUI().textSegment.unhighlightAllSteps();
+            Main.getGUI().textSegment.highlightStepAtAddress(RegisterFile.getProgramCounter() - 4);
         }
         VenusUI.setReset(false);
     }
 
-		////////////////////////////////////////////////////////////////////////////////////
-    // Method to store any program arguments into MIPS memory and registers before
-    // execution begins. Arguments go into the gap between $sp and kernel memory.  
-    // Argument pointers and count go into runtime stack and $sp is adjusted accordingly.
-    // $a0 gets argument count (argc), $a1 gets stack address of first arg pointer (argv).
-    private void processProgramArgumentsIfAny() {
-        String programArguments = executePane.getTextSegmentWindow().getProgramArguments();
-        if (programArguments == null || programArguments.length() == 0
-                || !Settings.BooleanSettings.PROGRAM_ARGUMENTS.isSet())
-            return;
-        new ProgramArgumentList(programArguments).storeProgramArguments();
-    }
 }

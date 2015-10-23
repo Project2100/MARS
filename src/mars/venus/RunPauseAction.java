@@ -3,6 +3,7 @@ package mars.venus;
 import mars.simulator.*;
 import java.awt.event.*;
 import javax.swing.*;
+import mars.Main;
 
 /*
  Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
@@ -34,14 +35,23 @@ import javax.swing.*;
 /**
  * Action class for the Run -> Pause menu item (and toolbar icon)
  */
-public class RunPauseAction extends GuiAction {
+public class RunPauseAction extends AbstractAction {
 
-    public RunPauseAction(String name, Icon icon, String descrip,
-            Integer mnemonic, KeyStroke accel, VenusUI gui) {
-        super(name, icon, descrip, mnemonic, accel, gui);
+    public RunPauseAction() {
+        super("Pause", new ImageIcon(GuiAction.class.getResource(Main.imagesPath + "Pause16.png")));
+
+        putValue(LARGE_ICON_KEY, new ImageIcon(GuiAction.class.getResource(Main.imagesPath + "Pause22.png")));
+        putValue(SHORT_DESCRIPTION, "Pause the currently running program");
+        putValue(MNEMONIC_KEY, KeyEvent.VK_P);
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0));
     }
 
-    public void actionPerformed(ActionEvent e) {
+    /**
+     *
+     * @param event
+     */
+    @Override
+    public void actionPerformed(ActionEvent event) {
         Simulator.getInstance().stopExecution(this);
         // RunGoAction's "paused" method will do the cleanup.
     }

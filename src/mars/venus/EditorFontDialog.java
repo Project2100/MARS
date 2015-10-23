@@ -30,7 +30,9 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.text.Caret;
 import mars.Main;
-import mars.Settings;
+import mars.settings.BooleanSettings;
+import mars.settings.FontSettings;
+import mars.settings.IntegerSettings;
 import mars.venus.editors.jeditsyntax.SyntaxStyle;
 import mars.venus.editors.jeditsyntax.SyntaxUtilities;
 import mars.venus.editors.jeditsyntax.tokenmarker.MIPSTokenMarker;
@@ -117,8 +119,8 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
     private boolean initialLineHighlighting, initialGenericTextEditor, initialAutoIndent;
 
     public EditorFontDialog() {
-        super(Main.getGUI().mainFrame, "Text Editor Settings", true, Settings.FontSettings.EDITOR_FONT.get());
-        if (Settings.BooleanSettings.GENERIC_TEXT_EDITOR.isSet()) {
+        super(Main.getGUI().mainFrame, "Text Editor Settings", true, FontSettings.EDITOR_FONT.get());
+        if (BooleanSettings.GENERIC_TEXT_EDITOR.isSet()) {
             syntaxStylePanel.setVisible(false);
             otherSettingsPanel.setVisible(false);
         }
@@ -168,7 +170,7 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
         resetButton.addActionListener((ActionEvent e) -> {
             reset();
         });
-        initialGenericTextEditor = Settings.BooleanSettings.GENERIC_TEXT_EDITOR.isSet();
+        initialGenericTextEditor = BooleanSettings.GENERIC_TEXT_EDITOR.isSet();
         genericEditorCheck = new JCheckBox("Use Generic Editor", initialGenericTextEditor);
         genericEditorCheck.setToolTipText(GENERIC_TOOL_TIP_TEXT);
         genericEditorCheck.addItemListener((ItemEvent e) -> {
@@ -200,12 +202,12 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
     // abstract in superclass.
     @Override
     protected void apply(Font font) {
-        Settings.BooleanSettings.GENERIC_TEXT_EDITOR.set(genericEditorCheck.isSelected());
-        Settings.BooleanSettings.EDITOR_CURRENT_LINE_HIGHLIGHTING.set(lineHighlightCheck.isSelected());
-        Settings.BooleanSettings.AUTO_INDENT.set(autoIndentCheck.isSelected());
-        Settings.IntegerSettings.CARET_BLINK_RATE.set((Integer) blinkRateSpinSelector.getValue());
+        BooleanSettings.GENERIC_TEXT_EDITOR.set(genericEditorCheck.isSelected());
+        BooleanSettings.EDITOR_CURRENT_LINE_HIGHLIGHTING.set(lineHighlightCheck.isSelected());
+        BooleanSettings.AUTO_INDENT.set(autoIndentCheck.isSelected());
+        IntegerSettings.CARET_BLINK_RATE.set((Integer) blinkRateSpinSelector.getValue());
 //        Main.getSettings().setCaretBlinkRate(((Integer) blinkRateSpinSelector.getValue()).intValue());
-        Settings.IntegerSettings.EDITOR_TAB_SIZE.set(tabSizeSelector.getValue());
+        IntegerSettings.EDITOR_TAB_SIZE.set(tabSizeSelector.getValue());
 //        Main.getSettings().setEditorTabSize(tabSizeSelector.getValue());
         if (syntaxStylesAction) {
             for (int i = 0; i < syntaxStyleIndex.length; i++)
@@ -214,14 +216,14 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
                                 italic[i].isSelected(), bold[i].isSelected()));
             syntaxStylesAction = false; // reset
         }
-        Settings.FontSettings.EDITOR_FONT.set(font);
+        FontSettings.EDITOR_FONT.set(font);
         for (int i = 0; i < popupGuidanceOptions.length; i++)
             if (popupGuidanceOptions[i].isSelected()) {
                 if (i == 0)
-                    Settings.BooleanSettings.POPUP_INSTRUCTION_GUIDANCE.set(false);
+                    BooleanSettings.POPUP_INSTRUCTION_GUIDANCE.set(false);
                 else {
-                    Settings.BooleanSettings.POPUP_INSTRUCTION_GUIDANCE.set(true);
-                    Settings.IntegerSettings.EDITOR_POPUP_PREFIX_LENGTH.set(i);
+                    BooleanSettings.POPUP_INSTRUCTION_GUIDANCE.set(true);
+                    IntegerSettings.EDITOR_POPUP_PREFIX_LENGTH.set(i);
 //                    Main.getSettings().setEditorPopupPrefixLength(i);
                 }
                 break;
@@ -254,7 +256,7 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
         JPanel otherSettingsPanel = new JPanel();
 
         // Tab size selector
-        initialEditorTabSize = Settings.IntegerSettings.EDITOR_TAB_SIZE.get();
+        initialEditorTabSize = IntegerSettings.EDITOR_TAB_SIZE.get();
         tabSizeSelector = new JSlider(MIN_TAB_SIZE, MAX_TAB_SIZE, initialEditorTabSize);
         tabSizeSelector.setToolTipText("Use slider to select tab size from " + MIN_TAB_SIZE + " to " + MAX_TAB_SIZE + ".");
         tabSizeSelector.addChangeListener((ChangeEvent e) -> {
@@ -270,19 +272,19 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
         });
 
         // highlighting of current line
-        initialLineHighlighting = Settings.BooleanSettings.EDITOR_CURRENT_LINE_HIGHLIGHTING.isSet();
+        initialLineHighlighting = BooleanSettings.EDITOR_CURRENT_LINE_HIGHLIGHTING.isSet();
         lineHighlightCheck = new JCheckBox("Highlight the line currently being edited");
         lineHighlightCheck.setSelected(initialLineHighlighting);
         lineHighlightCheck.setToolTipText(CURRENT_LINE_HIGHLIGHT_TOOL_TIP_TEXT);
 
         // auto-indent 
-        initialAutoIndent = Settings.BooleanSettings.AUTO_INDENT.isSet();
+        initialAutoIndent = BooleanSettings.AUTO_INDENT.isSet();
         autoIndentCheck = new JCheckBox("Auto-Indent");
         autoIndentCheck.setSelected(initialAutoIndent);
         autoIndentCheck.setToolTipText(AUTO_INDENT_TOOL_TIP_TEXT);
 
         // cursor blink rate selector
-        initialCaretBlinkRate = Settings.IntegerSettings.CARET_BLINK_RATE.get();
+        initialCaretBlinkRate = IntegerSettings.CARET_BLINK_RATE.get();
         blinkSample = new JTextField("     ");
         blinkSample.setCaretPosition(2);
         blinkSample.setToolTipText(BLINK_SAMPLE_TOOL_TIP_TEXT);
@@ -329,8 +331,8 @@ final class EditorFontDialog extends AbstractFontSettingDialog {
             popupGuidanceOptions[i].setToolTipText(POPUP_GUIDANCE_TOOL_TIP_TEXT[i]);
             popupGuidanceButtons.add(popupGuidanceOptions[i]);
         }
-        initialPopupGuidance = Settings.BooleanSettings.POPUP_INSTRUCTION_GUIDANCE.isSet()
-                ? Settings.IntegerSettings.EDITOR_POPUP_PREFIX_LENGTH.get()
+        initialPopupGuidance = BooleanSettings.POPUP_INSTRUCTION_GUIDANCE.isSet()
+                ? IntegerSettings.EDITOR_POPUP_PREFIX_LENGTH.get()
                 : 0;
         popupGuidanceOptions[initialPopupGuidance].setSelected(true);
         JPanel popupPanel = new JPanel(new GridLayout(3, 1));

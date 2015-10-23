@@ -39,7 +39,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     public class Token {
    
-      private TokenTypes type;
+      private TokenType type;
       private String value;
       private MIPSprogram sourceMIPSprogram;
       private int sourceLine, sourcePos;
@@ -57,7 +57,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     * @see TokenTypes
     **/
     
-       public Token(TokenTypes type, String value, MIPSprogram sourceMIPSprogram, int line, int start) {
+    /**
+     * Constructor for Token class.
+     * @param type The token type that this token has. (e.g. REGISTER_NAME)
+     * @param value The source value for this token (e.g. $t3)
+     * @param sourceMIPSprogram The MIPSprogram object containing this token
+     * @param line The line number in source program in which this token appears.
+     * @param start The starting position in that line number of this token's source value.
+     * @see TokenType
+     */
+    public Token(TokenType type, String value, MIPSprogram sourceMIPSprogram, int line, int start) {
          this.type = type;
          this.value = value;
          this.sourceMIPSprogram = sourceMIPSprogram;
@@ -106,7 +115,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     * 
     * @return TokenType of this token.
     **/
-       public TokenTypes getType() {
+       public TokenType getType() {
          return type;
       }
    
@@ -115,9 +124,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	 * an identifier that matches an instruction name is 
 	 * actually being used as a label.
     * 
-    * @param type new TokenTypes for this token.
+    * @param type new TokenType for this token.
     **/   
-	    public void setType(TokenTypes type) {
+	    public void setType(TokenType type) {
 		   this.type = type;
 		}
 		   

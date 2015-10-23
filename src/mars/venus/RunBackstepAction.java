@@ -1,7 +1,9 @@
 package mars.venus;
 
 import java.awt.event.ActionEvent;
-import javax.swing.Icon;
+import java.awt.event.KeyEvent;
+import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import mars.Main;
@@ -40,22 +42,25 @@ import mars.mips.hardware.RegisterFile;
 /**
  * Action for the Run -> Backstep menu item
  */
-public class RunBackstepAction extends GuiAction {
+public class RunBackstepAction extends AbstractAction {
 
-//    String name;
-//    ExecutePane executePane;
+    public RunBackstepAction() {
+        super("Backstep", new ImageIcon(GuiAction.class.getResource(Main.imagesPath + "StepBack16.png")));
 
-    public RunBackstepAction(String name, Icon icon, String descrip,
-            Integer mnemonic, KeyStroke accel, VenusUI gui) {
-        super(name, icon, descrip, mnemonic, accel, gui);
+        putValue(LARGE_ICON_KEY, new ImageIcon(GuiAction.class.getResource(Main.imagesPath + "StepBack22.png")));
+        putValue(SHORT_DESCRIPTION, "Undo the last step");
+        putValue(MNEMONIC_KEY, KeyEvent.VK_B);
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0));
     }
 
     /**
-     * perform next simulated instruction step.
+     * Perform next simulated instruction step.
+     * 
+     * @param event
      */
     @Override
-    public void actionPerformed(ActionEvent e) {
-        
+    public void actionPerformed(ActionEvent event) {
+
         if (!Main.getGUI().executePane.isShowing()) {
             // note: this should never occur since backstepping is only enabled after successful assembly.
             JOptionPane.showMessageDialog(Main.getGUI().mainFrame, "The program must be assembled before it can be run.");
@@ -63,24 +68,24 @@ public class RunBackstepAction extends GuiAction {
         }
         VenusUI.setStarted(true);
         Main.getGUI().messagesPane.setSelectedComponent(Main.getGUI().messagesPane.runTab);
-        Main.getGUI().executePane.getTextSegmentWindow().setCodeHighlighting(true);
+        Main.getGUI().textSegment.setCodeHighlighting(true);
 
         if (Main.isBackSteppingEnabled()) {
             boolean inDelaySlot = Main.program.getBackStepper().inDelaySlot(); // Added 25 June 2007
-            Memory.getInstance().addObserver(Main.getGUI().executePane.getDataSegmentWindow());
+            Memory.getInstance().addObserver(Main.getGUI().dataSegment);
             RegisterFile.addRegistersObserver(Main.getGUI().registersTab);
             Coprocessor0.addRegistersObserver(Main.getGUI().coprocessor0Tab);
             Coprocessor1.addRegistersObserver(Main.getGUI().coprocessor1Tab);
             Main.program.getBackStepper().backStep();
-            Memory.getInstance().deleteObserver(Main.getGUI().executePane.getDataSegmentWindow());
+            Memory.getInstance().deleteObserver(Main.getGUI().dataSegment);
             RegisterFile.deleteRegistersObserver(Main.getGUI().registersTab);
             Main.getGUI().registersTab.updateRegisters();
             Main.getGUI().coprocessor1Tab.updateRegisters();
             Main.getGUI().coprocessor0Tab.updateRegisters();
-            Main.getGUI().executePane.getDataSegmentWindow().updateValues();
-            Main.getGUI().executePane.getTextSegmentWindow().highlightStepAtPC(inDelaySlot); // Argument aded 25 June 2007
+            Main.getGUI().dataSegment.updateValues();
+            Main.getGUI().textSegment.highlightStepAtPC(inDelaySlot); // Argument aded 25 June 2007
             Main.getGUI().setMenuStateRunnable();
-            
+
             VenusUI.setReset(false);
         }
     }

@@ -1,19 +1,23 @@
 package mars.venus;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import javax.swing.Icon;
+import java.util.Collections;
+import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 import mars.ErrorList;
 import mars.ErrorMessage;
 import mars.MIPSprogram;
 import mars.Main;
 import mars.ProcessingException;
-import mars.Settings;
 import mars.mips.hardware.Coprocessor0;
 import mars.mips.hardware.Coprocessor1;
 import mars.mips.hardware.Memory;
 import mars.mips.hardware.RegisterFile;
+import mars.settings.BooleanSettings;
+import mars.settings.StringSettings;
 import mars.util.FilenameFinder;
 import mars.util.SystemIO;
 
@@ -47,17 +51,20 @@ import mars.util.SystemIO;
 /**
  * Action for the Run -> Reset menu item
  */
-class ExecuteAction extends GuiAction {
+class ExecuteAction extends AbstractAction {
 
-    private static boolean warningsAreErrors;
     // Threshold for adding filename to printed message of files being assembled.
     private static final int LINE_LENGTH_LIMIT = 60;
     private static ArrayList<MIPSprogram> MIPSprogramsToAssemble;
-    private static boolean extendedAssemblerEnabled;
+    private static boolean warningsAreErrors, extendedAssemblerEnabled;
 
-    protected ExecuteAction(String name, Icon icon, String descrip,
-            Integer mnemonic, KeyStroke accel, VenusUI gui) {
-        super(name, icon, descrip, mnemonic, accel, gui);
+    protected ExecuteAction() {
+        super("Reset", new ImageIcon(GuiAction.class.getResource(Main.imagesPath + "Reset16.png")));
+
+        putValue(LARGE_ICON_KEY, new ImageIcon(GuiAction.class.getResource(Main.imagesPath + "Reset22.png")));
+        putValue(SHORT_DESCRIPTION, "Reset MIPS memory and registers");
+        putValue(MNEMONIC_KEY, KeyEvent.VK_R);
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0));
     }
 
     public static ArrayList<MIPSprogram> getMIPSprogramsToAssemble() {
@@ -65,35 +72,33 @@ class ExecuteAction extends GuiAction {
     }
 
     public static boolean assemble() {
-        String name = "Assemble";
-        extendedAssemblerEnabled = Settings.BooleanSettings.EXTENDED_ASSEMBLER.isSet();
-        warningsAreErrors = Settings.BooleanSettings.WARNINGS_ARE_ERRORS.isSet();
+        extendedAssemblerEnabled = BooleanSettings.EXTENDED_ASSEMBLER.isSet();
+        warningsAreErrors = BooleanSettings.WARNINGS_ARE_ERRORS.isSet();
 
+        // NOTE: Guaranteed to be non-null from action enable-handling
         EditPane current = Main.getGUI().editTabbedPane.getSelectedComponent();
 
-        // return if file isn't saved
-        if (Main.getGUI().editTabbedPane.isShowing()) {
-            Main.getGUI().executePane.clearPane();
-            if (current == null || (current.isNew() || current.hasUnsavedEdits()) && !current.save(false))
+        // Return if file save is unsuccessful
+        if (Main.getGUI().editTabbedPane.isShowing()) {//PENDING is it necessary?
+            clearExecutePane();
+            if ((current.isNew() || current.hasUnsavedEdits()) && !current.save(false))
                 return false;
         }
 
         Main.program = new MIPSprogram();
-        ArrayList<String> filesToAssemble;
-        if (Settings.BooleanSettings.ASSEMBLE_ALL.isSet())
-            filesToAssemble = FilenameFinder.getFilenameList(current.getParentDirectory(), Main.fileExtensions);
-        else
-            (filesToAssemble = new ArrayList<>()).add(current.getPathname());
-        String exceptionHandler = null;
-        if (Settings.BooleanSettings.EXCEPTION_HANDLER.isSet()
-                && Settings.StringSettings.EXCEPTION_HANDLER_FILE.get() != null
-                && Settings.StringSettings.EXCEPTION_HANDLER_FILE.get().length() > 0)
-            exceptionHandler = Settings.StringSettings.EXCEPTION_HANDLER_FILE.get();
-
         try {
-            MIPSprogramsToAssemble = Main.program.prepareFilesForAssembly(filesToAssemble, current.getPathname(), exceptionHandler);
+            MIPSprogramsToAssemble = Main.program.prepareFilesForAssembly(
+                    BooleanSettings.ASSEMBLE_ALL.isSet()
+                            ? FilenameFinder.getFilenameList(current.getPath().getParent().toString(), Main.fileExtensions)
+                            : Collections.singletonList(current.getPath().toString()),
+                    current.getPath().toString(),
+                    BooleanSettings.EXCEPTION_HANDLER.isSet()
+                            ? StringSettings.EXCEPTION_HANDLER_FILE.get()
+                            : null);
             Main.getGUI().messagesPane.postMarsMessage("Assembling files: "
-                    + MIPSprogramsToAssemble.stream().map(s -> s.getFilename()).reduce((s, t) -> {
+                    + MIPSprogramsToAssemble.stream()
+                    .map(s -> s.getFilename())
+                    .reduce((s, t) -> {
                         int lowerBound = s.lastIndexOf('\n');
 
                         return s + (s.substring(lowerBound == -1 ? 0 : lowerBound).length() >= LINE_LENGTH_LIMIT
@@ -102,7 +107,6 @@ class ExecuteAction extends GuiAction {
                     }).get() + "\n\n");
 
             ErrorList warnings = Main.program.assemble(MIPSprogramsToAssemble, extendedAssemblerEnabled, warningsAreErrors);
-
             if (warnings.warningsOccurred())
                 Main.getGUI().messagesPane.postMarsMessage(warnings.generateWarningReport());
         }
@@ -115,7 +119,7 @@ class ExecuteAction extends GuiAction {
                 if (!em.isWarning() || warningsAreErrors) {
                     Main.getGUI().messagesPane.selectErrorMessage(em.getFilename(), em.getLine(), em.getPosition());
                     if (Main.getGUI().editTabbedPane.isShowing())
-                        Main.getGUI().messagesPane.selectEditorTextLine(em.getFilename(), em.getLine(), em.getPosition());
+                        Main.getGUI().editTabbedPane.selectEditorTextLine(em.getFilename(), em.getLine(), em.getPosition());
                     break;
                 }
             }
@@ -127,13 +131,13 @@ class ExecuteAction extends GuiAction {
         RegisterFile.resetRegisters();
         Coprocessor1.resetRegisters();
         Coprocessor0.resetRegisters();
-        Main.getGUI().executePane.getTextSegmentWindow().setupTable();
-        Main.getGUI().executePane.getDataSegmentWindow().setupTable();
-        Main.getGUI().executePane.getDataSegmentWindow().highlightCellForAddress(Memory.dataBaseAddress);
-        Main.getGUI().executePane.getDataSegmentWindow().clearHighlighting();
-        Main.getGUI().executePane.getLabelsWindow().setupTable();
-        Main.getGUI().executePane.getTextSegmentWindow().setCodeHighlighting(true);
-        Main.getGUI().executePane.getTextSegmentWindow().highlightStepAtPC();
+        Main.getGUI().textSegment.setupTable();
+        Main.getGUI().dataSegment.setupTable();
+        Main.getGUI().dataSegment.highlightCellForAddress(Memory.dataBaseAddress);
+        Main.getGUI().dataSegment.clearHighlighting();
+        Main.getGUI().labelValues.setupTable();
+        Main.getGUI().textSegment.setCodeHighlighting(true);
+        Main.getGUI().textSegment.highlightStepAtPC();
         Main.getGUI().registersTab.clearWindow();
         Main.getGUI().coprocessor1Tab.clearWindow();
         Main.getGUI().coprocessor0Tab.clearWindow();
@@ -147,7 +151,6 @@ class ExecuteAction extends GuiAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         RunGoAction.resetMaxSteps();
-        ExecutePane executePane = Main.getGUI().executePane;
         // The difficult part here is resetting the data segment.  Two approaches are:
         // 1. After each assembly, get a deep copy of the Globals.memory array 
         //    containing data segment.  Then replace it upon reset.
@@ -177,11 +180,11 @@ class ExecuteAction extends GuiAction {
         Main.getGUI().coprocessor1Tab.updateRegisters();
         Main.getGUI().coprocessor0Tab.clearHighlighting();
         Main.getGUI().coprocessor0Tab.updateRegisters();
-        executePane.getDataSegmentWindow().highlightCellForAddress(Memory.dataBaseAddress);
-        executePane.getDataSegmentWindow().clearHighlighting();
-        executePane.getTextSegmentWindow().resetModifiedSourceCode();
-        executePane.getTextSegmentWindow().setCodeHighlighting(true);
-        executePane.getTextSegmentWindow().highlightStepAtPC();
+        Main.getGUI().dataSegment.highlightCellForAddress(Memory.dataBaseAddress);
+        Main.getGUI().dataSegment.clearHighlighting();
+        Main.getGUI().textSegment.resetModifiedSourceCode();
+        Main.getGUI().textSegment.setCodeHighlighting(true);
+        Main.getGUI().textSegment.highlightStepAtPC();
         Main.getGUI().registersPane.setSelectedComponent(Main.getGUI().registersTab);
         Main.getGUI().setMenuStateRunnable();
         VenusUI.setReset(true);
@@ -191,5 +194,19 @@ class ExecuteAction extends GuiAction {
         SystemIO.resetFiles();  // Ensure that I/O "file descriptors" are initialized for a new program run
 
         Main.getGUI().messagesPane.postRunMessage("\nReset completed.\n\n");
+    }
+
+    /**
+     * Clears out all components of the Execute tab: text segment display, data
+     * segment display, label display and register display. This will typically
+     * be done upon File->Close, Open, New.
+     */
+    public static void clearExecutePane() {
+        Main.getGUI().textSegment.clearWindow();
+        Main.getGUI().dataSegment.clearWindow();
+        Main.getGUI().labelValues.clearWindow();
+        Main.getGUI().registersTab.clearWindow();
+        Main.getGUI().coprocessor1Tab.clearWindow();
+        Main.getGUI().coprocessor0Tab.clearWindow();
     }
 }

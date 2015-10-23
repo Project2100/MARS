@@ -72,7 +72,7 @@ public class NumberDisplayBaseChooser extends JCheckBox {
                     listener.actionPerformed(event);
             }
             // Better to use notify, but I am tired...
-            Main.getGUI().executePane.numberDisplayBaseChanged(choose);
+            Main.getGUI().dataSegment.numberDisplayBaseChanged(choose);
         });
     }
 

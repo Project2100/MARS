@@ -3,6 +3,7 @@ package mars;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.AbstractAction;
 import mars.assembler.Assembler;
 import mars.assembler.MacroPool;
@@ -58,7 +59,7 @@ public class MIPSprogram {
     private String filename;
     private ArrayList<String> sourceList;
     private ArrayList<TokenList> tokenList;
-    private ArrayList parsedList;
+    private ArrayList<ProgramStatement> parsedList;
     private ArrayList<ProgramStatement> machineList;
     private BackStepper backStepper;
     private SymbolTable localSymbolTable;
@@ -98,7 +99,7 @@ public class MIPSprogram {
      *
      */
     public ArrayList<SourceLine> getSourceLineList() {
-        return this.sourceLineList;
+        return sourceLineList;
     }
 
     /**
@@ -141,8 +142,8 @@ public class MIPSprogram {
      * @see ProgramStatement
      *
      */
-    public ArrayList createParsedList() {
-        parsedList = new ArrayList();
+    public ArrayList<ProgramStatement> createParsedList() {
+        parsedList = new ArrayList<>();
         return parsedList;
     }
 
@@ -154,7 +155,7 @@ public class MIPSprogram {
      * @see ProgramStatement
      *
      */
-    public ArrayList getParsedList() {
+    public ArrayList<ProgramStatement> getParsedList() {
         return parsedList;
     }
 
@@ -196,7 +197,7 @@ public class MIPSprogram {
     /**
      * Returns status of BackStepper associated with this program.
      *
-     * @return true if enabled, false if disabled or non-existant.
+     * @return true if enabled, false if disabled or non-existent.
      *
      */
     public boolean backSteppingEnabled() {
@@ -273,7 +274,7 @@ public class MIPSprogram {
      * @throws ProcessingException Will throw exception if errors occurred while
      * reading or tokenizing.
      */
-    public ArrayList<MIPSprogram> prepareFilesForAssembly(ArrayList<String> filenames, String leadFilename, String exceptionHandler) throws ProcessingException {
+    public ArrayList<MIPSprogram> prepareFilesForAssembly(List<String> filenames, String leadFilename, String exceptionHandler) throws ProcessingException {
         ArrayList<MIPSprogram> MIPSprogramsToAssemble = new ArrayList<>();
         int leadFilePosition = 0;
         if (exceptionHandler != null && exceptionHandler.length() > 0) {
@@ -391,8 +392,7 @@ public class MIPSprogram {
      */
     public boolean simulateFromPC(int[] breakPoints, int maxSteps, AbstractAction a) throws ProcessingException {
         steppedExecution = false;
-        Simulator sim = Simulator.getInstance();
-        return sim.simulate(this, RegisterFile.getProgramCounter(), maxSteps, breakPoints, a);
+        return Simulator.getInstance().simulate(this, RegisterFile.getProgramCounter(), maxSteps, breakPoints, a);
     }
 
     /**
@@ -409,9 +409,7 @@ public class MIPSprogram {
      */
     public boolean simulateStepAtPC(AbstractAction a) throws ProcessingException {
         steppedExecution = true;
-        Simulator sim = Simulator.getInstance();
-        boolean done = sim.simulate(this, RegisterFile.getProgramCounter(), 1, null, a);
-        return done;
+        return Simulator.getInstance().simulate(this, RegisterFile.getProgramCounter(), 1, null, a);
     }
 
     /**

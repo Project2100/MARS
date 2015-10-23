@@ -9,6 +9,8 @@
    import mars.*;
    import mars.util.*;
    import mars.mips.hardware.*;
+import mars.settings.BooleanSettings;
+import mars.settings.StringSettings;
 
 /*
 Copyright (c) 2003-2008,  Pete Sanderson and Kenneth Vollmar
@@ -696,10 +698,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
            // boolean warningsAreErrors = false;           // Ditto.
            
             String exceptionHandler = null;
-            if (Settings.BooleanSettings.EXCEPTION_HANDLER.isSet() &&
-                   Settings.StringSettings.EXCEPTION_HANDLER_FILE.get() != null &&
-                   Settings.StringSettings.EXCEPTION_HANDLER_FILE.get().length() > 0) {
-               exceptionHandler = Settings.StringSettings.EXCEPTION_HANDLER_FILE.get();
+            if (BooleanSettings.EXCEPTION_HANDLER.isSet() &&
+                   StringSettings.EXCEPTION_HANDLER_FILE.get() != null &&
+                   StringSettings.EXCEPTION_HANDLER_FILE.get().length() > 0) {
+               exceptionHandler = StringSettings.EXCEPTION_HANDLER_FILE.get();
             }
            
             Thread.currentThread().setPriority(Thread.NORM_PRIORITY-1);
@@ -727,7 +729,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                } 
          
             try {
-               program.assemble(programsToAssemble, Settings.BooleanSettings.EXTENDED_ASSEMBLER.isSet(), Settings.BooleanSettings.WARNINGS_ARE_ERRORS.isSet());
+               program.assemble(programsToAssemble, BooleanSettings.EXTENDED_ASSEMBLER.isSet(), BooleanSettings.WARNINGS_ARE_ERRORS.isSet());
             }
                 catch (mars.ProcessingException pe) {
                   operationStatusMessages.displayTerminatingMessage("Assembly Error: "+fileToAssemble);

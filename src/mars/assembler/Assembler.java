@@ -10,12 +10,12 @@ import mars.Main;
 import mars.MIPSprogram;
 import mars.ProcessingException;
 import mars.ProgramStatement;
-import mars.Settings;
 import mars.mips.hardware.AddressErrorException;
 import mars.mips.hardware.Memory;
 import mars.mips.instructions.BasicInstruction;
 import mars.mips.instructions.ExtendedInstruction;
 import mars.mips.instructions.Instruction;
+import mars.settings.BooleanSettings;
 import mars.util.Binary;
 import mars.util.SystemIO;
 
@@ -64,8 +64,8 @@ public class Assembler {
     // macro definition segment
     private int externAddress;
     private boolean autoAlign;
-    private Directives currentDirective;
-    private Directives dataDirective;
+    private Directive currentDirective;
+    private Directive dataDirective;
     private MIPSprogram fileCurrentlyBeingAssembled;
     private TokenList globalDeclarationList;
     private UserKernelAddressSpace textAddress;
@@ -84,11 +84,12 @@ public class Assembler {
      * @return An ArrayList representing the assembled program. Each member of
      * the list is a ProgramStatement object containing the source,
      * intermediate, and machine binary representations of a program statement.
+     * @throws mars.ProcessingException
      *
      * @see ProgramStatement
      *
      */
-    public ArrayList assemble(MIPSprogram p, boolean extendedAssemblerEnabled)
+    public ArrayList<ProgramStatement> assemble(MIPSprogram p, boolean extendedAssemblerEnabled)
             throws ProcessingException {
         return assemble(p, extendedAssemblerEnabled, false);
     }
@@ -107,15 +108,16 @@ public class Assembler {
      * @return An ArrayList representing the assembled program. Each member of
      * the list is a ProgramStatement object containing the source,
      * intermediate, and machine binary representations of a program statement.
+     * @throws mars.ProcessingException
      *
      * @see ProgramStatement
      *
      */
-    public ArrayList assemble(MIPSprogram p, boolean extendedAssemblerEnabled,
+    public ArrayList<ProgramStatement> assemble(MIPSprogram p, boolean extendedAssemblerEnabled,
             boolean warningsAreErrors) throws ProcessingException {
-        ArrayList programFiles = new ArrayList();
+        ArrayList<MIPSprogram> programFiles = new ArrayList<>();
         programFiles.add(p);
-        return this.assemble(programFiles, extendedAssemblerEnabled, warningsAreErrors);
+        return assemble(programFiles, extendedAssemblerEnabled, warningsAreErrors);
     }
 
     /**
@@ -142,11 +144,12 @@ public class Assembler {
      * the list is a ProgramStatement object containing the source,
      * intermediate, and machine binary representations of a program statement.
      * Returns null if incoming array list is null or empty.
+     * @throws mars.ProcessingException
      *
      * @see ProgramStatement
      *
      */
-    public ArrayList assemble(ArrayList tokenizedProgramFiles, boolean extendedAssemblerEnabled)
+    public ArrayList<ProgramStatement> assemble(ArrayList<MIPSprogram> tokenizedProgramFiles, boolean extendedAssemblerEnabled)
             throws ProcessingException {
         return assemble(tokenizedProgramFiles, extendedAssemblerEnabled, false);
     }
@@ -173,7 +176,7 @@ public class Assembler {
      * @see ProgramStatement
      *
      */
-    public ArrayList assemble(ArrayList tokenizedProgramFiles, boolean extendedAssemblerEnabled,
+    public ArrayList<ProgramStatement> assemble(ArrayList<MIPSprogram> tokenizedProgramFiles, boolean extendedAssemblerEnabled,
             boolean warningsAreErrors) throws ProcessingException {
 
         if (tokenizedProgramFiles == null || tokenizedProgramFiles.isEmpty())
@@ -195,10 +198,10 @@ public class Assembler {
         // TO SECOND PASS. THIS ASSURES ALL SYMBOL TABLES ARE CORRECTLY BUILT.
         // THERE IS ONE GLOBAL SYMBOL TABLE (for identifiers declared .globl) PLUS
         // ONE LOCAL SYMBOL TABLE FOR EACH SOURCE FILE.
-        for (int fileIndex = 0; fileIndex < tokenizedProgramFiles.size(); fileIndex++) {
+        for (MIPSprogram tokenizedProgramFile : tokenizedProgramFiles) {
             if (errors.errorLimitExceeded())
                 break;
-            this.fileCurrentlyBeingAssembled = (MIPSprogram) tokenizedProgramFiles.get(fileIndex);
+            this.fileCurrentlyBeingAssembled = tokenizedProgramFile;
             // List of labels declared ".globl". new list for each file assembled
             this.globalDeclarationList = new TokenList();
             // Parser begins by default in text segment until directed otherwise.
@@ -209,7 +212,7 @@ public class Assembler {
             // This can be turned off for remainder of current data segment with ".align 0"
             this.autoAlign = true;
             // Default data directive is .word for 4 byte data items
-            this.dataDirective = Directives.WORD;
+            this.dataDirective = Directive.WORD;
             // Clear out (initialize) symbol table related structures.
             fileCurrentlyBeingAssembled.getLocalSymbolTable().clear();
             currentFileDataSegmentForwardReferences.clear();
@@ -217,8 +220,8 @@ public class Assembler {
             // tokenList is an ArrayList of TokenList objects, one per source line;
             // each ArrayList in tokenList consists of Token objects.
             ArrayList<SourceLine> sourceLineList = fileCurrentlyBeingAssembled.getSourceLineList();
-            ArrayList tokenList = fileCurrentlyBeingAssembled.getTokenList();
-            ArrayList parsedList = fileCurrentlyBeingAssembled.createParsedList();
+            ArrayList<TokenList> tokenList = fileCurrentlyBeingAssembled.getTokenList();
+            ArrayList<ProgramStatement> parsedList = fileCurrentlyBeingAssembled.createParsedList();
             // each file keeps its own macro definitions
             MacroPool macroPool = fileCurrentlyBeingAssembled.createMacroPool();
             // FIRST PASS OF ASSEMBLER VERIFIES SYNTAX, GENERATES SYMBOL TABLE,
@@ -227,12 +230,12 @@ public class Assembler {
             for (int i = 0; i < tokenList.size(); i++) {
                 if (errors.errorLimitExceeded())
                     break;
-                for (int z = 0; z < ((TokenList) tokenList.get(i)).size(); z++) {
-                    Token t = ((TokenList) tokenList.get(i)).get(z);
+                for (int z = 0; z < tokenList.get(i).size(); z++) {
+                    Token t = tokenList.get(i).get(z);
                     // record this token's original source program and line #. Differs from final, if .include used
                     t.setOriginal(sourceLineList.get(i).getMIPSprogram(), sourceLineList.get(i).getLineNumber());
                 }
-                statements = this.parseLine((TokenList) tokenList.get(i),
+                statements = this.parseLine(tokenList.get(i),
                         sourceLineList.get(i).getSource(),
                         sourceLineList.get(i).getLineNumber(),
                         extendedAssemblerEnabled);
@@ -269,14 +272,14 @@ public class Assembler {
             System.out.println("Assembler second pass begins");
         // SECOND PASS OF ASSEMBLER GENERATES BASIC ASSEMBLER THEN MACHINE CODE.
         // Generates basic assembler statements...
-        for (int fileIndex = 0; fileIndex < tokenizedProgramFiles.size(); fileIndex++) {
-            if (errors.errorLimitExceeded())
-                break;
-            this.fileCurrentlyBeingAssembled = (MIPSprogram) tokenizedProgramFiles.get(fileIndex);
-            ArrayList parsedList = fileCurrentlyBeingAssembled.getParsedList();
+        for (MIPSprogram tokenizedProgramFile : tokenizedProgramFiles) {
+            if (errors.errorLimitExceeded()) break;
+
+            fileCurrentlyBeingAssembled = tokenizedProgramFile;
+            ArrayList<ProgramStatement> parsedList = fileCurrentlyBeingAssembled.getParsedList();
             ProgramStatement statement;
-            for (int i = 0; i < parsedList.size(); i++) {
-                statement = (ProgramStatement) parsedList.get(i);
+            for (Object parsedList1 : parsedList) {
+                statement = (ProgramStatement) parsedList1;
                 statement.buildBasicStatementFromBasicInstruction(errors);
                 if (errors.errorsOccurred())
                     throw new ProcessingException(errors);
@@ -312,7 +315,7 @@ public class Assembler {
 
                     // ////////////////////////////////////////////////////////////////////////////
                     // If we are using compact memory config and there is a compact expansion, use it
-                    ArrayList templateList;
+                    ArrayList<String> templateList;
                     if (compactTranslationCanBeApplied(statement))
                         templateList = inst.getCompactBasicIntructionTemplateList();
                     else
@@ -324,12 +327,12 @@ public class Assembler {
                     for (int instrNumber = 0; instrNumber < templateList.size(); instrNumber++) {
                         String instruction = ExtendedInstruction.makeTemplateSubstitutions(
                                 this.fileCurrentlyBeingAssembled,
-                                (String) templateList.get(instrNumber), theTokenList);
+                                templateList.get(instrNumber), theTokenList);
                         // 23 Jan 2008 by DPS. Template substitution may result in no instruction.
                         // If this is the case, skip remainder of loop iteration. This should only
                         // happen if template substitution was for "nop" instruction but delayed branching
                         // is disabled so the "nop" is not generated.
-                        if (instruction == null || instruction == "")
+                        if (instruction == null || instruction.isEmpty())
                             continue;
 
                         // All substitutions have been made so we have generated
@@ -340,7 +343,7 @@ public class Assembler {
                         // statement, add to list.
                         TokenList newTokenList = new Tokenizer().tokenizeLine(sourceLine,
                                 instruction, errors, false);
-                        ArrayList instrMatches = this.matchInstruction(newTokenList.get(0));
+                        ArrayList<Instruction> instrMatches = this.matchInstruction(newTokenList.get(0));
                         Instruction instr = OperandFormat.bestOperandMatch(newTokenList,
                                 instrMatches);
                         // Only first generated instruction is linked to original source
@@ -353,7 +356,6 @@ public class Assembler {
                         this.machineList.add(ps);
                     } // end of FOR loop, repeated for each template in list.
                 } // end of ELSE part for extended instruction.
-
             } // end of assembler second pass.
         }
         if (Main.debug)
@@ -407,7 +409,7 @@ public class Assembler {
                 errors.add(new ErrorMessage(ps2.getSourceMIPSprogram(), ps2.getSourceLine(), 0,
                         "Duplicate text segment address: "
                         + mars.venus.NumberDisplayBaseChooser.formatUnsignedInteger(ps2
-                                .getAddress(), (Settings.BooleanSettings.DISPLAY_ADDRESSES_IN_HEX.isSet()) ? 16 : 10)
+                                .getAddress(), (BooleanSettings.DISPLAY_ADDRESSES_IN_HEX.isSet()) ? 16 : 10)
                         + " already occupied by " + ps1.getSourceFile() + " line "
                         + ps1.getSourceLine() + " (caused by use of "
                         + ((Memory.inTextSegment(ps2.getAddress())) ? ".text" : ".ktext")
@@ -446,10 +448,10 @@ public class Assembler {
             return null;
         // Grab first (operator) token...
         Token token = tokens.get(0);
-        TokenTypes tokenType = token.getType();
+        TokenType tokenType = token.getType();
 
         // Let's handle the directives here...
-        if (tokenType == TokenTypes.DIRECTIVE) {
+        if (tokenType == TokenType.DIRECTIVE) {
             this.executeDirective(tokens);
             return null;
         }
@@ -460,8 +462,8 @@ public class Assembler {
 
         // SPIM-style macro calling:
         TokenList parenFreeTokens = tokens;
-        if (tokens.size() > 2 && tokens.get(1).getType() == TokenTypes.LEFT_PAREN
-                && tokens.get(tokens.size() - 1).getType() == TokenTypes.RIGHT_PAREN) {
+        if (tokens.size() > 2 && tokens.get(1).getType() == TokenType.LEFT_PAREN
+                && tokens.get(tokens.size() - 1).getType() == TokenType.RIGHT_PAREN) {
             parenFreeTokens = (TokenList) tokens.clone();
             parenFreeTokens.remove(tokens.size() - 1);
             parenFreeTokens.remove(1);
@@ -518,13 +520,13 @@ public class Assembler {
         // as SPIM but other MIPS assemblers recognize additional directives. Compilers such
         // as MIPS-directed GCC generate assembly code containing these directives. We'd like
         // the opportunity to ignore them and continue. Tokenizer would categorize an unrecognized
-        // directive as an TokenTypes.IDENTIFIER because it would not be matched as a directive and
+        // directive as an TokenType.IDENTIFIER because it would not be matched as a directive and
         // MIPS labels can start with '.' NOTE: this can also be handled by including the
-        // ignored directive in the Directives.java list. There is already a mechanism in place
+        // ignored directive in the Directive.java list. There is already a mechanism in place
         // for generating a warning there. But I cannot anticipate the names of all directives
         // so this will catch anything, including a misspelling of a valid directive (which is
         // a nice thing to do).
-        if (tokenType == TokenTypes.IDENTIFIER && token.getValue().charAt(0) == '.') {
+        if (tokenType == TokenType.IDENTIFIER && token.getValue().charAt(0) == '.') {
             errors.add(new ErrorMessage(ErrorMessage.WARNING, token.getSourceMIPSprogram(), token
                     .getSourceLine(), token.getStartPos(), "MARS does not recognize the "
                     + token.getValue() + " directive.  Ignored."));
@@ -538,12 +540,12 @@ public class Assembler {
         // is contained in this.dataDirective (the current data directive).
         //
         if (this.inDataSegment && // 30-Dec-09 DPS Added data segment guard...
-                (tokenType == TokenTypes.PLUS
+                (tokenType == TokenType.PLUS
                 || // because invalid instructions were being caught...
-                tokenType == TokenTypes.MINUS
+                tokenType == TokenType.MINUS
                 || // here and reported as a directive in text segment!
-                tokenType == TokenTypes.QUOTED_STRING || tokenType == TokenTypes.IDENTIFIER
-                || TokenTypes.isIntegerTokenType(tokenType) || TokenTypes
+                tokenType == TokenType.QUOTED_STRING || tokenType == TokenType.IDENTIFIER
+                || TokenType.isIntegerTokenType(tokenType) || TokenType
                 .isFloatingTokenType(tokenType))) {
             this.executeDirectiveContinuation(tokens);
             return null;
@@ -555,7 +557,7 @@ public class Assembler {
         // is not
         // yet implemented.
         if (!this.inDataSegment) {
-            ArrayList instrMatches = this.matchInstruction(token);
+            ArrayList<Instruction> instrMatches = this.matchInstruction(token);
             if (instrMatches == null)
                 return ret;
             // OK, we've got an operator match, let's check the operands.
@@ -610,7 +612,7 @@ public class Assembler {
         TokenList tokens = (TokenList) tokenList.clone();
         // If there is a comment, strip it off.
         int last = tokens.size() - 1;
-        if (tokens.get(last).getType() == TokenTypes.COMMENT)
+        if (tokens.get(last).getType() == TokenType.COMMENT)
             tokens.remove(last);
         return tokens;
     } // stripComment()
@@ -638,9 +640,9 @@ public class Assembler {
         else {
             Token token = tokens.get(0);
             if (tokenListBeginsWithLabel(tokens)) {
-                if (token.getType() == TokenTypes.OPERATOR)
+                if (token.getType() == TokenType.OPERATOR)
                     // an instruction name was used as label (e.g. lw:), so change its token type
-                    token.setType(TokenTypes.IDENTIFIER);
+                    token.setType(TokenType.IDENTIFIER);
                 fileCurrentlyBeingAssembled.getLocalSymbolTable().addSymbol(token,
                         (this.inDataSegment) ? dataAddress.get() : textAddress.get(),
                         this.inDataSegment, this.errors);
@@ -655,204 +657,211 @@ public class Assembler {
         // 2-July-2010. DPS. Remove prohibition of operator names as labels
         if (tokens.size() < 2)
             return false;
-        return (tokens.get(0).getType() == TokenTypes.IDENTIFIER || tokens.get(0).getType() == TokenTypes.OPERATOR)
-                && tokens.get(1).getType() == TokenTypes.COLON;
+        return (tokens.get(0).getType() == TokenType.IDENTIFIER || tokens.get(0).getType() == TokenType.OPERATOR)
+                && tokens.get(1).getType() == TokenType.COLON;
     }
 
     // //////////////////////////////////////////////////////////////////////////////////
     // This source code line is a directive, not a MIPS instruction. Let's carry it out.
     private void executeDirective(TokenList tokens) {
         Token token = tokens.get(0);
-        Directives direct = Directives.matchDirective(token.getValue());
+        Directive directive = Directive.matchDirective(token.getValue());
         if (Main.debug)
-            System.out.println("line " + token.getSourceLine() + " is directive " + direct);
-        if (direct == null) {
+            System.out.println("line " + token.getSourceLine() + " is directive " + directive);
+        if (directive == null) {
             errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(), token
                     .getStartPos(), "\"" + token.getValue()
                     + "\" directive is invalid or not implemented in MARS"));
             return;
         }
-        else if (direct == Directives.EQV) { /* EQV added by DPS 11 July 2012 */
-
-            // Do nothing.  This was vetted and processed during tokenizing.
-
-        }
-        else if (direct == Directives.MACRO) {
-            if (tokens.size() < 2) {
-                errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
-                        token.getStartPos(), "\"" + token.getValue()
-                        + "\" directive requires at least one argument."));
-                return;
-            }
-            if (tokens.get(1).getType() != TokenTypes.IDENTIFIER) {
-                errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
-                        tokens.get(1).getStartPos(), "Invalid Macro name \""
-                        + tokens.get(1).getValue() + "\""));
-                return;
-            }
-            if (inMacroSegment) {
-                errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
-                        token.getStartPos(), "Nested macros are not allowed"));
-                return;
-            }
-            inMacroSegment = true;
-            MacroPool pool = fileCurrentlyBeingAssembled.getLocalMacroPool();
-            pool.beginMacro(tokens.get(1));
-            for (int i = 2; i < tokens.size(); i++) {
-                Token arg = tokens.get(i);
-                if (arg.getType() == TokenTypes.RIGHT_PAREN
-                        || arg.getType() == TokenTypes.LEFT_PAREN)
-                    continue;
-                if (!Macro.tokenIsMacroParameter(arg.getValue(), true)) {
-                    errors.add(new ErrorMessage(arg.getSourceMIPSprogram(), arg.getSourceLine(),
-                            arg.getStartPos(), "Invalid macro argument '" + arg.getValue() + "'"));
-                    return;
-                }
-                pool.getCurrent().addArg(arg.getValue());
-            }
-        }
-        else if (direct == Directives.END_MACRO) {
-            if (tokens.size() > 1) {
-                errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
-                        token.getStartPos(), "invalid text after .END_MACRO"));
-                return;
-            }
-            if (!inMacroSegment) {
-                errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
-                        token.getStartPos(), ".END_MACRO without .MACRO"));
-                return;
-            }
-            inMacroSegment = false;
-            fileCurrentlyBeingAssembled.getLocalMacroPool().commitMacro(token);
-        }
-        else if (inMacroSegment)
+        if (inMacroSegment) {
             // should not parse lines even directives in macro segment
             return;
-        else if (direct == Directives.DATA || direct == Directives.KDATA) {
-            this.inDataSegment = true;
-            this.autoAlign = true;
-            this.dataAddress.setAddressSpace((direct == Directives.DATA) ? this.dataAddress.USER
-                    : this.dataAddress.KERNEL);
-            if (tokens.size() > 1 && TokenTypes.isIntegerTokenType(tokens.get(1).getType()))
-                this.dataAddress.set(Binary.stringToInt(tokens.get(1).getValue())); // KENV 1/6/05
         }
-        else if (direct == Directives.TEXT || direct == Directives.KTEXT) {
-            this.inDataSegment = false;
-            this.textAddress.setAddressSpace((direct == Directives.TEXT) ? this.textAddress.USER
-                    : this.textAddress.KERNEL);
-            if (tokens.size() > 1 && TokenTypes.isIntegerTokenType(tokens.get(1).getType()))
-                this.textAddress.set(Binary.stringToInt(tokens.get(1).getValue())); // KENV 1/6/05
-        }
-        else if (direct == Directives.WORD || direct == Directives.HALF
-                || direct == Directives.BYTE || direct == Directives.FLOAT
-                || direct == Directives.DOUBLE) {
-            this.dataDirective = direct;
-            if (passesDataSegmentCheck(token) && tokens.size() > 1) // DPS
-                // 11/20/06, added text segment prohibition
-                storeNumeric(tokens, direct, errors);
-        }
-        else if (direct == Directives.ASCII || direct == Directives.ASCIIZ) {
-            this.dataDirective = direct;
-            if (passesDataSegmentCheck(token))
-                storeStrings(tokens, direct, errors);
-        }
-        else if (direct == Directives.ALIGN) {
-            if (passesDataSegmentCheck(token)) {
-                if (tokens.size() != 2) {
-                    errors.add(new ErrorMessage(token.getSourceMIPSprogram(),
-                            token.getSourceLine(), token.getStartPos(), "\"" + token.getValue()
-                            + "\" requires one operand"));
+
+        switch (directive) {
+            case EQV: /* EQV added by DPS 11 July 2012 */
+                // Do nothing.  This was vetted and processed during tokenizing.
+                break;
+            case MACRO:
+                if (tokens.size() < 2) {
+                    errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
+                            token.getStartPos(), "\"" + token.getValue()
+                            + "\" directive requires at least one argument."));
                     return;
                 }
-                if (!TokenTypes.isIntegerTokenType(tokens.get(1).getType())
-                        || Binary.stringToInt(tokens.get(1).getValue()) < 0) {
-                    errors.add(new ErrorMessage(token.getSourceMIPSprogram(),
-                            token.getSourceLine(), token.getStartPos(), "\"" + token.getValue()
-                            + "\" requires a non-negative integer"));
+                if (tokens.get(1).getType() != TokenType.IDENTIFIER) {
+                    errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
+                            tokens.get(1).getStartPos(), "Invalid Macro name \""
+                            + tokens.get(1).getValue() + "\""));
                     return;
                 }
-                int value = Binary.stringToInt(tokens.get(1).getValue()); // KENV 1/6/05
-                if (value == 0)
-                    this.autoAlign = false;
-                else
-                    this.dataAddress.set(this.alignToBoundary(this.dataAddress.get(),
-                            (int) Math.pow(2, value)));
-            }
-        }
-        else if (direct == Directives.SPACE) {
-            if (passesDataSegmentCheck(token)) {
-                if (tokens.size() != 2) {
-                    errors.add(new ErrorMessage(token.getSourceMIPSprogram(),
-                            token.getSourceLine(), token.getStartPos(), "\"" + token.getValue()
-                            + "\" requires one operand"));
+                if (inMacroSegment) {
+                    errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
+                            token.getStartPos(), "Nested macros are not allowed"));
                     return;
                 }
-                if (!TokenTypes.isIntegerTokenType(tokens.get(1).getType())
-                        || Binary.stringToInt(tokens.get(1).getValue()) < 0) {
-                    errors.add(new ErrorMessage(token.getSourceMIPSprogram(),
-                            token.getSourceLine(), token.getStartPos(), "\"" + token.getValue()
-                            + "\" requires a non-negative integer"));
+                inMacroSegment = true;
+                MacroPool pool = fileCurrentlyBeingAssembled.getLocalMacroPool();
+                pool.beginMacro(tokens.get(1));
+                for (int i = 2; i < tokens.size(); i++) {
+                    Token arg = tokens.get(i);
+                    if (arg.getType() == TokenType.RIGHT_PAREN
+                            || arg.getType() == TokenType.LEFT_PAREN)
+                        continue;
+                    if (!Macro.tokenIsMacroParameter(arg.getValue(), true)) {
+                        errors.add(new ErrorMessage(arg.getSourceMIPSprogram(), arg.getSourceLine(),
+                                arg.getStartPos(), "Invalid macro argument '" + arg.getValue() + "'"));
+                        return;
+                    }
+                    pool.getCurrent().addArg(arg.getValue());
+                }
+                break;
+            case END_MACRO:
+                if (tokens.size() > 1) {
+                    errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
+                            token.getStartPos(), "invalid text after .END_MACRO"));
                     return;
                 }
-                int value = Binary.stringToInt(tokens.get(1).getValue()); // KENV 1/6/05
-                this.dataAddress.increment(value);
-            }
-        }
-        else if (direct == Directives.EXTERN) {
-            if (tokens.size() != 3) {
-                errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
-                        token.getStartPos(), "\"" + token.getValue()
-                        + "\" directive requires two operands (label and size)."));
-                return;
-            }
-            if (!TokenTypes.isIntegerTokenType(tokens.get(2).getType())
-                    || Binary.stringToInt(tokens.get(2).getValue()) < 0) {
-                errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
-                        token.getStartPos(), "\"" + token.getValue()
-                        + "\" requires a non-negative integer size"));
-                return;
-            }
-            int size = Binary.stringToInt(tokens.get(2).getValue());
-            // If label already in global symtab, do nothing. If not, add it right now.
-            if (Main.symbolTable.getAddress(tokens.get(1).getValue()) == SymbolTable.NOT_FOUND) {
-                Main.symbolTable.addSymbol(tokens.get(1), this.externAddress,
-                        Symbol.DATA_SYMBOL, errors);
-                this.externAddress += size;
-            }
-        }
-        else if (direct == Directives.SET)
-            errors.add(new ErrorMessage(ErrorMessage.WARNING, token.getSourceMIPSprogram(), token
-                    .getSourceLine(), token.getStartPos(),
-                    "MARS currently ignores the .set directive."));
-        else if (direct == Directives.GLOBL) {
-            if (tokens.size() < 2) {
-                errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
-                        token.getStartPos(), "\"" + token.getValue()
-                        + "\" directive requires at least one argument."));
-                return;
-            }
-            // SPIM limits .globl list to one label, why not extend it to a list?
-            for (int i = 1; i < tokens.size(); i++) {
-                // Add it to a list of labels to be processed at the end of the
-                // pass. At that point, transfer matching symbol definitions from 
-                // local symbol table to global symbol table.
-                Token label = tokens.get(i);
-                if (label.getType() != TokenTypes.IDENTIFIER) {
-                    errors.add(new ErrorMessage(token.getSourceMIPSprogram(),
-                            token.getSourceLine(), token.getStartPos(), "\"" + token.getValue()
-                            + "\" directive argument must be label."));
+                if (!inMacroSegment) {
+                    errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
+                            token.getStartPos(), ".END_MACRO without .MACRO"));
                     return;
                 }
-                globalDeclarationList.add(label);
-            }
+                inMacroSegment = false;
+                fileCurrentlyBeingAssembled.getLocalMacroPool().commitMacro(token);
+                break;
+            case DATA:
+            case KDATA:
+                this.inDataSegment = true;
+                this.autoAlign = true;
+                this.dataAddress.setAddressSpace((directive == Directive.DATA) ? this.dataAddress.USER
+                        : this.dataAddress.KERNEL);
+                if (tokens.size() > 1 && TokenType.isIntegerTokenType(tokens.get(1).getType()))
+                    this.dataAddress.set(Binary.stringToInt(tokens.get(1).getValue())); // KENV 1/6/05
+                break;
+            case TEXT:
+            case KTEXT:
+                this.inDataSegment = false;
+                this.textAddress.setAddressSpace((directive == Directive.TEXT) ? this.textAddress.USER
+                        : this.textAddress.KERNEL);
+                if (tokens.size() > 1 && TokenType.isIntegerTokenType(tokens.get(1).getType()))
+                    this.textAddress.set(Binary.stringToInt(tokens.get(1).getValue())); // KENV 1/6/05
+                break;
+            case WORD:
+            case HALF:
+            case BYTE:
+            case FLOAT:
+            case DOUBLE:
+                this.dataDirective = directive;
+                if (passesDataSegmentCheck(token) && tokens.size() > 1) // DPS
+                    // 11/20/06, added text segment prohibition
+                    storeNumeric(tokens, directive, errors);
+                break;
+            case ASCII:
+            case ASCIIZ:
+                this.dataDirective = directive;
+                if (passesDataSegmentCheck(token))
+                    storeStrings(tokens, directive, errors);
+                break;
+            case ALIGN:
+                if (passesDataSegmentCheck(token)) {
+                    if (tokens.size() != 2) {
+                        errors.add(new ErrorMessage(token.getSourceMIPSprogram(),
+                                token.getSourceLine(), token.getStartPos(), "\"" + token.getValue()
+                                + "\" requires one operand"));
+                        return;
+                    }
+                    if (!TokenType.isIntegerTokenType(tokens.get(1).getType())
+                            || Binary.stringToInt(tokens.get(1).getValue()) < 0) {
+                        errors.add(new ErrorMessage(token.getSourceMIPSprogram(),
+                                token.getSourceLine(), token.getStartPos(), "\"" + token.getValue()
+                                + "\" requires a non-negative integer"));
+                        return;
+                    }
+                    int value = Binary.stringToInt(tokens.get(1).getValue()); // KENV 1/6/05
+                    if (value == 0)
+                        this.autoAlign = false;
+                    else
+                        this.dataAddress.set(this.alignToBoundary(this.dataAddress.get(),
+                                (int) Math.pow(2, value)));
+                }
+                break;
+            case SPACE:
+                if (passesDataSegmentCheck(token)) {
+                    if (tokens.size() != 2) {
+                        errors.add(new ErrorMessage(token.getSourceMIPSprogram(),
+                                token.getSourceLine(), token.getStartPos(), "\"" + token.getValue()
+                                + "\" requires one operand"));
+                        return;
+                    }
+                    if (!TokenType.isIntegerTokenType(tokens.get(1).getType())
+                            || Binary.stringToInt(tokens.get(1).getValue()) < 0) {
+                        errors.add(new ErrorMessage(token.getSourceMIPSprogram(),
+                                token.getSourceLine(), token.getStartPos(), "\"" + token.getValue()
+                                + "\" requires a non-negative integer"));
+                        return;
+                    }
+                    int value = Binary.stringToInt(tokens.get(1).getValue()); // KENV 1/6/05
+                    this.dataAddress.increment(value);
+                }
+                break;
+            case EXTERN:
+                if (tokens.size() != 3) {
+                    errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
+                            token.getStartPos(), "\"" + token.getValue()
+                            + "\" directive requires two operands (label and size)."));
+                    return;
+                }
+                if (!TokenType.isIntegerTokenType(tokens.get(2).getType())
+                        || Binary.stringToInt(tokens.get(2).getValue()) < 0) {
+                    errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
+                            token.getStartPos(), "\"" + token.getValue()
+                            + "\" requires a non-negative integer size"));
+                    return;
+                }
+                int size = Binary.stringToInt(tokens.get(2).getValue());
+                // If label already in global symtab, do nothing. If not, add it right now.
+                if (Main.symbolTable.getAddress(tokens.get(1).getValue()) == SymbolTable.NOT_FOUND) {
+                    Main.symbolTable.addSymbol(tokens.get(1), this.externAddress,
+                            Symbol.DATA_SYMBOL, errors);
+                    this.externAddress += size;
+                }
+                break;
+            case SET:
+                errors.add(new ErrorMessage(ErrorMessage.WARNING, token.getSourceMIPSprogram(), token
+                        .getSourceLine(), token.getStartPos(),
+                        "MARS currently ignores the .set directive."));
+                break;
+            case GLOBL:
+                if (tokens.size() < 2) {
+                    errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
+                            token.getStartPos(), "\"" + token.getValue()
+                            + "\" directive requires at least one argument."));
+                    return;
+                }
+                // SPIM limits .globl list to one label, why not extend it to a list?
+                for (int i = 1; i < tokens.size(); i++) {
+                    // Add it to a list of labels to be processed at the end of the
+                    // pass. At that point, transfer matching symbol definitions from 
+                    // local symbol table to global symbol table.
+                    Token label = tokens.get(i);
+                    if (label.getType() != TokenType.IDENTIFIER) {
+                        errors.add(new ErrorMessage(token.getSourceMIPSprogram(),
+                                token.getSourceLine(), token.getStartPos(), "\"" + token.getValue()
+                                + "\" directive argument must be label."));
+                        return;
+                    }
+                    globalDeclarationList.add(label);
+                }
+                break;
+            default:
+                errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(), token
+                        .getStartPos(), "\"" + token.getValue()
+                        + "\" directive recognized but not yet implemented."));
+                break;
         }
-        else {
-            errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(), token
-                    .getStartPos(), "\"" + token.getValue()
-                    + "\" directive recognized but not yet implemented."));
-            return;
-        }
-    } // executeDirective()
+    }
 
     // //////////////////////////////////////////////////////////////////////////////
     // Process the list of .globl labels, if any, declared and defined in this file.
@@ -883,13 +892,13 @@ public class Assembler {
     // This source code line, if syntactically correct, is a continuation of a
     // directive list begun on on previous line.
     private void executeDirectiveContinuation(TokenList tokens) {
-        Directives direct = this.dataDirective;
-        if (direct == Directives.WORD || direct == Directives.HALF || direct == Directives.BYTE
-                || direct == Directives.FLOAT || direct == Directives.DOUBLE) {
+        Directive direct = this.dataDirective;
+        if (direct == Directive.WORD || direct == Directive.HALF || direct == Directive.BYTE
+                || direct == Directive.FLOAT || direct == Directive.DOUBLE) {
             if (tokens.size() > 0)
                 storeNumeric(tokens, direct, errors);
         }
-        else if (direct == Directives.ASCII || direct == Directives.ASCIIZ)
+        else if (direct == Directive.ASCII || direct == Directive.ASCIIZ)
             if (passesDataSegmentCheck(tokens.get(0)))
                 storeStrings(tokens, direct, errors);
     } // executeDirectiveContinuation()
@@ -897,8 +906,8 @@ public class Assembler {
     // //////////////////////////////////////////////////////////////////////////////////
     // Given token, find the corresponding Instruction object. If token was not
     // recognized as OPERATOR, there is a problem.
-    private ArrayList matchInstruction(Token token) {
-        if (token.getType() != TokenTypes.OPERATOR) {
+    private ArrayList<Instruction> matchInstruction(Token token) {
+        if (token.getType() != TokenType.OPERATOR) {
             if (token.getSourceMIPSprogram().getLocalMacroPool()
                     .matchesAnyMacroName(token.getValue()))
                 this.errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token
@@ -910,7 +919,7 @@ public class Assembler {
                         + "\" is not a recognized operator"));
             return null;
         }
-        ArrayList inst = Main.instructionSet.matchOperator(token.getValue());
+        ArrayList<Instruction> inst = Main.instructionSet.matchOperator(token.getValue());
         if (inst == null) // This should NEVER happen...
             this.errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
                     token.getStartPos(), "Internal Assembler error: \"" + token.getValue()
@@ -923,21 +932,21 @@ public class Assembler {
     // Can also handle "directive continuations", e.g. second or subsequent line
     // of a multiline list, which does not contain the directive token. Just pass the
     // current directive as argument.
-    private void storeNumeric(TokenList tokens, Directives directive, ErrorList errors) {
+    private void storeNumeric(TokenList tokens, Directive directive, ErrorList errors) {
         Token token = tokens.get(0);
         // A double-check; should have already been caught...removed ".word" exemption 11/20/06
         if (!passesDataSegmentCheck(token))
             return;
         // Correctly handles case where this is a "directive continuation" line.
         int tokenStart = 0;
-        if (token.getType() == TokenTypes.DIRECTIVE)
+        if (token.getType() == TokenType.DIRECTIVE)
             tokenStart = 1;
 
         // Set byte length in memory of each number (e.g. WORD is 4, BYTE is 1, etc)
         int lengthInBytes = DataTypes.getLengthInBytes(directive);
 
         // Handle the "value : n" format, which replicates the value "n" times.
-        if (tokens.size() == 4 && tokens.get(2).getType() == TokenTypes.COLON) {
+        if (tokens.size() == 4 && tokens.get(2).getType() == TokenType.COLON) {
             Token valueToken = tokens.get(1);
             Token repetitionsToken = tokens.get(3);
             // DPS 15-jul-08, allow ":" for repetition for all numeric
@@ -946,12 +955,12 @@ public class Assembler {
             // (integer directive AND integer value OR floating directive AND
             // (integer value OR floating value))
             // AND integer repetition value
-            if (!(Directives.isIntegerDirective(directive)
-                    && TokenTypes.isIntegerTokenType(valueToken.getType()) || Directives
-                    .isFloatingDirective(directive)
-                    && (TokenTypes.isIntegerTokenType(valueToken.getType()) || TokenTypes
-                    .isFloatingTokenType(valueToken.getType())))
-                    || !TokenTypes.isIntegerTokenType(repetitionsToken.getType())) {
+            if (!(directive.isIntegerDirective()
+                    && TokenType.isIntegerTokenType(valueToken.getType())
+                    || directive.isFloatingDirective()
+                    && (TokenType.isIntegerTokenType(valueToken.getType())
+                    || TokenType.isFloatingTokenType(valueToken.getType())))
+                    || !TokenType.isIntegerTokenType(repetitionsToken.getType())) {
                 errors.add(new ErrorMessage(fileCurrentlyBeingAssembled,
                         valueToken.getSourceLine(), valueToken.getStartPos(),
                         "malformed expression"));
@@ -969,7 +978,7 @@ public class Assembler {
                     this.dataAddress
                             .set(this.alignToBoundary(this.dataAddress.get(), lengthInBytes));
                 for (int i = 0; i < repetitions; i++)
-                    if (Directives.isIntegerDirective(directive))
+                    if (directive.isIntegerDirective())
                         storeInteger(valueToken, directive, errors);
                     else
                         storeRealNumber(valueToken, directive, errors);
@@ -1002,9 +1011,9 @@ public class Assembler {
         // if not in ".word w : n" format, must just be list of one or more values.
         for (int i = tokenStart; i < tokens.size(); i++) {
             token = tokens.get(i);
-            if (Directives.isIntegerDirective(directive))
+            if (directive.isIntegerDirective())
                 storeInteger(token, directive, errors);
-            if (Directives.isFloatingDirective(directive))
+            if (directive.isFloatingDirective())
                 storeRealNumber(token, directive, errors);
         }
     } // storeNumeric()
@@ -1014,18 +1023,18 @@ public class Assembler {
     // Called by storeNumeric()
     // NOTE: The token itself may be a label, in which case the correct action is
     // to store the address of that label (into however many bytes specified).
-    private void storeInteger(Token token, Directives directive, ErrorList errors) {
+    private void storeInteger(Token token, Directive directive, ErrorList errors) {
         int lengthInBytes = DataTypes.getLengthInBytes(directive);
-        if (TokenTypes.isIntegerTokenType(token.getType())) {
+        if (TokenType.isIntegerTokenType(token.getType())) {
             int value = Binary.stringToInt(token.getValue());
             int fullvalue = value;
             // DPS 4-Jan-2013.  Overriding 6-Jan-2005 KENV changes.
             // If value is out of range for the directive, will simply truncate
             // the leading bits (includes sign bits). This is what SPIM does.  
             // But will issue a warning (not error) which SPIM does not do.
-            if (directive == Directives.BYTE)
+            if (directive == Directive.BYTE)
                 value = value & 0x000000FF;
-            else if (directive == Directives.HALF)
+            else if (directive == Directive.HALF)
                 value = value & 0x0000FFFF;
 
             if (DataTypes.outOfRange(directive, fullvalue))
@@ -1058,14 +1067,14 @@ public class Assembler {
                 this.textAddress.increment(lengthInBytes);
             }
         } // end of "if integer token type"
-        else if (token.getType() == TokenTypes.IDENTIFIER)
+        else if (token.getType() == TokenType.IDENTIFIER)
             if (this.inDataSegment) {
                 int value = fileCurrentlyBeingAssembled.getLocalSymbolTable()
                         .getAddressLocalOrGlobal(token.getValue());
                 if (value == SymbolTable.NOT_FOUND) {
                     // Record value 0 for now, then set up backpatch entry
-                    int dataAddress = writeToDataSegment(0, lengthInBytes, token, errors);
-                    currentFileDataSegmentForwardReferences.add(dataAddress, lengthInBytes, token);
+                    int dataAddr = writeToDataSegment(0, lengthInBytes, token, errors);
+                    currentFileDataSegmentForwardReferences.add(dataAddr, lengthInBytes, token);
                 }
                 else // label already defined, so write its address
                     writeToDataSegment(value, lengthInBytes, token, errors);
@@ -1084,12 +1093,12 @@ public class Assembler {
     // //////////////////////////////////////////////////////////////////////////////
     // Store real (fixed or floating point) value given floating (float, double) directive.
     // Called by storeNumeric()
-    private void storeRealNumber(Token token, Directives directive, ErrorList errors) {
+    private void storeRealNumber(Token token, Directive directive, ErrorList errors) {
         int lengthInBytes = DataTypes.getLengthInBytes(directive);
         double value;
 
-        if (TokenTypes.isIntegerTokenType(token.getType())
-                || TokenTypes.isFloatingTokenType(token.getType())) {
+        if (TokenType.isIntegerTokenType(token.getType())
+                || TokenType.isFloatingTokenType(token.getType())) {
             try {
                 value = Double.parseDouble(token.getValue());
             }
@@ -1114,9 +1123,9 @@ public class Assembler {
         }
 
         // Value has been validated; let's store it.
-        if (directive == Directives.FLOAT)
+        if (directive == Directive.FLOAT)
             writeToDataSegment(Float.floatToIntBits((float) value), lengthInBytes, token, errors);
-        if (directive == Directives.DOUBLE)
+        if (directive == Directive.DOUBLE)
             writeDoubleToDataSegment(value, token, errors);
 
     } // storeRealNumber
@@ -1125,15 +1134,15 @@ public class Assembler {
     // Use directive argument to distinguish between ASCII and ASCIIZ. The
     // latter stores a terminating null byte. Can handle a list of one or more
     // strings on a single line.
-    private void storeStrings(TokenList tokens, Directives direct, ErrorList errors) {
+    private void storeStrings(TokenList tokens, Directive direct, ErrorList errors) {
         Token token;
         // Correctly handles case where this is a "directive continuation" line.
         int tokenStart = 0;
-        if (tokens.get(0).getType() == TokenTypes.DIRECTIVE)
+        if (tokens.get(0).getType() == TokenType.DIRECTIVE)
             tokenStart = 1;
         for (int i = tokenStart; i < tokens.size(); i++) {
             token = tokens.get(i);
-            if (token.getType() != TokenTypes.QUOTED_STRING)
+            if (token.getType() != TokenType.QUOTED_STRING)
                 errors.add(new ErrorMessage(token.getSourceMIPSprogram(), token.getSourceLine(),
                         token.getStartPos(), "\"" + token.getValue()
                         + "\" is not a valid character string"));
@@ -1190,7 +1199,7 @@ public class Assembler {
                     }
                     this.dataAddress.increment(DataTypes.CHAR_SIZE);
                 }
-                if (direct == Directives.ASCIIZ) {
+                if (direct == Directive.ASCIIZ) {
                     try {
                         Main.memory.set(this.dataAddress.get(), 0, DataTypes.CHAR_SIZE);
                     }
@@ -1284,11 +1293,11 @@ public class Assembler {
     // ProgramStatement.getAddress()
     private class ProgramStatementComparator implements Comparator {
         // Will be used to sort the collection. Unsigned int compare, because
-        // all kernel 32-bit
-        // addresses have 1 in high order bit, which makes the int negative.
-        // "Unsigned" compare
-        // is needed when signs of the two operands differ.
+        // all kernel 32-bit addresses have 1 in high order bit, which makes
+        // the int negative.
+        // "Unsigned" compare is needed when signs of the two operands differ.
 
+        @Override
         public int compare(Object obj1, Object obj2) {
             if (obj1 instanceof ProgramStatement && obj2 instanceof ProgramStatement) {
                 int addr1 = ((ProgramStatement) obj1).getAddress();
@@ -1300,6 +1309,7 @@ public class Assembler {
         }
 
         // Take a hard line.
+        @Override
         public boolean equals(Object obj) {
             return this == obj;
         }
@@ -1361,10 +1371,10 @@ public class Assembler {
     // - the label's token. Normally need only the name but error message needs more.
     private class DataSegmentForwardReferences {
 
-        private ArrayList forwardReferenceList;
+        private ArrayList<DataSegmentForwardReference> forwardReferenceList;
 
         private DataSegmentForwardReferences() {
-            forwardReferenceList = new ArrayList();
+            forwardReferenceList = new ArrayList<>();
         }
 
         private int size() {
@@ -1403,7 +1413,7 @@ public class Assembler {
             int labelAddress;
             DataSegmentForwardReference entry;
             for (int i = 0; i < forwardReferenceList.size(); i++) {
-                entry = (DataSegmentForwardReference) forwardReferenceList.get(i);
+                entry = forwardReferenceList.get(i);
                 labelAddress = localSymtab.getAddressLocalOrGlobal(entry.token.getValue());
                 if (labelAddress != SymbolTable.NOT_FOUND) {
                     // patch address has to be valid b/c we already stored there...
@@ -1423,13 +1433,11 @@ public class Assembler {
         // Call this when you are confident that remaining list entries are to
         // undefined labels.
         private void generateErrorMessages(ErrorList errors) {
-            DataSegmentForwardReference entry;
-            for (int i = 0; i < forwardReferenceList.size(); i++) {
-                entry = (DataSegmentForwardReference) forwardReferenceList.get(i);
-                errors.add(new ErrorMessage(entry.token.getSourceMIPSprogram(), entry.token
-                        .getSourceLine(), entry.token.getStartPos(), "Symbol \""
-                        + entry.token.getValue() + "\" not found in symbol table."));
-            }
+            for (DataSegmentForwardReference entry : forwardReferenceList)
+                errors.add(new ErrorMessage(entry.token.getSourceMIPSprogram(),
+                        entry.token.getSourceLine(),
+                        entry.token.getStartPos(),
+                        "Symbol \"" + entry.token.getValue() + "\" not found in symbol table."));
         }
 
         // inner-inner class to hold each entry of the forward reference list.

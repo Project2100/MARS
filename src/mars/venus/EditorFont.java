@@ -3,7 +3,7 @@ package mars.venus;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.util.Arrays;
-import mars.Settings;
+import mars.settings.IntegerSettings;
 
 /*
  Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -185,7 +185,7 @@ class EditorFont {
     private static final String SPACES = "                                                  ";
 
     public static String substituteSpacesForTabs(String string) {
-        return substituteSpacesForTabs(string, Settings.IntegerSettings.EDITOR_TAB_SIZE.get());
+        return substituteSpacesForTabs(string, IntegerSettings.EDITOR_TAB_SIZE.get());
     }
 
     /**

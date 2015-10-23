@@ -29,10 +29,10 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import mars.MIPSprogram;
 import mars.Main;
-import mars.Settings;
 import mars.assembler.Symbol;
 import mars.assembler.SymbolTable;
 import mars.mips.hardware.Memory;
+import mars.settings.IntegerSettings;
 import mars.util.Binary;
 
 /*
@@ -148,7 +148,7 @@ public class LabelsWindow extends JInternalFrame {
     public LabelsWindow() {
         super("Labels", true, false, true, true);
         try {
-            sortState = Settings.IntegerSettings.LABEL_SORT_STATE.get();
+            sortState = IntegerSettings.LABEL_SORT_STATE.get();
         }
         catch (NumberFormatException nfe) {
             sortState = 0;
@@ -287,9 +287,9 @@ public class LabelsWindow extends JInternalFrame {
             }
             // Scroll to this address, either in Text Segment display or Data Segment display
             if (Memory.inTextSegment(address) || Memory.inKernelTextSegment(address))
-                (Main.getGUI().executePane).getTextSegmentWindow().selectStepAtAddress(address);
+                Main.getGUI().textSegment.selectStepAtAddress(address);
             else
-                (Main.getGUI().executePane).getDataSegmentWindow().selectCellForAddress(address);
+                Main.getGUI().dataSegment.selectCellForAddress(address);
         }
     }
 
@@ -329,7 +329,7 @@ public class LabelsWindow extends JInternalFrame {
             SymbolTable symbolTable = (myMIPSprogram == null)
                     ? Main.symbolTable
                     : myMIPSprogram.getLocalSymbolTable();
-            int addressBase = (Main.getGUI().executePane).getAddressDisplayBase();
+            int addressBase = Main.getGUI().dataSegment.getAddressDisplayBase();
             if (textLabels.isSelected() && dataLabels.isSelected())
                 symbols = symbolTable.getAllSymbols();
             else if (textLabels.isSelected() && !dataLabels.isSelected())
@@ -358,7 +358,7 @@ public class LabelsWindow extends JInternalFrame {
         public void updateLabelAddresses() {
             if (labelPanel.getComponentCount() == 0)
                 return; // ignore if no content to change
-            int addressBase = (Main.getGUI().executePane).getAddressDisplayBase();
+            int addressBase = Main.getGUI().dataSegment.getAddressDisplayBase();
             int address;
             String formattedAddress;
             int numSymbols = (labelData == null) ? 0 : labelData.length;
@@ -499,7 +499,7 @@ public class LabelsWindow extends JInternalFrame {
                     sortState = sortStateTransitions[sortState][realIndex];
                     tableSortComparator = tableSortingComparators[sortState];
                     columnNames = sortColumnHeadings[sortState];
-                    Settings.IntegerSettings.LABEL_SORT_STATE.set(sortState);
+                    IntegerSettings.LABEL_SORT_STATE.set(sortState);
 //                    Main.getSettings().setLabelSortState(Integer.toString(sortState));
                     setupTable();
                     LabelsWindow.this.validate();

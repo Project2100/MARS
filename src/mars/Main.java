@@ -1,5 +1,6 @@
 package mars;
 
+import mars.settings.Settings;
 import java.awt.EventQueue;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ import mars.assembler.SymbolTable;
 import mars.mips.hardware.Memory;
 import mars.mips.instructions.InstructionSet;
 import mars.mips.instructions.syscalls.SyscallNumberOverride;
-import mars.venus.MarsSplashScreen;
+//import mars.venus.MarsSplashScreen;
 import mars.venus.VenusUI;
 
 /*
@@ -65,6 +66,19 @@ public class Main {
     private static final String configPropertiesFile = "Config";
     private static final String syscallPropertiesFile = "Syscall";
 
+    // Properties file used to hold default settings
+    public static final String settingsFile = "/Settings.properties";
+    public static final Properties props = new Properties();
+
+    static {
+        try {
+            props.load(Main.class.getResourceAsStream(settingsFile));
+        }
+        catch (IOException e) {
+            Main.logger.log(Level.WARNING, "Unable to read Settings.properties file. Using built-in defaults.", e);
+        }
+    }
+
     /**
      * The status of implemented MIPS instructions.
      */
@@ -96,7 +110,7 @@ public class Main {
      * Object that contains various settings that can be accessed modified
      * internally.
      */
-    static Settings settings;
+    private static Settings settings;
     /**
      * String to GUI's RunI/O text area when echoing user input from pop-up
      * dialog.
@@ -120,6 +134,14 @@ public class Main {
      */
     private static VenusUI gui = null;
     /**
+     * MARS copyright years
+     */
+    public static final String copyrightYears = "2003-2014";
+    /**
+     * MARS copyright holders
+     */
+    public static final String copyrightHolders = "Pete Sanderson and Kenneth Vollmar";
+    /**
      * The current MARS version number. Can't wait for "initialize()" call to
      * set it.
      */
@@ -141,14 +163,6 @@ public class Main {
      */
     public static final int maximumBacksteps = getBackstepLimit();
     /**
-     * MARS copyright years
-     */
-    public static final String copyrightYears = getCopyrightYears();
-    /**
-     * MARS copyright holders
-     */
-    public static final String copyrightHolders = getCopyrightHolders();
-    /**
      * Placeholder for non-printable ASCII codes
      */
     public static final String ASCII_NON_PRINT = getAsciiNonPrint();
@@ -165,18 +179,21 @@ public class Main {
 
     public static boolean runSpeedPanelExists = false;
 
-    private static String getCopyrightYears() {
-        return "2003-2014";
-    }
-
-    private static String getCopyrightHolders() {
-        return "Pete Sanderson and Kenneth Vollmar";
-    }
-
+    /**
+     * Getter for MARS' GUI, is null if arguments were provided at application
+     * start
+     *
+     * @return the GUI's main class reference
+     */
     public static VenusUI getGUI() {
         return gui;
     }
 
+    /**
+     * Getter for MARS' settings
+     *
+     * @return the Settings object containing all application settings
+     */
     public static Settings getSettings() {
         return settings;
     }
@@ -187,11 +204,12 @@ public class Main {
     public static void initialize() {
         if (!initialized) {
             Thread.setDefaultUncaughtExceptionHandler(Main.exHandler);
+            logger.setLevel(debug ? Level.INFO : Level.WARNING);
+            settings = new Settings();
             memory = Memory.getInstance();  //clients can use Memory.getInstance instead of Globals.memory
             instructionSet = new InstructionSet();
             instructionSet.populate();
             symbolTable = new SymbolTable("global");
-            settings = new Settings();
             initialized = true;
             debug = false;
             memory.clear(); // will establish memory configuration from setting
@@ -344,6 +362,12 @@ public class Main {
         return overrides;
     }
 
+    /**
+     * Starting point of MARS
+     *
+     * @param args the program arguments. If none are provided, the application
+     * will start its GUI
+     */
     public static void main(String[] args) {
         initialize();
 
@@ -358,9 +382,12 @@ public class Main {
             // purpose; calling it externally seems to be safe
             //
             // Andrea Proietto, 15/04/28 21:37
-            MarsSplashScreen.showSplash(2000);
+            //
+            // NOTE 151016 - This seems to slow down startup - removing
+//            MarsSplashScreen.showSplash(2000);
 
             EventQueue.invokeLater(() -> {
+                settings.AWTinit();
                 Thread.setDefaultUncaughtExceptionHandler(exHandler);
                 gui = new VenusUI();
             });

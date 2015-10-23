@@ -4,12 +4,13 @@ import java.util.ArrayList;
 import mars.assembler.SymbolTable;
 import mars.assembler.Token;
 import mars.assembler.TokenList;
-import mars.assembler.TokenTypes;
+import mars.assembler.TokenType;
 import mars.mips.hardware.Coprocessor1;
 import mars.mips.hardware.RegisterFile;
 import mars.mips.instructions.BasicInstruction;
 import mars.mips.instructions.BasicInstructionFormat;
 import mars.mips.instructions.Instruction;
+import mars.settings.BooleanSettings;
 import mars.util.Binary;
 
 /*
@@ -123,7 +124,7 @@ public class ProgramStatement {
             this.operands = null;
             this.numOperands = 0;
             this.instruction = (binaryStatement == 0) // this is a "nop" statement
-                    ? (Instruction) Main.instructionSet.matchOperator("nop").get(0)
+                    ? Main.instructionSet.matchOperator("nop").get(0)
                     : null;
         }
         else {
@@ -172,7 +173,8 @@ public class ProgramStatement {
         String basicStatementElement = token.getValue() + " ";
         String basic = basicStatementElement;
         basicStatementList.addString(basicStatementElement); // the operator
-        TokenTypes tokenType, nextTokenType;
+        TokenType tokenType;
+        TokenType nextTokenType;
         String tokenValue;
         int registerNumber;
         this.numOperands = 0;
@@ -180,7 +182,7 @@ public class ProgramStatement {
             token = strippedTokenList.get(i);
             tokenType = token.getType();
             tokenValue = token.getValue();
-            if (tokenType == TokenTypes.REGISTER_NUMBER) {
+            if (tokenType == TokenType.REGISTER_NUMBER) {
                 basicStatementElement = tokenValue;
                 basic += basicStatementElement;
                 basicStatementList.addString(basicStatementElement);
@@ -194,7 +196,7 @@ public class ProgramStatement {
                 }
                 this.operands[this.numOperands++] = registerNumber;
             }
-            else if (tokenType == TokenTypes.REGISTER_NAME) {
+            else if (tokenType == TokenType.REGISTER_NAME) {
                 registerNumber = RegisterFile.getNumber(tokenValue);
                 basicStatementElement = "$" + registerNumber;
                 basic += basicStatementElement;
@@ -206,7 +208,7 @@ public class ProgramStatement {
                 }
                 this.operands[this.numOperands++] = registerNumber;
             }
-            else if (tokenType == TokenTypes.FP_REGISTER_NAME) {
+            else if (tokenType == TokenType.FP_REGISTER_NAME) {
                 registerNumber = Coprocessor1.getRegisterNumber(tokenValue);
                 basicStatementElement = "$f" + registerNumber;
                 basic += basicStatementElement;
@@ -218,7 +220,7 @@ public class ProgramStatement {
                 }
                 this.operands[this.numOperands++] = registerNumber;
             }
-            else if (tokenType == TokenTypes.IDENTIFIER) {
+            else if (tokenType == TokenType.IDENTIFIER) {
                 int address = this.sourceMIPSprogram.getLocalSymbolTable().getAddressLocalOrGlobal(tokenValue);
                 if (address == SymbolTable.NOT_FOUND) { // symbol used without being defined
                     errors.add(new ErrorMessage(this.sourceMIPSprogram, token.getSourceLine(), token.getStartPos(),
@@ -260,8 +262,8 @@ public class ProgramStatement {
                     basicStatementList.addValue(address);
                 this.operands[this.numOperands++] = address;
             }
-            else if (tokenType == TokenTypes.INTEGER_5 || tokenType == TokenTypes.INTEGER_16
-                    || tokenType == TokenTypes.INTEGER_16U || tokenType == TokenTypes.INTEGER_32) {
+            else if (tokenType == TokenType.INTEGER_5 || tokenType == TokenType.INTEGER_16
+                    || tokenType == TokenType.INTEGER_16U || tokenType == TokenType.INTEGER_32) {
 
                 int tempNumeric = Binary.stringToInt(tokenValue);
 
@@ -323,8 +325,8 @@ public class ProgramStatement {
             // next token is a parenthesis
             if ((i < strippedTokenList.size() - 1)) {
                 nextTokenType = strippedTokenList.get(i + 1).getType();
-                if (tokenType != TokenTypes.LEFT_PAREN && tokenType != TokenTypes.RIGHT_PAREN
-                        && nextTokenType != TokenTypes.LEFT_PAREN && nextTokenType != TokenTypes.RIGHT_PAREN) {
+                if (tokenType != TokenType.LEFT_PAREN && tokenType != TokenType.RIGHT_PAREN
+                        && nextTokenType != TokenType.LEFT_PAREN && nextTokenType != TokenType.RIGHT_PAREN) {
                     basicStatementElement = ",";
                     basic += basicStatementElement;
                     basicStatementList.addString(basicStatementElement);
@@ -651,16 +653,16 @@ public class ProgramStatement {
             // add separator if not at end of token list AND neither current nor 
             // next token is a parenthesis
             if (tokenListCounter > 1 && tokenListCounter < instr.getTokenList().size()) {
-                TokenTypes thisTokenType = instr.getTokenList().get(tokenListCounter).getType();
-                if (thisTokenType != TokenTypes.LEFT_PAREN && thisTokenType != TokenTypes.RIGHT_PAREN)
+                TokenType thisTokenType = instr.getTokenList().get(tokenListCounter).getType();
+                if (thisTokenType != TokenType.LEFT_PAREN && thisTokenType != TokenType.RIGHT_PAREN)
                     statementList.addString(",");
             }
             boolean notOperand = true;
             while (notOperand && tokenListCounter < instr.getTokenList().size()) {
-                TokenTypes tokenType = instr.getTokenList().get(tokenListCounter).getType();
-                if (tokenType.equals(TokenTypes.LEFT_PAREN))
+                TokenType tokenType = instr.getTokenList().get(tokenListCounter).getType();
+                if (tokenType.equals(TokenType.LEFT_PAREN))
                     statementList.addString("(");
-                else if (tokenType.equals(TokenTypes.RIGHT_PAREN))
+                else if (tokenType.equals(TokenType.RIGHT_PAREN))
                     statementList.addString(")");
                 else if (tokenType.toString().contains("REGISTER")) {
                     String marker = (tokenType.toString().contains("FP_REGISTER")) ? "$f" : "$";
@@ -675,10 +677,10 @@ public class ProgramStatement {
             }
         }
         while (tokenListCounter < instr.getTokenList().size()) {
-            TokenTypes tokenType = instr.getTokenList().get(tokenListCounter).getType();
-            if (tokenType.equals(TokenTypes.LEFT_PAREN))
+            TokenType tokenType = instr.getTokenList().get(tokenListCounter).getType();
+            if (tokenType.equals(TokenType.LEFT_PAREN))
                 statementList.addString("(");
-            else if (tokenType.equals(TokenTypes.RIGHT_PAREN))
+            else if (tokenType.equals(TokenType.RIGHT_PAREN))
                 statementList.addString(")");
             tokenListCounter++;
         }
@@ -721,8 +723,8 @@ public class ProgramStatement {
 
         @Override
         public String toString() {
-            int addressBase = (Settings.BooleanSettings.DISPLAY_ADDRESSES_IN_HEX.isSet()) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
-            int valueBase = (Settings.BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet()) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
+            int addressBase = (BooleanSettings.DISPLAY_ADDRESSES_IN_HEX.isSet()) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
+            int valueBase = (BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet()) ? mars.venus.NumberDisplayBaseChooser.HEXADECIMAL : mars.venus.NumberDisplayBaseChooser.DECIMAL;
 
             StringBuilder result = new StringBuilder();
             for (ListElement elem : list) switch (elem.type) {

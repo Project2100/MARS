@@ -1,10 +1,13 @@
 package mars.venus;
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import javax.swing.Icon;
+import java.awt.event.KeyEvent;
+import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import mars.Main;
 
 /*
  Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
@@ -39,7 +42,7 @@ import javax.swing.event.TableModelListener;
  * removed, thus will set its enabled status true or false depending on whether
  * breakpoints remain after that action.
  */
-public class RunClearBreakpointsAction extends GuiAction implements TableModelListener {
+public class RunClearBreakpointsAction extends AbstractAction implements TableModelListener {
 
     /**
      * Create the object and register with text segment window as a listener on
@@ -47,26 +50,24 @@ public class RunClearBreakpointsAction extends GuiAction implements TableModelLi
      * segment window will hang onto this registration info and transfer it to
      * the table model upon creation (which happens with each successful
      * assembly).
-     * @param name
-     * @param icon
-     * @param descrip
-     * @param mnemonic
-     * @param accel
-     * @param gui
      */
-    public RunClearBreakpointsAction(String name, Icon icon, String descrip,
-            Integer mnemonic, KeyStroke accel, VenusUI gui) {
-        super(name, icon, descrip, mnemonic, accel, gui);
-        gui.executePane.getTextSegmentWindow().registerTableModelListener(this);
+    public RunClearBreakpointsAction() {
+        super("Clear all breakpoints");
+
+        putValue(SHORT_DESCRIPTION, "Clears all execution breakpoints set since the last assemble.");
+        putValue(MNEMONIC_KEY, KeyEvent.VK_K);
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_K, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
     }
 
     /**
      * When this option is selected, tell text segment window to clear
      * breakpoints in its table model.
+     *
+     * @param e
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        mainUI.executePane.getTextSegmentWindow().clearAllBreakpoints();
+        Main.getGUI().textSegment.clearAllBreakpoints();
     }
 
     /**
@@ -74,11 +75,12 @@ public class RunClearBreakpointsAction extends GuiAction implements TableModelLi
      * segment table model. The only editable column is breakpoints so this
      * method is called only when user adds or removes a breakpoint. Gets new
      * breakpoint count and sets enabled status accordingly.
+     *
      * @param e
      */
     @Override
     public void tableChanged(TableModelEvent e) {
-        setEnabled(mainUI.executePane.getTextSegmentWindow().getBreakpointCount() > 0);
+        setEnabled(Main.getGUI().textSegment.getBreakpointCount() > 0);
     }
 
 }

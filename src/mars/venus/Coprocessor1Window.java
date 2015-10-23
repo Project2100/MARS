@@ -20,13 +20,15 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
+import mars.settings.ColorSettings;
 import mars.Main;
-import mars.Settings;
 import mars.mips.hardware.AccessNotice;
 import mars.mips.hardware.Coprocessor1;
 import mars.mips.hardware.InvalidRegisterAccessException;
 import mars.mips.hardware.Register;
 import mars.mips.hardware.RegisterAccessNotice;
+import mars.settings.BooleanSettings;
+import mars.settings.FontSettings;
 import mars.simulator.Simulator;
 import mars.simulator.SimulatorNotice;
 import mars.util.Binary;
@@ -76,7 +78,6 @@ public class Coprocessor1Window extends JPanel implements ActionListener, Observ
     private static final int NAME_COLUMN = 0;
     private static final int FLOAT_COLUMN = 1;
     private static final int DOUBLE_COLUMN = 2;
-    private static Settings settings;
 
     /**
      * Constructor which sets up a fresh window with a table that contains the
@@ -85,7 +86,6 @@ public class Coprocessor1Window extends JPanel implements ActionListener, Observ
      */
     public Coprocessor1Window() {
         Simulator.getInstance().addObserver(this);
-        settings = Main.getSettings();
         // Display registers in table contained in scroll pane.
         this.setLayout(new BorderLayout()); // table display will occupy entire width if widened
         table = new MyTippedJTable(new RegTableModel(setupWindow()));
@@ -158,7 +158,7 @@ public class Coprocessor1Window extends JPanel implements ActionListener, Observ
         tableData = new Object[registers.length][3];
         for (int i = 0; i < registers.length; i++) {
             tableData[i][0] = registers[i].getName();
-            tableData[i][1] = NumberDisplayBaseChooser.formatFloatNumber(registers[i].getValue(), NumberDisplayBaseChooser.getBase(Settings.BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet()));//formatNumber(floatValue,NumberDisplayBaseChooser.getBase(settings.getDisplayValuesInHex()));
+            tableData[i][1] = NumberDisplayBaseChooser.formatFloatNumber(registers[i].getValue(), NumberDisplayBaseChooser.getBase(BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet()));//formatNumber(floatValue,NumberDisplayBaseChooser.getBase(settings.getDisplayValuesInHex()));
             if (i % 2 == 0) { // even numbered double registers
                 long longValue = 0;
                 try {
@@ -166,7 +166,7 @@ public class Coprocessor1Window extends JPanel implements ActionListener, Observ
                 }
                 catch (InvalidRegisterAccessException e) {
                 } // cannot happen since i must be even
-                tableData[i][2] = NumberDisplayBaseChooser.formatDoubleNumber(longValue, NumberDisplayBaseChooser.getBase(Settings.BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet()));
+                tableData[i][2] = NumberDisplayBaseChooser.formatDoubleNumber(longValue, NumberDisplayBaseChooser.getBase(BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet()));
             }
             else
                 tableData[i][2] = "";
@@ -180,7 +180,7 @@ public class Coprocessor1Window extends JPanel implements ActionListener, Observ
     public void clearWindow() {
         this.clearHighlighting();
         Coprocessor1.resetRegisters();
-        this.updateRegisters((Main.getGUI().executePane).getValueDisplayBase());
+        this.updateRegisters(Main.getGUI().dataSegment.getValueDisplayBase());
         Coprocessor1.clearConditionFlags();
         this.updateConditionFlagDisplay();
     }
@@ -207,7 +207,7 @@ public class Coprocessor1Window extends JPanel implements ActionListener, Observ
      * Redisplay registers using current display number base (10 or 16)
      */
     public void updateRegisters() {
-        updateRegisters((Main.getGUI().executePane).getValueDisplayBase());
+        updateRegisters(Main.getGUI().dataSegment.getValueDisplayBase());
     }
 
     /**
@@ -353,20 +353,20 @@ public class Coprocessor1Window extends JPanel implements ActionListener, Observ
                     isSelected, hasFocus, row, column);
             cell.setFont(font);
             cell.setHorizontalAlignment(alignment);
-            if (Settings.BooleanSettings.REGISTERS_HIGHLIGHTING.isSet() && highlighting && row == highlightRow) {
-                cell.setBackground(Settings.ColorSettings.REGISTER_HIGHLIGHT.getBackground());
-                cell.setForeground(Settings.ColorSettings.REGISTER_HIGHLIGHT.getForeground());
-                cell.setFont(Settings.FontSettings.REGISTER_HIGHLIGHT_FONT.get());
+            if (BooleanSettings.REGISTERS_HIGHLIGHTING.isSet() && highlighting && row == highlightRow) {
+                cell.setBackground(ColorSettings.REGISTER_HIGHLIGHT.getBackground());
+                cell.setForeground(ColorSettings.REGISTER_HIGHLIGHT.getForeground());
+                cell.setFont(FontSettings.REGISTER_HIGHLIGHT_FONT.get());
             }
             else if (row % 2 == 0) {
-                cell.setBackground(Settings.ColorSettings.EVEN_ROW.getBackground());
-                cell.setForeground(Settings.ColorSettings.EVEN_ROW.getForeground());
-                cell.setFont(Settings.FontSettings.EVEN_ROW_FONT.get());
+                cell.setBackground(ColorSettings.EVEN_ROW.getBackground());
+                cell.setForeground(ColorSettings.EVEN_ROW.getForeground());
+                cell.setFont(FontSettings.EVEN_ROW_FONT.get());
             }
             else {
-                cell.setBackground(Settings.ColorSettings.ODD_ROW.getBackground());
-                cell.setForeground(Settings.ColorSettings.ODD_ROW.getForeground());
-                cell.setFont(Settings.FontSettings.ODD_ROW_FONT.get());
+                cell.setBackground(ColorSettings.ODD_ROW.getBackground());
+                cell.setForeground(ColorSettings.ODD_ROW.getForeground());
+                cell.setFont(FontSettings.ODD_ROW_FONT.get());
             }
             return cell;
         }
@@ -429,7 +429,7 @@ public class Coprocessor1Window extends JPanel implements ActionListener, Observ
          */
         @Override
         public void setValueAt(Object value, int row, int col) {
-            int valueBase = (Main.getGUI().executePane).getValueDisplayBase();
+            int valueBase = Main.getGUI().dataSegment.getValueDisplayBase();
             float fVal;
             double dVal;
             String sVal = (String) value;

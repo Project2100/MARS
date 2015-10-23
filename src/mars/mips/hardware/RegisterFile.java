@@ -3,9 +3,9 @@
    import java.util.Observer;
 
    import mars.Main;
-import mars.Settings;
    import mars.assembler.SymbolTable;
    import mars.mips.instructions.Instruction;
+import mars.settings.BooleanSettings;
    import mars.util.Binary;
 
 /*
@@ -299,7 +299,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          for(int i=0; i< regFile.length; i++){
             regFile[i].resetValue();
          }
-         initializeProgramCounter(Settings.BooleanSettings.START_AT_MAIN.isSet());// replaces "programCounter.resetValue()", DPS 3/3/09
+         initializeProgramCounter(BooleanSettings.START_AT_MAIN.isSet());// replaces "programCounter.resetValue()", DPS 3/3/09
          hi.resetValue();
          lo.resetValue();
       }

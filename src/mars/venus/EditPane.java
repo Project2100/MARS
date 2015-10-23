@@ -3,6 +3,8 @@ package mars.venus;
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.Point;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,7 +27,10 @@ import javax.swing.undo.UndoManager;
 import mars.MIPSprogram;
 import mars.Main;
 import mars.ProcessingException;
-import mars.Settings;
+import mars.settings.BooleanSettings;
+import mars.settings.FontSettings;
+import mars.settings.IntegerSettings;
+import mars.settings.StringSettings;
 import mars.venus.editors.MARSTextEditingArea;
 import mars.venus.editors.generic.GenericTextArea;
 import mars.venus.editors.jeditsyntax.JEditBasedTextArea;
@@ -92,9 +97,6 @@ public class EditPane extends JPanel implements Observer {
         if (source == null)
             throw new IllegalArgumentException("Passing null Path to tab constructor!");
 
-        // We want to be notified of editor font changes! See update() below.
-        Main.getSettings().addObserver(this);
-
         // Field init
         file = source;
         edited = false;
@@ -108,10 +110,10 @@ public class EditPane extends JPanel implements Observer {
         showLineNumbers.setToolTipText("If checked, will display line number for each line of text.");
         showLineNumbers.setEnabled(false);
         // Show line numbers by default.
-        showLineNumbers.setSelected(Settings.BooleanSettings.EDITOR_LINE_NUMBERS.isSet());
+        showLineNumbers.setSelected(BooleanSettings.EDITOR_LINE_NUMBERS.isSet());
 
         // sourceCode uses caretPositionLabel
-        sourceCode = Settings.BooleanSettings.GENERIC_TEXT_EDITOR.isSet()
+        sourceCode = BooleanSettings.GENERIC_TEXT_EDITOR.isSet()
                 ? new GenericTextArea(this, lineNumbers)
                 : new JEditBasedTextArea(this, lineNumbers);
 
@@ -171,7 +173,7 @@ public class EditPane extends JPanel implements Observer {
 
             lineNumbers.setText(isSelected ? getLineNumbers() : "");
             lineNumbers.setVisible(isSelected);
-            Settings.BooleanSettings.EDITOR_LINE_NUMBERS.set(isSelected);
+            BooleanSettings.EDITOR_LINE_NUMBERS.set(isSelected);
 
             sourceCode.revalidate(); // added 16 Jan 2012 to assure label redrawn.
             // needed because caret disappears when checkbox clicked
@@ -185,6 +187,13 @@ public class EditPane extends JPanel implements Observer {
         // sourceCode is responsible for its own scrolling
         add(sourceCode.getOuterComponent(), BorderLayout.CENTER);
         add(editInfo, BorderLayout.SOUTH);
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                sourceCode.requestFocusInWindow();
+            }
+        });
     }
 
     /**
@@ -223,30 +232,12 @@ public class EditPane extends JPanel implements Observer {
     }
 
     /**
-     * Get file name with no path information. See java.io.File.getName()
+     * Get the file associated with this tab as a {@link Path} object.
      *
-     * @return filename as a String
+     * @return this tab's {@code Path}
      */
-    public String getFilename() {
-        return file.getFileName().toString();
-    }
-
-    /**
-     * Get full file pathname. See java.io.File.getPath()
-     *
-     * @return full pathname as a {@code String}
-     */
-    public String getPathname() {
-        return file.toString();
-    }
-
-    /**
-     * Get file parent pathname. See java.io.File.getParentDirectory()
-     *
-     * @return parent full pathname as a {@code String}
-     */
-    public String getParentDirectory() {
-        return file.getParent().toString();
+    public Path getPath() {
+        return file;
     }
 
     /**
@@ -268,16 +259,15 @@ public class EditPane extends JPanel implements Observer {
      * false otherwise.
      */
     public boolean isNew() {
-        return file.getRoot() == null;
+        return !file.isAbsolute();
     }
 
     /**
      * Delegates to text area's requestFocusInWindow method.
      */
-    public void tellEditingComponentToRequestFocusInWindow() {
-        sourceCode.requestFocusInWindow();
-    }
-
+//    public void tellEditingComponentToRequestFocusInWindow() {
+//        sourceCode.requestFocusInWindow();
+//    }
     /**
      * Get the manager in charge of Undo and Redo operations
      *
@@ -398,21 +388,10 @@ public class EditPane extends JPanel implements Observer {
      * corresponding position.
      */
     private int convertLineColumnToStreamPosition(int line, int column) {
-        String textStream = sourceCode.getText();
-        int textLength = textStream.length();
-        int textLine = 1;
-        int textColumn = 1;
-        for (int i = 0; i < textLength; i++) {
-            if (textLine == line && textColumn == column)
-                return i;
-            if (textStream.charAt(i) == newline) {
-                textLine++;
-                textColumn = 1;
-            }
-            else
-                textColumn++;
-        }
-        return -1;
+        return Arrays.stream(sourceCode.getText().split(newline + ""))
+                .limit(line - 1)
+                .reduce(0, (i, s) -> i + s.length() + 1, Integer::sum)
+                + column - 1;
     }
 
     /**
@@ -482,7 +461,7 @@ public class EditPane extends JPanel implements Observer {
      * matching occurrence is found. Returns TEXT_NOT_FOUND if the text is not
      * matched. Returns TEXT_REPLACED_NOT_FOUND_NEXT if replacement is
      * successful but there are no additional matches. Returns
-     * TEXT_REPLACED_FOUND_NEXT if reaplacement is successful and there is at
+     * TEXT_REPLACED_FOUND_NEXT if replacement is successful and there is at
      * least one additional match.
      */
     public int doReplace(String find, String replace, boolean caseSensitive) {
@@ -512,10 +491,10 @@ public class EditPane extends JPanel implements Observer {
      */
     @Override
     public void update(Observable fontChanger, Object arg) {
-        sourceCode.setFont(Settings.FontSettings.EDITOR_FONT.get());
-        sourceCode.setLineHighlightEnabled(Settings.BooleanSettings.EDITOR_CURRENT_LINE_HIGHLIGHTING.isSet());
-        sourceCode.setCaretBlinkRate(Settings.IntegerSettings.CARET_BLINK_RATE.get());
-        sourceCode.setTabSize(Settings.IntegerSettings.EDITOR_TAB_SIZE.get());
+        sourceCode.setFont(FontSettings.EDITOR_FONT.get());
+        sourceCode.setLineHighlightEnabled(BooleanSettings.EDITOR_CURRENT_LINE_HIGHLIGHTING.isSet());
+        sourceCode.setCaretBlinkRate(IntegerSettings.CARET_BLINK_RATE.get());
+        sourceCode.setTabSize(IntegerSettings.EDITOR_TAB_SIZE.get());
         sourceCode.updateSyntaxStyles();
         sourceCode.revalidate();
         // We want line numbers to be displayed same size but always PLAIN style.
@@ -546,31 +525,33 @@ public class EditPane extends JPanel implements Observer {
      * user will be asked for a valid pathname by means of a
      * {@link JFileChooser}.
      *
-     * @param doRename if true, will force "Save As" behavior
+     * @param as if true, will force "Save As" behavior
      * @return true if the file has been successfully written, false otherwise
      */
-    boolean save(boolean doRename) {
+    boolean save(boolean as) {
 
-        if (isNew() || doRename) {
+        if (isNew() || as) {
 
             //Setting up file chooser
             JFileChooser saveDialog = new JFileChooser(isNew()
-                    ? Main.getGUI().editTabbedPane.getCurrentSaveDirectory()
+                    ? StringSettings.SAVE_DIRECTORY.get()
                     : file.getParent().toString());
             saveDialog.setDialogTitle("Save As");
             if (!isNew())
                 saveDialog.setSelectedFile(file.getFileName().toFile());
 
-            boolean doSave = false;
-            while (!doSave) {
+            loop:
+            while (true) {
                 if (saveDialog.showSaveDialog(Main.getGUI().mainFrame) != JFileChooser.APPROVE_OPTION)
                     return false;
 
                 Path newFilename = saveDialog.getSelectedFile().toPath();
 
+                StringSettings.SAVE_DIRECTORY.set(newFilename.toString());
+
                 if (!Files.exists(newFilename)) {
                     file = newFilename;
-                    doSave = true;
+                    break;
                 }
                 else switch (JOptionPane.showConfirmDialog(
                             Main.getGUI().mainFrame,
@@ -578,17 +559,16 @@ public class EditPane extends JPanel implements Observer {
                             "Overwrite existing file?",
                             JOptionPane.YES_NO_CANCEL_OPTION,
                             JOptionPane.WARNING_MESSAGE)) {
-                        case JOptionPane.YES_OPTION:
-                            file = newFilename;
-                            doSave = true;
-                            break;
-                        case JOptionPane.NO_OPTION:
-                            break;
-                        case JOptionPane.CANCEL_OPTION:
-                            return false;
-                        default:
-                            throw new IllegalStateException("Unexpected exception: Illegal case on confirm dialog!");
-                    }
+                    case JOptionPane.YES_OPTION:
+                        file = newFilename;
+                        break loop;
+                    case JOptionPane.NO_OPTION:
+                        break;
+                    case JOptionPane.CANCEL_OPTION:
+                        return false;
+                    default:
+                        throw new IllegalStateException("Unexpected exception: Illegal case on confirm dialog!");
+                }
             }
         }
 
@@ -612,8 +592,8 @@ public class EditPane extends JPanel implements Observer {
      * changes the user may have specified there, such as number of copies.
      */
     void print() {
-        try (HardcopyWriter printer = new HardcopyWriter(Main.getGUI().mainFrame, getFilename(),
-                10, .5, .5, .5, .5)) {
+        try (HardcopyWriter printer = new HardcopyWriter(Main.getGUI().mainFrame,
+                file.getFileName().toString(), 10, .5, .5, .5, .5)) {
 
             UnaryOperator<String> mapper;
             if (showLineNumbers.isSelected()) {

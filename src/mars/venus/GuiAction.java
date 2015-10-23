@@ -2,13 +2,14 @@ package mars.venus;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
+import java.net.URL;
 import java.util.function.BiConsumer;
 import javax.swing.AbstractAction;
-import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.KeyStroke;
 import mars.Main;
-import mars.Settings;
+import mars.settings.BooleanSettings;
 import mars.simulator.Simulator;
 
 /*
@@ -44,34 +45,41 @@ import mars.simulator.Simulator;
  */
 class GuiAction extends AbstractAction {
 
-    VenusUI mainUI;
-    private BiConsumer<GuiAction, ActionEvent> delegate;
+    private final BiConsumer<GuiAction, ActionEvent> delegate;
 
-    protected GuiAction(String name, Icon icon, String descrip,
-            Integer mnemonic, KeyStroke accel, VenusUI gui) {
-        this(name, icon, descrip, mnemonic, accel, (BiConsumer<GuiAction, ActionEvent>) null);
-        mainUI = gui;
+    protected GuiAction(String name, URL icon, URL largeIcon, String description,
+            Integer mnemonic, KeyStroke accel, BiConsumer<GuiAction, ActionEvent> act) {
+
+        super(name, icon == null ? null : new ImageIcon(icon));
+
+        putValue(SHORT_DESCRIPTION, description);
+        putValue(LARGE_ICON_KEY, largeIcon == null ? null : new ImageIcon(largeIcon));
+        putValue(MNEMONIC_KEY, mnemonic);
+        putValue(ACCELERATOR_KEY, accel);
+
+        delegate = act;
     }
 
-    protected GuiAction(String name, Icon icon, String descrip,
-            Integer mnemonic, KeyStroke accel, BiConsumer<GuiAction, ActionEvent> c) {
-        super(name, icon);
-        putValue(SHORT_DESCRIPTION, descrip);
-        if (mnemonic != null)
-            putValue(MNEMONIC_KEY, mnemonic);
-        if (accel != null)
-            putValue(ACCELERATOR_KEY, accel);
-        delegate = c;
+    protected GuiAction(String name, String description, Integer mnemonic,
+            KeyStroke accel, BiConsumer<GuiAction, ActionEvent> act) {
+        this(name, null, null, description, mnemonic, accel, act);
     }
 
+    protected GuiAction(String name, String description,
+            BiConsumer<GuiAction, ActionEvent> act) {
+        this(name, null, null, description, null, null, act);
+    }
+    
     /**
-     * ActionListener's actionPerformed(). @see java.awt.event.ActionListener
+     * Inherited from {@code AbstractAction}; default implementation invokes the
+     * {@link BiConsumer} passed at construction time.
      *
-     * @param e the event dispatched by the EDT
+     * @param event the event dispatched by the EDT
+     * @see AbstractAction#actionPerformed(ActionEvent)
      */
     @Override
-    public void actionPerformed(ActionEvent e) {
-        delegate.accept(this, e);
+    public void actionPerformed(ActionEvent event) {
+        delegate.accept(this, event);
     }
 
     /////////////////////////////////////////////////////////////////
@@ -92,21 +100,21 @@ class GuiAction extends AbstractAction {
     }
 
     /**
-     * Perform "save" operation on current tab's file.
+     * Perform "save" operation on current file.
      */
     void save(ActionEvent event) {
         Main.getGUI().editTabbedPane.getSelectedComponent().save(false);
     }
 
     /**
-     * Perform "save as" operation on current tab's file.
+     * Perform "save as" operation on current file.
      */
     void saveAs(ActionEvent event) {
         Main.getGUI().editTabbedPane.getSelectedComponent().save(true);
     }
 
     /**
-     * Perform save operation on all open files (tabs).
+     * Perform save operation on all open files.
      */
     void saveAll(ActionEvent event) {
         Main.getGUI().editTabbedPane.saveAllFiles();
@@ -175,32 +183,32 @@ class GuiAction extends AbstractAction {
     }
 
     void toggleBreakpoints(ActionEvent event) {
-        Main.getGUI().executePane.getTextSegmentWindow().toggleBreakpoints();
+        Main.getGUI().textSegment.toggleBreakpoints();
     }
 
     void toggleWarningsAreErrors(ActionEvent e) {
-        Settings.BooleanSettings.WARNINGS_ARE_ERRORS.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
+        BooleanSettings.WARNINGS_ARE_ERRORS.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void togglePopupInput(ActionEvent e) {
-        Settings.BooleanSettings.POPUP_SYSCALL_INPUT.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
+        BooleanSettings.POPUP_SYSCALL_INPUT.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleProgramArguments(ActionEvent e) {
         boolean selected = ((JCheckBoxMenuItem) e.getSource()).isSelected();
-        Settings.BooleanSettings.PROGRAM_ARGUMENTS.set(selected);
+        BooleanSettings.PROGRAM_ARGUMENTS.set(selected);
         if (selected)
-            Main.getGUI().executePane.getTextSegmentWindow().addProgramArgumentsPanel();
+            Main.getGUI().textSegment.addProgramArgumentsPanel();
         else
-            Main.getGUI().executePane.getTextSegmentWindow().removeProgramArgumentsPanel();
+            Main.getGUI().textSegment.removeProgramArgumentsPanel();
     }
 
     void toggleSelfModifyingCode(ActionEvent e) {
-        Settings.BooleanSettings.SELF_MODIFYING_CODE.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
+        BooleanSettings.SELF_MODIFYING_CODE.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleExtendedInstructionSet(ActionEvent e) {
-        Settings.BooleanSettings.EXTENDED_ASSEMBLER.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
+        BooleanSettings.EXTENDED_ASSEMBLER.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     /**
@@ -209,16 +217,16 @@ class GuiAction extends AbstractAction {
      */
     void toggleLabelWindow(ActionEvent e) {
         boolean visibility = ((JCheckBoxMenuItem) e.getSource()).isSelected();
-        Main.getGUI().executePane.labelValues.setVisible(visibility);
-        Settings.BooleanSettings.LABEL_WINDOW_VISIBILITY.set(visibility);
+        Main.getGUI().labelValues.setVisible(visibility);
+        BooleanSettings.LABEL_WINDOW_VISIBILITY.set(visibility);
     }
 
     void toggleStartAtMain(ActionEvent e) {
-        Settings.BooleanSettings.START_AT_MAIN.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
+        BooleanSettings.START_AT_MAIN.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleDelayedBranching(ActionEvent e) {
-        Settings.BooleanSettings.DELAYED_BRANCHING.set(
+        BooleanSettings.DELAYED_BRANCHING.set(
                 ((JCheckBoxMenuItem) e.getSource()).isSelected());
         // 25 June 2007 Re-assemble if the situation demands it to maintain consistency.
         if (Main.getGUI().executePane.isShowing()) {
@@ -231,23 +239,23 @@ class GuiAction extends AbstractAction {
     }
 
     void toggleAssembleOnOpen(ActionEvent e) {
-        Settings.BooleanSettings.ASSEMBLE_ON_OPEN.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
+        BooleanSettings.ASSEMBLE_ON_OPEN.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleAssembleAll(ActionEvent e) {
-        Settings.BooleanSettings.ASSEMBLE_ALL.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
+        BooleanSettings.ASSEMBLE_ALL.set(((JCheckBoxMenuItem) e.getSource()).isSelected());
     }
 
     void toggleValueDisplayBase(ActionEvent e) {
         boolean isHex = ((JCheckBoxMenuItem) e.getSource()).isSelected();
-        Main.getGUI().executePane.getValueDisplayBaseChooser().setSelected(isHex);
-        Settings.BooleanSettings.DISPLAY_VALUES_IN_HEX.set(isHex);
+        Main.getGUI().dataSegment.getValueDisplayBaseChooser().setSelected(isHex);
+        BooleanSettings.DISPLAY_VALUES_IN_HEX.set(isHex);
     }
 
     void toggleAddressDisplayBase(ActionEvent e) {
         boolean isHex = ((JCheckBoxMenuItem) e.getSource()).isSelected();
-        Main.getGUI().executePane.getAddressDisplayBaseChooser().setSelected(isHex);
-        Settings.BooleanSettings.DISPLAY_ADDRESSES_IN_HEX.set(isHex);
+        Main.getGUI().dataSegment.getAddressDisplayBaseChooser().setSelected(isHex);
+        BooleanSettings.DISPLAY_ADDRESSES_IN_HEX.set(isHex);
     }
 
     void editorSettings(ActionEvent event) {
@@ -267,6 +275,6 @@ class GuiAction extends AbstractAction {
     }
 
     void help(ActionEvent event) {
-        new HelpDialog().setVisible(true);
+        HelpDialog.showDialog();
     }
 }

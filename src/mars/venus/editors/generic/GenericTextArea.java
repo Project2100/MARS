@@ -18,7 +18,8 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.CompoundEdit;
 import javax.swing.undo.UndoManager;
 import mars.Main;
-import mars.Settings;
+import mars.settings.FontSettings;
+import mars.settings.IntegerSettings;
 import mars.venus.EditPane;
 import mars.venus.editors.MARSTextEditingArea;
 
@@ -63,10 +64,10 @@ public class GenericTextArea extends JTextArea implements MARSTextEditingArea {
     public GenericTextArea(EditPane editPain, JComponent lineNumbers) {
         this.editPane = editPain;
         this.sourceCode = this;
-        this.setFont(Settings.FontSettings.EDITOR_FONT.get());
-        this.setTabSize(Settings.IntegerSettings.EDITOR_TAB_SIZE.get());
+        this.setFont(FontSettings.EDITOR_FONT.get());
+        this.setTabSize(IntegerSettings.EDITOR_TAB_SIZE.get());
         this.setMargin(new Insets(0, 3, 3, 3));
-        this.setCaretBlinkRate(Settings.IntegerSettings.CARET_BLINK_RATE.get());
+        this.setCaretBlinkRate(IntegerSettings.CARET_BLINK_RATE.get());
 
         JPanel source = new JPanel(new BorderLayout());
         source.add(lineNumbers, BorderLayout.WEST);

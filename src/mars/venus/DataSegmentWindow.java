@@ -32,13 +32,16 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableModel;
+import mars.settings.ColorSettings;
 import mars.Main;
-import mars.Settings;
+import mars.settings.Settings;
 import mars.mips.hardware.AccessNotice;
 import mars.mips.hardware.AddressErrorException;
 import mars.mips.hardware.Memory;
 import mars.mips.hardware.MemoryAccessNotice;
 import mars.mips.hardware.RegisterFile;
+import mars.settings.BooleanSettings;
+import mars.settings.FontSettings;
 import mars.simulator.Simulator;
 import mars.simulator.SimulatorNotice;
 import mars.util.Binary;
@@ -121,15 +124,27 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
     private int[] displayBaseAddresses;
     private int defaultBaseAddressIndex;
     JButton[] baseAddressButtons;
+    
+    
+    private NumberDisplayBaseChooser valueDisplayBase;
+    private NumberDisplayBaseChooser addressDisplayBase;
 
     /**
      * Constructor for the Data Segment window.
-     *
-     * @param choosers an array of objects used by user to select number display
-     * base (10 or 16)
      */
-    public DataSegmentWindow(NumberDisplayBaseChooser[] choosers) {
+    public DataSegmentWindow() {
         super("Data Segment", true, false, true, true);
+        
+        
+        // Although these are displayed in Data Segment, they apply to all three internal
+        // windows within the Execute pane.  So they will be housed here.
+        addressDisplayBase = new NumberDisplayBaseChooser("Hexadecimal Addresses",
+                BooleanSettings.DISPLAY_ADDRESSES_IN_HEX.isSet());
+        valueDisplayBase = new NumberDisplayBaseChooser("Hexadecimal Values",
+                BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet());//VenusUI.DEFAULT_NUMBER_BASE);
+        addressDisplayBase.setToolTipText("If checked, displays all memory addresses in hexadecimal.  Otherwise, decimal.");
+        valueDisplayBase.setToolTipText("If checked, displays all memory and register contents in hexadecimal.  Otherwise, decimal.");
+        NumberDisplayBaseChooser[] choosers = {addressDisplayBase, valueDisplayBase};
 
         Simulator.getInstance().addObserver(this);
         settings = Main.getSettings();
@@ -424,8 +439,8 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
     //   Returns the JScrollPane for the Address/Data part of the Data Segment window.
     private JScrollPane generateDataPanel() {
         dataData = new Object[NUMBER_OF_ROWS][NUMBER_OF_COLUMNS];
-        int valueBase = (Main.getGUI().executePane).getValueDisplayBase();
-        int addressBase = (Main.getGUI().executePane).getAddressDisplayBase();
+        int valueBase = getValueDisplayBase();
+        int addressBase = getAddressDisplayBase();
         int address = this.homeAddress;
         for (int row = 0; row < NUMBER_OF_ROWS; row++) {
             dataData[row][ADDRESS_COLUMN] = NumberDisplayBaseChooser.formatUnsignedInteger(address, addressBase);
@@ -502,7 +517,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
 
     private int getValueDisplayFormat() {
         return (asciiDisplay) ? NumberDisplayBaseChooser.ASCII
-                : (Main.getGUI().executePane).getValueDisplayBase();
+                : getValueDisplayBase();
     }
 
     /**
@@ -517,7 +532,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
         if (tablePanel.getComponentCount() == 0)
             return; // ignore if no content to change
         int valueBase = getValueDisplayFormat();
-        int addressBase = (Main.getGUI().executePane).getAddressDisplayBase();
+        int addressBase = getAddressDisplayBase();
         int address = firstAddr;
         TableModel dataModel = dataTable.getModel();
         for (int row = 0; row < NUMBER_OF_ROWS; row++) {
@@ -533,15 +548,15 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
                     // temporarily enabling the setting as "non persistent" so it won't write through to the registry.
                     if (Memory.inTextSegment(address)) {
                         int displayValue = 0;
-                        if (!Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
-                            Settings.BooleanSettings.SELF_MODIFYING_CODE.setNoPersist(true);
+                        if (!BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
+                            BooleanSettings.SELF_MODIFYING_CODE.setNoPersist(true);
                             try {
                                 displayValue = Main.memory.getWordNoNotify(address);
                             }
                             catch (AddressErrorException e) {
                                 // Still got an exception?  Doesn't seem possible but if we drop through it will write default value 0.
                             }
-                            Settings.BooleanSettings.SELF_MODIFYING_CODE.setNoPersist(false);
+                            BooleanSettings.SELF_MODIFYING_CODE.setNoPersist(false);
                         }
                         ((DataTableModel) dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(displayValue, valueBase), row, column);
                     }
@@ -570,7 +585,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
             return;
         int row = offset / BYTES_PER_ROW;
         int column = (offset % BYTES_PER_ROW) / BYTES_PER_VALUE + 1; // column 0 reserved for address
-        int valueBase = (Main.getGUI().executePane).getValueDisplayBase();
+        int valueBase = getValueDisplayBase();
         ((DataTableModel) dataTable.getModel()).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(value, valueBase),
                 row, column);
     }
@@ -582,7 +597,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
     public void updateDataAddresses() {
         if (tablePanel.getComponentCount() == 0)
             return; // ignore if no content to change
-        int addressBase = (Main.getGUI().executePane).getAddressDisplayBase();
+        int addressBase = getAddressDisplayBase();
         int address = this.firstAddress;
         String formattedAddress;
         for (int i = 0; i < NUMBER_OF_ROWS; i++) {
@@ -615,7 +630,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
      * Reset all data display values to 0
      */
     public void resetValues() {
-        int valueBase = (Main.getGUI().executePane).getValueDisplayBase();
+        int valueBase = getValueDisplayBase();
         TableModel dataModel = dataTable.getModel();
         for (int row = 0; row < NUMBER_OF_ROWS; row++)
             for (int column = 1; column < NUMBER_OF_COLUMNS; column++)
@@ -650,7 +665,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
         heapButton.setEnabled(true);
         extnButton.setEnabled(true);
         mmioButton.setEnabled(true);
-        textButton.setEnabled(Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet());
+        textButton.setEnabled(BooleanSettings.SELF_MODIFYING_CODE.isSet());
         kernButton.setEnabled(true);
         prevButton.setEnabled(true);
         nextButton.setEnabled(true);
@@ -951,7 +966,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
                     return;
                 }
             }// end synchronized block
-            int valueBase = (Main.getGUI().executePane).getValueDisplayBase();
+            int valueBase = getValueDisplayBase();
             data[row][col] = NumberDisplayBaseChooser.formatNumber(val, valueBase);
             fireTableCellUpdated(row, col);
         }
@@ -990,20 +1005,20 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
 
             cell.setHorizontalAlignment(SwingConstants.RIGHT);
             int rowFirstAddress = Binary.stringToInt(table.getValueAt(row, ADDRESS_COLUMN).toString());
-            if (Settings.BooleanSettings.DATA_SEGMENT_HIGHLIGHTING.isSet() && addressHighlighting && rowFirstAddress == addressRowFirstAddress && column == addressColumn) {
-                cell.setBackground(Settings.ColorSettings.DATASEGMENT_HIGHLIGHT.getBackground());
-                cell.setForeground(Settings.ColorSettings.DATASEGMENT_HIGHLIGHT.getForeground());
-                cell.setFont(Settings.FontSettings.DATASEGMENT_HIGHLIGHT_FONT.get());
+            if (BooleanSettings.DATA_SEGMENT_HIGHLIGHTING.isSet() && addressHighlighting && rowFirstAddress == addressRowFirstAddress && column == addressColumn) {
+                cell.setBackground(ColorSettings.DATASEGMENT_HIGHLIGHT.getBackground());
+                cell.setForeground(ColorSettings.DATASEGMENT_HIGHLIGHT.getForeground());
+                cell.setFont(FontSettings.DATASEGMENT_HIGHLIGHT_FONT.get());
             }
             else if (row % 2 == 0) {
-                cell.setBackground(Settings.ColorSettings.EVEN_ROW.getBackground());
-                cell.setForeground(Settings.ColorSettings.EVEN_ROW.getForeground());
-                cell.setFont(Settings.FontSettings.EVEN_ROW_FONT.get());
+                cell.setBackground(ColorSettings.EVEN_ROW.getBackground());
+                cell.setForeground(ColorSettings.EVEN_ROW.getForeground());
+                cell.setFont(FontSettings.EVEN_ROW_FONT.get());
             }
             else {
-                cell.setBackground(Settings.ColorSettings.ODD_ROW.getBackground());
-                cell.setForeground(Settings.ColorSettings.ODD_ROW.getForeground());
-                cell.setFont(Settings.FontSettings.ODD_ROW_FONT.get());
+                cell.setBackground(ColorSettings.ODD_ROW.getBackground());
+                cell.setForeground(ColorSettings.ODD_ROW.getForeground());
+                cell.setFont(FontSettings.ODD_ROW_FONT.get());
             }
             return cell;
         }
@@ -1095,5 +1110,72 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
             updateModelForMemoryRange(firstAddress);
         }
     }//////////////////////////////////////////////////////////////////////
+    
+    
+    /**
+     * Retrieve the number system base for displaying values (mem/register
+     * contents)
+     *
+     * @return
+     */
+    public int getValueDisplayBase() {
+        return valueDisplayBase.getBase();
+    }
 
+    /**
+     * Retrieve the number system base for displaying memory addresses
+     *
+     * @return
+     */
+    public int getAddressDisplayBase() {
+        return addressDisplayBase.getBase();
+    }
+
+    /**
+     * Retrieve component used to set numerical base (10 or 16) of data value
+     * display.
+     *
+     * @return the chooser
+     */
+    public NumberDisplayBaseChooser getValueDisplayBaseChooser() {
+        return valueDisplayBase;
+    }
+
+    /**
+     * Retrieve component used to set numerical base (10 or 16) of address
+     * display.
+     *
+     * @return the chooser
+     */
+    public NumberDisplayBaseChooser getAddressDisplayBaseChooser() {
+        return addressDisplayBase;
+    }
+
+    
+    
+    /**
+     * Update display of columns based on state of given chooser. Normally
+     * called only by the chooser's ItemListener.
+     *
+     * @param chooser the GUI object manipulated by the user to change number
+     * base
+     */
+    public void numberDisplayBaseChanged(NumberDisplayBaseChooser chooser) {
+        if (chooser == valueDisplayBase) {
+            // Have all internal windows update their value columns
+            Main.getGUI().registersTab.updateRegisters();
+            Main.getGUI().coprocessor1Tab.updateRegisters();
+            Main.getGUI().coprocessor0Tab.updateRegisters();
+            Main.getGUI().dataSegment.updateValues();
+            Main.getGUI().textSegment.updateBasicStatements();
+        }
+        else { // addressDisplayBase
+            // Have all internal windows update their address columns
+            Main.getGUI().dataSegment.updateDataAddresses();
+            Main.getGUI().labelValues.updateLabelAddresses();
+            Main.getGUI().textSegment.updateCodeAddresses();
+            Main.getGUI().textSegment.updateBasicStatements();
+        }
+    }
+    
 }

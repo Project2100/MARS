@@ -58,9 +58,9 @@ import mars.venus.RunStepAction;
 public class Simulator extends Observable {
 
     private SimThread simulatorThread;
-    private static Simulator simulator = null;  // Singleton object
+    private static Simulator instance = null;  // Singleton object
 
-    // Others can setStatusMenu this true to indicate external interrupt.  Initially used
+    // Others can set this true to indicate external interrupt.  Initially used
     // to simulate keyboard and display interrupts.  The device is identified
     // by the address of its MMIO control register.  keyboard 0xFFFF0000 and
     // display 0xFFFF0008.  DPS 23 July 2008.
@@ -86,9 +86,7 @@ public class Simulator extends Observable {
         // Its constructor looks for the GUI, which at load time is not created yet,
         // and incorrectly leaves interactiveGUIUpdater null!  This causes runtime
         // exceptions while running in timed mode.
-        if (simulator == null)
-            simulator = new Simulator();
-        return simulator;
+        return instance == null ? instance = new Simulator() : instance;
     }
 
     private Simulator() {
@@ -137,7 +135,7 @@ public class Simulator extends Observable {
             ProcessingException pe = simulatorThread.pe;
             boolean done = simulatorThread.done;
             if (done) SystemIO.resetFiles(); // close any files opened in MIPS progra
-            this.simulatorThread = null;
+            simulatorThread = null;
             if (pe != null)
                 throw pe;
             return done;
@@ -151,6 +149,8 @@ public class Simulator extends Observable {
      * true, the execution thread will depart gracefully so the main thread
      * handling the GUI can take over. This is used by both STOP and PAUSE
      * features.
+     *
+     * @param actor
      */
     public void stopExecution(AbstractAction actor) {
 
@@ -171,7 +171,7 @@ public class Simulator extends Observable {
         void stopped(Simulator s);
     }
 
-    private ArrayList<StopListener> stopListeners = new ArrayList<StopListener>(1);
+    private ArrayList<StopListener> stopListeners = new ArrayList<>(1);
 
     public void addStopListener(StopListener l) {
         stopListeners.add(l);
@@ -262,10 +262,11 @@ public class Simulator extends Observable {
         /**
          * This is comparable to the Runnable "run" method (it is called by
          * SwingWorker's "run" method). It simulates the program execution in
-         * the backgorund.
+         * the background.
          *
          * @return boolean value true if execution done, false otherwise
          */
+        @Override
         public Object construct() {
             // The next two statements are necessary for GUI to be consistently updated
             // before the simulation gets underway.  Without them, this happens only intermittently,
@@ -282,24 +283,24 @@ public class Simulator extends Observable {
             Simulator.getInstance().notifyObserversOfExecutionStart(maxSteps, pc);
 
             RegisterFile.initializeProgramCounter(pc);
-            ProgramStatement statement = null;
+            ProgramStatement statement;
             try {
                 statement = Main.memory.getStatement(RegisterFile.getProgramCounter());
             }
             catch (AddressErrorException e) {
                 ErrorList el = new ErrorList();
                 el.add(new ErrorMessage((MIPSprogram) null, 0, 0, "invalid program counter value: " + Binary.intToHexString(RegisterFile.getProgramCounter())));
-                this.pe = new ProcessingException(el, e);
+                pe = new ProcessingException(el, e);
                 // Next statement is a hack.  Previous statement sets EPC register to ProgramCounter-4
                 // because it assumes the bad address comes from an operand so the ProgramCounter has already been
                 // incremented.  In this case, bad address is the instruction fetch itself so Program Counter has
-                // not yet been incremented.  We'll setStatusMenu the EPC directly here.  DPS 8-July-2013
+                // not yet been incremented.  We'll set the EPC directly here.  DPS 8-July-2013
                 Coprocessor0.updateRegister(Coprocessor0.EPC, RegisterFile.getProgramCounter());
-                this.constructReturnReason = EXCEPTION;
-                this.done = true;
+                constructReturnReason = EXCEPTION;
+                done = true;
                 SystemIO.resetFiles(); // close any files opened in MIPS program
                 Simulator.getInstance().notifyObserversOfExecutionStop(maxSteps, pc);
-                return new Boolean(done);
+                return done;
             }
             int steps = 0;
 
@@ -362,11 +363,11 @@ public class Simulator extends Observable {
                     }
                     catch (ProcessingException pe) {
                         if (pe.errors() == null) {
-                            this.constructReturnReason = NORMAL_TERMINATION;
-                            this.done = true;
+                            constructReturnReason = NORMAL_TERMINATION;
+                            done = true;
                             SystemIO.resetFiles(); // close any files opened in MIPS program
                             Simulator.getInstance().notifyObserversOfExecutionStop(maxSteps, pc);
-                            return new Boolean(done); // execution completed without error.
+                            return done; // execution completed without error.
                         }
                         else {
                             // See if an exception handler is present.  Assume this is the case
@@ -383,12 +384,12 @@ public class Simulator extends Observable {
                             if (exceptionHandler != null)
                                 RegisterFile.setProgramCounter(Memory.exceptionHandlerAddress);
                             else {
-                                this.constructReturnReason = EXCEPTION;
+                                constructReturnReason = EXCEPTION;
                                 this.pe = pe;
-                                this.done = true;
+                                done = true;
                                 SystemIO.resetFiles(); // close any files opened in MIPS program
                                 Simulator.getInstance().notifyObserversOfExecutionStop(maxSteps, pc);
-                                return new Boolean(done);
+                                return done;
                             }
                         }
                     }
@@ -405,27 +406,27 @@ public class Simulator extends Observable {
                 // Volatile variable initialized false but can be setStatusMenu true by the main thread.
                 // Used to stop or pause a running MIPS program.  See stopSimulation() above.
                 if (stop == true) {
-                    this.constructReturnReason = PAUSE_OR_STOP;
-                    this.done = false;
+                    constructReturnReason = PAUSE_OR_STOP;
+                    done = false;
                     Simulator.getInstance().notifyObserversOfExecutionStop(maxSteps, pc);
-                    return new Boolean(done);
+                    return done;
                 }
                 //	Return if we've reached a breakpoint.					
                 if ((breakPoints != null)
                         && (Arrays.binarySearch(breakPoints, RegisterFile.getProgramCounter()) >= 0)) {
-                    this.constructReturnReason = BREAKPOINT;
-                    this.done = false;
+                    constructReturnReason = BREAKPOINT;
+                    done = false;
                     Simulator.getInstance().notifyObserversOfExecutionStop(maxSteps, pc);
-                    return new Boolean(done); // false;
+                    return done; // false;
                 }
                 // Check number of MIPS instructions executed.  Return if at limit (-1 is no limit).
                 if (maxSteps > 0) {
                     steps++;
                     if (steps >= maxSteps) {
-                        this.constructReturnReason = MAX_STEPS;
-                        this.done = false;
+                        constructReturnReason = MAX_STEPS;
+                        done = false;
                         Simulator.getInstance().notifyObserversOfExecutionStop(maxSteps, pc);
-                        return new Boolean(done);// false;
+                        return done;// false;
                     }
                 }
 
@@ -462,7 +463,7 @@ public class Simulator extends Observable {
                     this.done = true;
                     SystemIO.resetFiles(); // close any files opened in MIPS program
                     Simulator.getInstance().notifyObserversOfExecutionStop(maxSteps, pc);
-                    return new Boolean(done);
+                    return done;
                 }
             }
             // DPS July 2007.  This "if" statement is needed for correct program
@@ -478,20 +479,21 @@ public class Simulator extends Observable {
             this.done = true;
             SystemIO.resetFiles(); // close any files opened in MIPS program
             Simulator.getInstance().notifyObserversOfExecutionStop(maxSteps, pc);
-            return new Boolean(done); // true;  // execution completed
+            return done; // true;  // execution completed
         }
 
         /**
          * This method is invoked by the SwingWorker when the "construct" method
-         * returns. It will simUpdate the GUI appropriately. According to Sun's
- documentation, it is run in the main thread so should work OK with
- Swing components (which are not thread-safe).
-
- Its action depends on what caused the return from construct() and
- what action led to the call of construct() in the first place.
+         * returns. It will update the GUI appropriately. According to Sun's
+         * documentation, it is run in the main thread so should work OK with
+         * Swing components (which are not thread-safe).
+         *
+         * Its action depends on what caused the return from construct() and
+         * what action led to the call of construct() in the first place.
          */
+        @Override
         public void finished() {
-            // If running from the command-line, then there is no GUI to simUpdate.
+            // If running from the command-line, then there is no GUI to update.
             if (Main.getGUI() == null)
                 return;
             String starterName = (String) starter.getValue(AbstractAction.NAME);
@@ -499,15 +501,15 @@ public class Simulator extends Observable {
                 ((RunStepAction) starter).stepped(done, constructReturnReason, pe);
             if (starterName.equals("Go"))
                 if (done)
-                    ((RunGoAction) starter).stopped(pe, constructReturnReason);
+                    RunGoAction.stopped(pe, constructReturnReason);
                 else if (constructReturnReason == BREAKPOINT)
-                    ((RunGoAction) starter).paused(done, constructReturnReason, pe);
+                    RunGoAction.paused(done, constructReturnReason, pe);
                 else {
                     String stopperName = (String) stopper.getValue(AbstractAction.NAME);
-                    if ("Pause".equals(stopperName))
-                        ((RunGoAction) starter).paused(done, constructReturnReason, pe);
-                    else if ("Stop".equals(stopperName))
-                        ((RunGoAction) starter).stopped(pe, constructReturnReason);
+                    if (stopperName.equals("Pause"))
+                        RunGoAction.paused(done, constructReturnReason, pe);
+                    else if (stopperName.equals("Stop"))
+                        RunGoAction.stopped(pe, constructReturnReason);
                 }
             return;
         }

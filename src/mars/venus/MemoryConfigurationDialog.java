@@ -23,9 +23,9 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import mars.Main;
-import mars.Settings;
 import mars.mips.hardware.MemoryConfiguration;
 import mars.mips.hardware.MemoryConfigurations;
+import mars.settings.StringSettings;
 import mars.simulator.Simulator;
 import mars.util.Binary;
 
@@ -194,11 +194,11 @@ final class MemoryConfigurationDialog extends JDialog implements ActionListener 
 
     private void performApply() {
         if (MemoryConfigurations.setCurrentConfiguration(this.selectedConfigurationButton.getConfiguration())) {
-            Settings.StringSettings.MEMORY_CONFIGURATION.set(selectedConfigurationButton.getConfiguration().getConfigurationIdentifier());
+            StringSettings.MEMORY_CONFIGURATION.set(selectedConfigurationButton.getConfiguration().getConfigurationIdentifier());
 //            Main.getSettings().setMemoryConfiguration(this.selectedConfigurationButton.getConfiguration().getConfigurationIdentifier());
             Main.getGUI().registersTab.clearHighlighting();
             Main.getGUI().registersTab.updateRegisters();
-            Main.getGUI().executePane.getDataSegmentWindow().updateBaseAddressComboBox();
+            Main.getGUI().dataSegment.updateBaseAddressComboBox();
             // 21 July 2009 Re-assemble if the situation demands it to maintain consistency.
             // 20150519 - Do reassemble if executePane is visible
             if (Main.getGUI().executePane.isShowing()) {

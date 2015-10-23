@@ -95,7 +95,6 @@ public class RunSpeedPanel extends JPanel {
         runSpeedSlider.setMinorTickSpacing(1);
         runSpeedSlider.setSnapToTicks(true);
         runSpeedSlider.setPaintTicks(true);
-        //runSpeedSlider.
         
         runSpeedSlider.addChangeListener((event) -> {
             if (!runSpeedSlider.getValueIsAdjusting())

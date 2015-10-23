@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import mars.Main;
-import mars.Settings;
+import mars.settings.BooleanSettings;
 
 /*
  Copyright (c) 2003-2013,  Pete Sanderson and Kenneth Vollmar
@@ -95,7 +95,7 @@ public class SystemIO {
             }
             catch (IOException e) {
             }
-        else if (Settings.BooleanSettings.POPUP_SYSCALL_INPUT.isSet())
+        else if (BooleanSettings.POPUP_SYSCALL_INPUT.isSet())
             input = (Main.getGUI().messagesPane).getInputString(
                     "Enter an integer value (syscall " + serviceNumber + ")");
         else
@@ -121,7 +121,7 @@ public class SystemIO {
             }
             catch (IOException e) {
             }
-        else if (Settings.BooleanSettings.POPUP_SYSCALL_INPUT.isSet())
+        else if (BooleanSettings.POPUP_SYSCALL_INPUT.isSet())
             input = (Main.getGUI().messagesPane).getInputString(
                     "Enter a float value (syscall " + serviceNumber + ")");
         else
@@ -148,7 +148,7 @@ public class SystemIO {
             catch (IOException e) {
             }
 
-        else if (Settings.BooleanSettings.POPUP_SYSCALL_INPUT.isSet())
+        else if (BooleanSettings.POPUP_SYSCALL_INPUT.isSet())
             input = Main.getGUI().messagesPane.getInputString(
                     "Enter a double value (syscall " + serviceNumber + ")");
         else
@@ -186,7 +186,7 @@ public class SystemIO {
             }
             catch (IOException e) {
             }
-        else if (Settings.BooleanSettings.POPUP_SYSCALL_INPUT.isSet())
+        else if (BooleanSettings.POPUP_SYSCALL_INPUT.isSet())
             input = (Main.getGUI().messagesPane).getInputString(
                     "Enter a string of maximum length " + maxLength
                     + " (syscall " + serviceNumber + ")");
@@ -219,7 +219,7 @@ public class SystemIO {
             }
             catch (IOException e) {
             }
-        else if (Settings.BooleanSettings.POPUP_SYSCALL_INPUT.isSet())
+        else if (BooleanSettings.POPUP_SYSCALL_INPUT.isSet())
             input = (Main.getGUI().messagesPane).getInputString(
                     "Enter a character value (syscall " + serviceNumber + ")");
         else

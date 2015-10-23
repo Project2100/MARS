@@ -301,16 +301,16 @@ public class MipsXray extends AbstractMarsToolAndApplication{
 //   							  KeyStroke.getKeyStroke( KeyEvent.VK_F3, 0), 
 //   							  mainUI);			
 
-               runStepAction = new RunStepAction("Step", 
+               runStepAction = new RunStepAction(/*"Step",
                        new ImageIcon(tk.getImage(cs.getResource(Main.imagesPath+"StepForward22.png"))),
-   							  "Run one step at a time", new Integer(KeyEvent.VK_T),
-   							  KeyStroke.getKeyStroke( KeyEvent.VK_F7, 0),
-   							  mainUI);	
-               runBackstepAction = new RunBackstepAction("Backstep", 
+                       "Run one step at a time", new Integer(KeyEvent.VK_T),
+                       KeyStroke.getKeyStroke( KeyEvent.VK_F7, 0),
+               mainUI*/);	
+               runBackstepAction = new RunBackstepAction(/*"Backstep",
                        new ImageIcon(tk.getImage(cs.getResource(Main.imagesPath+"StepBack22.png"))),
-   							  "Undo the last step", new Integer(KeyEvent.VK_B),
-   							  KeyStroke.getKeyStroke( KeyEvent.VK_F8, 0), 
-   							  mainUI);		
+                       "Undo the last step", new Integer(KeyEvent.VK_B),
+                       KeyStroke.getKeyStroke( KeyEvent.VK_F8, 0),
+               mainUI*/);		
            }
            catch(Exception e){
                System.out.println("Internal Error: images folder not found, or other null pointer exception while creating Action objects");

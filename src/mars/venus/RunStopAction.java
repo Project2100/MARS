@@ -1,8 +1,12 @@
 package mars.venus;
 
-import mars.simulator.*;
-import java.awt.event.*;
-import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
+import javax.swing.KeyStroke;
+import mars.Main;
+import mars.simulator.Simulator;
 
 /*
  Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
@@ -34,11 +38,15 @@ import javax.swing.*;
 /**
  * Action class for the Run -> Stop menu item (and toolbar icon)
  */
-public class RunStopAction extends GuiAction {
+public class RunStopAction extends AbstractAction {
 
-    public RunStopAction(String name, Icon icon, String descrip,
-            Integer mnemonic, KeyStroke accel, VenusUI gui) {
-        super(name, icon, descrip, mnemonic, accel, gui);
+    public RunStopAction() {
+        super("Stop", new ImageIcon(GuiAction.class.getResource(Main.imagesPath + "Stop16.png")));
+
+        putValue(LARGE_ICON_KEY, new ImageIcon(GuiAction.class.getResource(Main.imagesPath + "Stop22.png")));
+        putValue(SHORT_DESCRIPTION, "Stop the currently running program");
+        putValue(MNEMONIC_KEY, KeyEvent.VK_S);
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
     }
 
     @Override

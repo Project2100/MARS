@@ -80,16 +80,16 @@ public final class DataTypes {
     * (or not implemented yet), returns 0.
     **/
     
-   public static int getLengthInBytes(Directives direct) {
-       if (direct == Directives.FLOAT)
+   public static int getLengthInBytes(Directive direct) {
+       if (direct == Directive.FLOAT)
            return FLOAT_SIZE;
-       else if (direct == Directives.DOUBLE)
+       else if (direct == Directive.DOUBLE)
            return DOUBLE_SIZE;
-       else if (direct == Directives.WORD)
+       else if (direct == Directive.WORD)
            return WORD_SIZE;
-       else if (direct == Directives.HALF)
+       else if (direct == Directive.HALF)
            return HALF_SIZE;
-       else if (direct == Directives.BYTE)
+       else if (direct == Directive.BYTE)
            return BYTE_SIZE;
        else 
            return 0;
@@ -103,10 +103,10 @@ public final class DataTypes {
     * @return Returns <tt>true</tt> if value can be stored in the number of bytes allowed
     * by the given directive (.word, .half, .byte), <tt>false</tt> otherwise.
     **/   
-   public static boolean outOfRange(Directives direct, int value) {
-       if (direct == Directives.HALF && (value < MIN_HALF_VALUE || value > MAX_HALF_VALUE))
+   public static boolean outOfRange(Directive direct, int value) {
+       if (direct == Directive.HALF && (value < MIN_HALF_VALUE || value > MAX_HALF_VALUE))
            return true;
-       else if (direct == Directives.BYTE && (value < MIN_BYTE_VALUE || value > MAX_BYTE_VALUE))
+       else if (direct == Directive.BYTE && (value < MIN_BYTE_VALUE || value > MAX_BYTE_VALUE))
            return true;
        else 
            return false;       
@@ -122,8 +122,8 @@ public final class DataTypes {
     * @return Returns <tt>true</tt> if value is within range of
     * the given directive (.float, .double), <tt>false</tt> otherwise.
     **/   
-   public static boolean outOfRange(Directives direct, double value) {
-       if (direct == Directives.FLOAT && (value < LOW_FLOAT_VALUE || value > MAX_FLOAT_VALUE))
+   public static boolean outOfRange(Directive direct, double value) {
+       if (direct == Directive.FLOAT && (value < LOW_FLOAT_VALUE || value > MAX_FLOAT_VALUE))
            return true;
        else 
            return false;       

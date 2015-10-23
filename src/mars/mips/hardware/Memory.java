@@ -5,6 +5,7 @@ import mars.util.*;
 import mars.simulator.*;
 import mars.mips.instructions.*;
 import java.util.*;
+import mars.settings.BooleanSettings;
 
 /*
  Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -441,7 +442,7 @@ public class Memory extends Observable {
             // Burch Mod (Jan 2013): replace throw with call to setStatement 
             // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
 
-            if (Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
+            if (BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
                 ProgramStatement oldStatement = getStatementNoNotify(address);
                 if (oldStatement != null)
                     oldValue = oldStatement.getBinaryStatement();
@@ -505,7 +506,7 @@ public class Memory extends Observable {
         else if (inTextSegment(address))
             // Burch Mod (Jan 2013): replace throw with call to setStatement 
             // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
-            if (Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
+            if (BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
                 ProgramStatement oldStatement = getStatementNoNotify(address);
                 if (oldStatement != null)
                     oldValue = oldStatement.getBinaryStatement();
@@ -690,7 +691,7 @@ public class Memory extends Observable {
         else if (inTextSegment(address))
             // Burch Mod (Jan 2013): replace throw with calls to getStatementNoNotify & getBinaryStatement 
             // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
-            if (Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
+            if (BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
                 ProgramStatement stmt = getStatementNoNotify(address);
                 value = stmt == null ? 0 : stmt.getBinaryStatement();
             }
@@ -757,7 +758,7 @@ public class Memory extends Observable {
         else if (inTextSegment(address))
             // Burch Mod (Jan 2013): replace throw with calls to getStatementNoNotify & getBinaryStatement 
             // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
-            if (Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
+            if (BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
                 ProgramStatement stmt = getStatementNoNotify(address);
                 value = stmt == null ? 0 : stmt.getBinaryStatement();
             }
@@ -997,7 +998,7 @@ public class Memory extends Observable {
             throw new AddressErrorException(
                     "fetch address for text segment not aligned to word boundary ",
                     Exceptions.ADDRESS_EXCEPTION_LOAD, address);
-        if (!Settings.BooleanSettings.SELF_MODIFYING_CODE.isSet()
+        if (!BooleanSettings.SELF_MODIFYING_CODE.isSet()
                 && !(inTextSegment(address) || inKernelTextSegment(address)))
             throw new AddressErrorException(
                     "fetch address for text segment out of range ",

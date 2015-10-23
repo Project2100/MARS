@@ -18,6 +18,7 @@ import mars.mips.dump.DumpFormat;
 import mars.mips.dump.DumpFormatLoader;
 import mars.mips.hardware.AddressErrorException;
 import mars.mips.hardware.Memory;
+import mars.settings.StringSettings;
 import mars.util.Binary;
 
 /*
@@ -186,7 +187,7 @@ final class DumpMemoryDialog extends JDialog {
     private boolean performDump(int firstAddress, int lastAddress, DumpFormat format) {
         File theFile;
         boolean operationOK = false;
-        JFileChooser saveDialog = new JFileChooser(Main.getGUI().editTabbedPane.getCurrentSaveDirectory());
+        JFileChooser saveDialog = new JFileChooser(StringSettings.SAVE_DIRECTORY.get());
         saveDialog.setDialogTitle(title);
         while (!operationOK) {
             int decision = saveDialog.showSaveDialog(Main.getGUI().mainFrame);

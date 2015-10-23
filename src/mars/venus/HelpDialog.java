@@ -1,15 +1,42 @@
 package mars.venus;
 
-import mars.*;
-import mars.assembler.*;
-import mars.mips.instructions.*;
-import java.util.*;
-import java.io.*;
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.text.html.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Vector;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLFrameHyperlinkEvent;
+import mars.Main;
+import mars.assembler.Directive;
+import mars.mips.instructions.Instruction;
 
 /*
  Copyright (c) 2003-2008,  Pete Sanderson and Kenneth Vollmar
@@ -43,6 +70,18 @@ import javax.swing.text.html.*;
  */
 final class HelpDialog extends JDialog {
 
+    private static HelpDialog instance = null;
+
+    /**
+     * Instance getter; use this method to display the help dialog.
+     */
+    public static void showDialog() {
+        if (instance == null)
+            (instance = new HelpDialog()).setVisible(true);
+        else
+            instance.requestFocus();
+    }
+
     // ideally read or computed from config file...
     private Dimension getDimensionSize() {
         return new Dimension(800, 600);
@@ -54,9 +93,9 @@ final class HelpDialog extends JDialog {
     /**
      * Displays tabs with categories of information
      */
-    public HelpDialog() {
+    private HelpDialog() {
         // Create non-modal dialog. Based on java.sun.com "How to Make Dialogs", DialogDemo.java		
-        super(Main.getGUI().mainFrame, "MARS " + Main.version + " Help");
+        super(Main.getGUI().mainFrame, Main.getGUI().baseTitle + " Help");
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("MIPS", createMipsHelpInfoPanel());
@@ -82,8 +121,14 @@ final class HelpDialog extends JDialog {
         contentPane.add(closePanel);
         contentPane.setOpaque(true);
         setContentPane(contentPane);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                instance = null;
+            }
+        });
 
-        setSize(this.getDimensionSize());
+        setSize(getDimensionSize());
         setLocationRelativeTo(Main.getGUI().mainFrame);
 
         //////////////////////////////////////////////////////////////////
@@ -250,18 +295,15 @@ final class HelpDialog extends JDialog {
     ///////////////  Methods to construct MIPS help tabs from internal MARS objects  //////////////
     /////////////////////////////////////////////////////////////////////////////
     private JScrollPane createMipsDirectivesHelpPane() {
-        Vector exampleList = new Vector();
+        Vector<String> exampleList = new Vector<>();
         String blanks = "            ";  // 12 blanks
-        Directives direct;
-        Iterator it = Directives.getDirectiveList().iterator();
-        while (it.hasNext()) {
-            direct = (Directives) it.next();
-            exampleList.add(direct.toString()
-                    + blanks.substring(0, Math.max(0, blanks.length() - direct.toString().length()))
-                    + direct.getDescription());
+        for (Directive d : Directive.values()) {
+            exampleList.add(d.toString()
+                    + blanks.substring(0, Math.max(0, blanks.length() - d.toString().length()))
+                    + d.description);
         }
         Collections.sort(exampleList);
-        JList examples = new JList(exampleList);
+        JList<String> examples = new JList<>(exampleList);
         JScrollPane mipsScrollPane = new JScrollPane(examples, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         examples.setFont(new Font("Monospaced", Font.PLAIN, 12));
@@ -270,14 +312,13 @@ final class HelpDialog extends JDialog {
 
     ////////////////////////////////////////////////////////////////////////////
     private JScrollPane createMipsInstructionHelpPane(String instructionClassName) {
-        ArrayList instructionList = Main.instructionSet.getInstructionList();
-        Vector exampleList = new Vector(instructionList.size());
-        Iterator it = instructionList.iterator();
+        ArrayList<Instruction> instructionList = Main.instructionSet.getInstructionList();
+        Vector<String> exampleList = new Vector<>(instructionList.size());
+        Iterator<Instruction> it = instructionList.iterator();
         Instruction instr;
         String blanks = "                        ";  // 24 blanks
-        Class instructionClass;
         while (it.hasNext()) {
-            instr = (Instruction) it.next();
+            instr = it.next();
             try {
                 if (Class.forName(instructionClassName).isInstance(instr))
                     exampleList.add(instr.getExampleFormat()
@@ -289,22 +330,22 @@ final class HelpDialog extends JDialog {
             }
         }
         Collections.sort(exampleList);
-        JList examples = new JList(exampleList);
+        JList<String> examples = new JList<>(exampleList);
         JScrollPane mipsScrollPane = new JScrollPane(examples, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         examples.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        examples.setCellRenderer(new MyCellRenderer());
+        examples.setCellRenderer(new MyCellRenderer<>());
         return mipsScrollPane;
     }
 
-    private class MyCellRenderer extends JLabel implements ListCellRenderer {
+    private class MyCellRenderer<T> extends JLabel implements ListCellRenderer<T> {
         // This is the only method defined by ListCellRenderer. 
         // We just reconfigure the JLabel each time we're called. 
 
         @Override
         public Component getListCellRendererComponent(
-                JList list, // the list 
-                Object value, // value to display 
+                JList<? extends T> list, // the list 
+                T value, // value to display 
                 int index, // cell index 
                 boolean isSelected, // is the cell selected 
                 boolean cellHasFocus) // does the cell have focus 

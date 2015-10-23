@@ -17,12 +17,14 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
+import mars.settings.ColorSettings;
 import mars.Main;
-import mars.Settings;
 import mars.mips.hardware.AccessNotice;
 import mars.mips.hardware.Register;
 import mars.mips.hardware.RegisterAccessNotice;
 import mars.mips.hardware.RegisterFile;
+import mars.settings.BooleanSettings;
+import mars.settings.FontSettings;
 import mars.simulator.Simulator;
 import mars.simulator.SimulatorNotice;
 import mars.util.Binary;
@@ -69,7 +71,6 @@ public class RegistersWindow extends JPanel implements Observer {
     private static final int NAME_COLUMN = 0;
     private static final int NUMBER_COLUMN = 1;
     private static final int VALUE_COLUMN = 2;
-    private static Settings settings;
 
     /**
      * Constructor which sets up a fresh window with a table that contains the
@@ -77,7 +78,6 @@ public class RegistersWindow extends JPanel implements Observer {
      */
     public RegistersWindow() {
         Simulator.getInstance().addObserver(this);
-        settings = Main.getSettings();
         this.highlighting = false;
         table = new MyTippedJTable(new RegTableModel(setupWindow()));
         table.getColumnModel().getColumn(NAME_COLUMN).setPreferredWidth(25);
@@ -99,7 +99,7 @@ public class RegistersWindow extends JPanel implements Observer {
      *
      */
     public Object[][] setupWindow() {
-        int valueBase = NumberDisplayBaseChooser.getBase(Settings.BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet());
+        int valueBase = NumberDisplayBaseChooser.getBase(BooleanSettings.DISPLAY_VALUES_IN_HEX.isSet());
         tableData = new Object[35][3];
         registers = RegisterFile.getRegisters();
         for (int i = 0; i < registers.length; i++) {
@@ -128,7 +128,7 @@ public class RegistersWindow extends JPanel implements Observer {
     public void clearWindow() {
         this.clearHighlighting();
         RegisterFile.resetRegisters();
-        this.updateRegisters((Main.getGUI().executePane).getValueDisplayBase());
+        this.updateRegisters(Main.getGUI().dataSegment.getValueDisplayBase());
     }
 
     /**
@@ -153,7 +153,7 @@ public class RegistersWindow extends JPanel implements Observer {
      * update register display using current number base (10 or 16)
      */
     public void updateRegisters() {
-        updateRegisters((Main.getGUI().executePane).getValueDisplayBase());
+        updateRegisters(Main.getGUI().dataSegment.getValueDisplayBase());
     }
 
     /**
@@ -263,20 +263,20 @@ public class RegistersWindow extends JPanel implements Observer {
                     isSelected, hasFocus, row, column);
             cell.setFont(font);
             cell.setHorizontalAlignment(alignment);
-            if (Settings.BooleanSettings.REGISTERS_HIGHLIGHTING.isSet() && highlighting && row == highlightRow) {
-                cell.setBackground(Settings.ColorSettings.REGISTER_HIGHLIGHT.getBackground());
-                cell.setForeground(Settings.ColorSettings.REGISTER_HIGHLIGHT.getForeground());
-                cell.setFont(Settings.FontSettings.REGISTER_HIGHLIGHT_FONT.get());
+            if (BooleanSettings.REGISTERS_HIGHLIGHTING.isSet() && highlighting && row == highlightRow) {
+                cell.setBackground(ColorSettings.REGISTER_HIGHLIGHT.getBackground());
+                cell.setForeground(ColorSettings.REGISTER_HIGHLIGHT.getForeground());
+                cell.setFont(FontSettings.REGISTER_HIGHLIGHT_FONT.get());
             }
             else if (row % 2 == 0) {
-                cell.setBackground(Settings.ColorSettings.EVEN_ROW.getBackground());
-                cell.setForeground(Settings.ColorSettings.EVEN_ROW.getForeground());
-                cell.setFont(Settings.FontSettings.EVEN_ROW_FONT.get());
+                cell.setBackground(ColorSettings.EVEN_ROW.getBackground());
+                cell.setForeground(ColorSettings.EVEN_ROW.getForeground());
+                cell.setFont(FontSettings.EVEN_ROW_FONT.get());
             }
             else {
-                cell.setBackground(Settings.ColorSettings.ODD_ROW.getBackground());
-                cell.setForeground(Settings.ColorSettings.ODD_ROW.getForeground());
-                cell.setFont(Settings.FontSettings.ODD_ROW_FONT.get());
+                cell.setBackground(ColorSettings.ODD_ROW.getBackground());
+                cell.setForeground(ColorSettings.ODD_ROW.getForeground());
+                cell.setFont(FontSettings.ODD_ROW_FONT.get());
             }
             return cell;
         }
@@ -354,7 +354,7 @@ public class RegistersWindow extends JPanel implements Observer {
             synchronized (Main.memoryAndRegistersLock) {
                 RegisterFile.updateRegister(row, val);
             }
-            int valueBase = (Main.getGUI().executePane).getValueDisplayBase();
+            int valueBase = Main.getGUI().dataSegment.getValueDisplayBase();
             data[row][col] = NumberDisplayBaseChooser.formatNumber(val, valueBase);
             fireTableCellUpdated(row, col);
         }

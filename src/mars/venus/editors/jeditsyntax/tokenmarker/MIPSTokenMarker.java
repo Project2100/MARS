@@ -13,11 +13,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeSet;
 import javax.swing.text.Segment;
-import mars.Settings;
-import mars.assembler.Directives;
+import mars.assembler.Directive;
 import mars.mips.hardware.Register;
 import mars.mips.instructions.BasicInstruction;
 import mars.mips.instructions.Instruction;
+import mars.settings.BooleanSettings;
+import mars.settings.IntegerSettings;
 import mars.venus.editors.jeditsyntax.KeywordMap;
 import mars.venus.editors.jeditsyntax.PopupHelpItem;
 
@@ -135,7 +136,7 @@ public class MIPSTokenMarker extends TokenMarker {
                             //String lab = new String(array, lastOffset, i1-lastOffset-1).trim();
                             boolean validIdentifier;
                             try {
-                                validIdentifier = mars.assembler.TokenTypes.isValidIdentifier(new String(array, lastOffset, i1 - lastOffset - 1).trim());
+                                validIdentifier = mars.assembler.TokenType.isValidIdentifier(new String(array, lastOffset, i1 - lastOffset - 1).trim());
                             }
                             catch (StringIndexOutOfBoundsException e) {
                                 validIdentifier = false;
@@ -226,7 +227,7 @@ public class MIPSTokenMarker extends TokenMarker {
                 int realMatches = 0;
                 matches = new ArrayList<>();
                 for (Instruction inst : instrMatches)
-                    if (Settings.BooleanSettings.EXTENDED_ASSEMBLER.isSet() || inst instanceof BasicInstruction) {
+                    if (BooleanSettings.EXTENDED_ASSEMBLER.isSet() || inst instanceof BasicInstruction) {
                         matches.add(new PopupHelpItem(tokenText, inst.getExampleFormat(), inst.getDescription()));
                         realMatches++;
                     }
@@ -235,10 +236,10 @@ public class MIPSTokenMarker extends TokenMarker {
             }
         }
         if (token != null && token.id == Token.KEYWORD2) {
-            Directives dir = Directives.matchDirective(tokenText);
+            Directive dir = Directive.matchDirective(tokenText);
             if (dir != null) {
                 matches = new ArrayList<>();
-                matches.add(new PopupHelpItem(tokenText, dir.getName(), dir.getDescription()));
+                matches.add(new PopupHelpItem(tokenText, (dir.descriptor), (dir.description)));
             }
         }
         return matches;
@@ -266,7 +267,7 @@ public class MIPSTokenMarker extends TokenMarker {
         if (token != null && token.id == Token.COMMENT1)
             return null;
 
-         // Let's see if the line already contains an instruction or directive.  If so, we need its token
+        // Let's see if the line already contains an instruction or directive.  If so, we need its token
         // text as well so we can do the match.  Also need to distinguish the case where current
         // token is also an instruction/directive (moreThanOneKeyword variable).
         Token tokens = tokenList;
@@ -287,7 +288,7 @@ public class MIPSTokenMarker extends TokenMarker {
             tokens = tokens.next;
         }
 
-      	// CASE:  Current token is valid KEYWORD1 (MIPS instruction).  If this line contains a previous KEYWORD1 or KEYWORD2
+        // CASE:  Current token is valid KEYWORD1 (MIPS instruction).  If this line contains a previous KEYWORD1 or KEYWORD2
         //        token, then we ignore this one and do exact match on the first one.  If it does not, there may be longer 
         //        instructions for which this is a prefix, so do a prefix match on current token.
         if (token != null && token.id == Token.KEYWORD1)
@@ -297,7 +298,7 @@ public class MIPSTokenMarker extends TokenMarker {
             else
                 return getTextFromInstructionMatch(tokenText, false);
 
-      	// CASE:  Current token is valid KEYWORD2 (MIPS directive).  If this line contains a previous KEYWORD1 or KEYWORD2
+        // CASE:  Current token is valid KEYWORD2 (MIPS directive).  If this line contains a previous KEYWORD1 or KEYWORD2
         //        token, then we ignore this one and do exact match on the first one.  If it does not, there may be longer 
         //        directives for which this is a prefix, so do a prefix match on current token.
         if (token != null && token.id == Token.KEYWORD2)
@@ -307,7 +308,7 @@ public class MIPSTokenMarker extends TokenMarker {
             else
                 return getTextFromDirectiveMatch(tokenText, false);
 
-         // CASE: line already contains KEYWORD1 or KEYWORD2 and current token is something other
+        // CASE: line already contains KEYWORD1 or KEYWORD2 and current token is something other
         //       than KEYWORD1 or KEYWORD2. Generate text based on exact match of that token.
         if (keywordTokenText != null) {
             if (keywordType == Token.KEYWORD1)
@@ -316,7 +317,7 @@ public class MIPSTokenMarker extends TokenMarker {
                 return getTextFromDirectiveMatch(keywordTokenText, true);
         }
 
-      	// CASE:  Current token is NULL, which can be any number of things.  Think of it as being either white space
+        // CASE:  Current token is NULL, which can be any number of things.  Think of it as being either white space
         //        or an in-progress token possibly preceded by white space.  We'll do a trim on the token.  Now there
         //        are two subcases to consider:
         //    SUBCASE: The line does not contain any KEYWORD1 or KEYWORD2 tokens but nothing remains after trimming the
@@ -337,38 +338,38 @@ public class MIPSTokenMarker extends TokenMarker {
             if (keywordTokenText == null && trimmedTokenText.length() > 0)
                 if (trimmedTokenText.charAt(0) == '.')
                     return getTextFromDirectiveMatch(trimmedTokenText, false);
-                else if (trimmedTokenText.length() >= Settings.IntegerSettings.EDITOR_POPUP_PREFIX_LENGTH.get())
+                else if (trimmedTokenText.length() >= IntegerSettings.EDITOR_POPUP_PREFIX_LENGTH.get())
                     return getTextFromInstructionMatch(trimmedTokenText, false);
         }
         // should never get here...
         return null;
     }
 
-      ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
     // Return ArrayList of PopupHelpItem for match of directives.  If second argument
     // true, will do exact match.  If false, will do prefix match.  Returns null
     // if no matches.
     private ArrayList<PopupHelpItem> getTextFromDirectiveMatch(String tokenText, boolean exact) {
         ArrayList<PopupHelpItem> matches = null;
-        ArrayList<Directives> directiveMatches = null;
+        ArrayList<Directive> directiveMatches = null;
         if (exact) {
-            Directives dir = Directives.matchDirective(tokenText);
+            Directive dir = Directive.matchDirective(tokenText);
             if (dir != null) {
                 directiveMatches = new ArrayList<>();
                 directiveMatches.add(dir);
             }
         }
         else
-            directiveMatches = Directives.prefixMatchDirectives(tokenText);
+            directiveMatches = Directive.prefixMatchDirectives(tokenText);
         if (directiveMatches != null) {
             matches = new ArrayList<>();
-            for (Directives direct : directiveMatches)
-                matches.add(new PopupHelpItem(tokenText, direct.getName(), direct.getDescription(), exact));
+            for (Directive direct : directiveMatches)
+                matches.add(new PopupHelpItem(tokenText, direct.descriptor, direct.description, exact));
         }
         return matches;
     }
 
-      // Return text for match of instruction mnemonic.  If second argument true, will
+    // Return text for match of instruction mnemonic.  If second argument true, will
     // do exact match.  If false, will do prefix match.   Text is returned as ArrayList
     // of PopupHelpItem objects. If no matches, returns null.
     private ArrayList<PopupHelpItem> getTextFromInstructionMatch(String tokenText, boolean exact) {
@@ -385,7 +386,7 @@ public class MIPSTokenMarker extends TokenMarker {
         HashMap<String, String> insts = new HashMap<>();
         TreeSet<String> mnemonics = new TreeSet<>();
         for (Instruction inst : matches)
-            if (Settings.BooleanSettings.EXTENDED_ASSEMBLER.isSet() || inst instanceof BasicInstruction) {
+            if (BooleanSettings.EXTENDED_ASSEMBLER.isSet() || inst instanceof BasicInstruction) {
                 if (exact)
                     results.add(new PopupHelpItem(tokenText, inst.getExampleFormat(), inst.getDescription(), exact));
                 else {
@@ -402,15 +403,14 @@ public class MIPSTokenMarker extends TokenMarker {
                 results.add(new PopupHelpItem(tokenText, tokenText, "(not a basic instruction)", exact));
             else
                 return null;
-        else
-            if (!exact) {
-                Iterator<String> mnemonicList = mnemonics.iterator();
-                while (mnemonicList.hasNext()) {
-                    String mnemonic = mnemonicList.next();
-                    String info = insts.get(mnemonic);
-                    results.add(new PopupHelpItem(tokenText, mnemonic, info, exact));
-                }
+        else if (!exact) {
+            Iterator<String> mnemonicList = mnemonics.iterator();
+            while (mnemonicList.hasNext()) {
+                String mnemonic = mnemonicList.next();
+                String info = insts.get(mnemonic);
+                results.add(new PopupHelpItem(tokenText, mnemonic, info, exact));
             }
+        }
         return results;
     }
 
@@ -429,9 +429,8 @@ public class MIPSTokenMarker extends TokenMarker {
             for (Instruction instructionSet1 : instructionSet)
                 cKeywords.add(instructionSet1.getName(), Token.KEYWORD1);
             // add assembler directives
-            java.util.ArrayList<Directives> directiveSet = mars.assembler.Directives.getDirectiveList();
-            for (Directives directiveSet1 : directiveSet)
-                cKeywords.add(directiveSet1.getName(), Token.KEYWORD2);
+            for (Directive directiveSet1 : Directive.values())
+                cKeywords.add(directiveSet1.descriptor, Token.KEYWORD2);
             // add integer register file
             mars.mips.hardware.Register[] registerFile = mars.mips.hardware.RegisterFile.getRegisters();
             for (int i = 0; i < registerFile.length; i++) {
@@ -460,7 +459,7 @@ public class MIPSTokenMarker extends TokenMarker {
         int len = i - lastKeyword;
         byte id = keywords.lookup(line, lastKeyword, len);
         if (id != Token.NULL) {
-          // If this is a Token.KEYWORD1 and line already contains a keyword,
+            // If this is a Token.KEYWORD1 and line already contains a keyword,
             // then assume this one is a label reference and ignore it.
             //   if (id == Token.KEYWORD1 && tokenListContainsKeyword()) { 
             //    } 

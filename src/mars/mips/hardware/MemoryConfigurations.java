@@ -2,7 +2,7 @@ package mars.mips.hardware;
 
 import mars.Main;
 import java.util.*;
-import mars.Settings;
+import mars.settings.StringSettings;
 
 /*
  Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -163,7 +163,7 @@ public class MemoryConfigurations {
             currentConfiguration = defaultConfiguration;
          	// Get current config from settings
             //String currentConfigurationIdentifier = Globals.getSettings().getMemoryConfiguration();
-            setCurrentConfiguration(getConfigurationByName(Settings.StringSettings.MEMORY_CONFIGURATION.get()));
+            setCurrentConfiguration(getConfigurationByName(StringSettings.MEMORY_CONFIGURATION.get()));
          //	Iterator configurationsIterator = getConfigurationsIterator();
             //	while (configurationsIterator.hasNext()) {
             //  MemoryConfiguration config = (MemoryConfiguration)configurationsIterator.next();

@@ -19,6 +19,7 @@ import mars.mips.hardware.MemoryAccessNotice;
 import mars.mips.hardware.MemoryConfiguration;
 import mars.mips.hardware.MemoryConfigurations;
 import mars.mips.hardware.RegisterFile;
+import mars.settings.BooleanSettings;
 import mars.simulator.ProgramArgumentList;
 import mars.util.Binary;
 import mars.util.FilenameFinder;
@@ -454,8 +455,8 @@ public class MarsLaunch {
         if (filenameList.isEmpty())
             return programRan;
         try {
-            Settings.BooleanSettings.DELAYED_BRANCHING.setNoPersist(delayedBranching);
-            Settings.BooleanSettings.SELF_MODIFYING_CODE.setNoPersist(selfModifyingCode);
+            BooleanSettings.DELAYED_BRANCHING.setNoPersist(delayedBranching);
+            BooleanSettings.SELF_MODIFYING_CODE.setNoPersist(selfModifyingCode);
             File mainFile = new File(filenameList.get(0)).getAbsoluteFile();// First file is "main" file
             ArrayList<String> filesToAssemble;
             if (assembleProject) {

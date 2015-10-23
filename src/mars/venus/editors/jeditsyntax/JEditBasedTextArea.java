@@ -14,7 +14,7 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.CompoundEdit;
 import javax.swing.undo.UndoManager;
 import mars.Main;
-import mars.Settings;
+import mars.settings.FontSettings;
 import mars.venus.EditPane;
 import mars.venus.editors.MARSTextEditingArea;
 import mars.venus.editors.jeditsyntax.tokenmarker.MIPSTokenMarker;
@@ -54,7 +54,7 @@ public class JEditBasedTextArea extends JEditTextArea implements MARSTextEditing
             }
         };
         getDocument().addUndoableEditListener(undoableEditListener);
-        setFont(Settings.FontSettings.EDITOR_FONT.get());
+        setFont(FontSettings.EDITOR_FONT.get());
         setTokenMarker(new MIPSTokenMarker());
 
         addCaretListener(this);
