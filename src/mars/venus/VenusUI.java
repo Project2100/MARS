@@ -599,7 +599,7 @@ public final class VenusUI {
         adjustInternalFrames.addActionListener((event) -> setExecuteTabBounds());
 
         URL assembleIcon = c.getResource(Main.imagesPath + "Assemble22.png");
-        marsMode = new JButton("Execute", assembleIcon == null
+        marsMode = new JButton("Assemble", assembleIcon == null
                 ? null
                 : new ImageIcon(assembleIcon));
         marsMode.setToolTipText("View and control program execution");
@@ -764,7 +764,7 @@ public final class VenusUI {
      */
     void toggleGUIMode() {
         if (leftPane.getTopComponent().equals(executePane)) {
-            marsMode.setText("Execute");
+            marsMode.setText("Assemble");
             marsMode.setToolTipText("View and control program execution");
 
             toolbar.removeAll();

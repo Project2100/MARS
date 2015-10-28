@@ -60,12 +60,12 @@ public enum FontSettings {
         styleID = identifier + "Style";
         sizeID = identifier + "Size";
 
-        String val1 = Main.props.getProperty(familyID);
+        String val1 = Main.properties.getProperty(familyID);
         if (val1 == null) val1 = type;
 
         int val2;
         try {
-            val2 = Integer.decode(Main.props.getProperty(styleID));
+            val2 = Integer.decode(Main.properties.getProperty(styleID));
         }
         catch (NumberFormatException | NullPointerException ex) {
             Main.logger.log(Level.WARNING, Settings.errorMessage,
@@ -75,7 +75,7 @@ public enum FontSettings {
 
         int val3;
         try {
-            val3 = Integer.decode(Main.props.getProperty(sizeID));
+            val3 = Integer.decode(Main.properties.getProperty(sizeID));
         }
         catch (NumberFormatException | NullPointerException ex) {
             Main.logger.log(Level.WARNING, Settings.errorMessage,

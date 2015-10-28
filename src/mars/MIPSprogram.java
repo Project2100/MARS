@@ -248,12 +248,11 @@ public class MIPSprogram {
      *
      * @throws ProcessingException Will throw exception if errors occurred while
      * tokenizing.
-     *
      */
     public void tokenize() throws ProcessingException {
-        this.tokenizer = new Tokenizer();
-        this.tokenList = tokenizer.tokenize(this);
-        this.localSymbolTable = new SymbolTable(this.filename); // prepare for assembly
+        tokenizer = new Tokenizer();
+        tokenList = tokenizer.tokenize(this);
+        localSymbolTable = new SymbolTable(filename); // prepare for assembly
     }
 
     /**

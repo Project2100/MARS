@@ -67,7 +67,7 @@ public enum BooleanSettings {
     private BooleanSettings(String id, boolean def) {
         identifier = id;
 
-        String prop = Main.props.getProperty(identifier);
+        String prop = Main.properties.getProperty(identifier);
         this.state = Settings.preferences.getBoolean(identifier,
                 prop != null ? Boolean.parseBoolean(prop) : def);
     }

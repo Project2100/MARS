@@ -58,7 +58,7 @@ public class Settings extends Observable {
 
     // Preferences node - see documentation
     static final Preferences preferences = Preferences.userNodeForPackage(Main.class);
-    public static final String errorMessage
+    static final String errorMessage
             = "Invalid value retrieved from property \"{0}\": {1}";
 
     /**
@@ -73,9 +73,8 @@ public class Settings extends Observable {
         Main.getSettings().setChanged();
         Main.getSettings().notifyObservers();
     }
-    
+
     public final void AWTinit() {
-        
 
         // For syntax styles, need to initialize from SyntaxUtilities defaults.
         // Taking care not to explicitly create a Color object, since it may trigger
@@ -107,7 +106,7 @@ public class Settings extends Observable {
             syntaxStyleItalicSettingsValues[i]
                     = defaultSyntaxStyleItalicSettingsValues[i] = syntaxStyle[i].isItalic();
         }
-        
+
         for (int i = 0; i < syntaxStyleColorSettingsKeys.length; i++) {
             syntaxStyleColorSettingsValues[i] = preferences.get(syntaxStyleColorSettingsKeys[i], syntaxStyleColorSettingsValues[i]);
             syntaxStyleBoldSettingsValues[i] = preferences.getBoolean(syntaxStyleBoldSettingsKeys[i], syntaxStyleBoldSettingsValues[i]);
@@ -183,7 +182,6 @@ public class Settings extends Observable {
             Main.logger.log(Level.SEVERE, "Can't save application settings!", se);
         }
     }
-
 
     // Get Color object for this key array position. Get it from values array
     // provided as argument (could be either the current or the default settings array).	

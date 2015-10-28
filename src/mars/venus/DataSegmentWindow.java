@@ -34,7 +34,6 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableModel;
 import mars.settings.ColorSettings;
 import mars.Main;
-import mars.settings.Settings;
 import mars.mips.hardware.AccessNotice;
 import mars.mips.hardware.AddressErrorException;
 import mars.mips.hardware.Memory;
@@ -108,7 +107,6 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
     private boolean addressHighlighting = false;
     private boolean asciiDisplay = false;
     private int addressRow, addressColumn, addressRowFirstAddress;
-    private Settings settings;
 
     int firstAddress;
     int homeAddress;
@@ -124,8 +122,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
     private int[] displayBaseAddresses;
     private int defaultBaseAddressIndex;
     JButton[] baseAddressButtons;
-    
-    
+
     private NumberDisplayBaseChooser valueDisplayBase;
     private NumberDisplayBaseChooser addressDisplayBase;
 
@@ -134,8 +131,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
      */
     public DataSegmentWindow() {
         super("Data Segment", true, false, true, true);
-        
-        
+
         // Although these are displayed in Data Segment, they apply to all three internal
         // windows within the Execute pane.  So they will be housed here.
         addressDisplayBase = new NumberDisplayBaseChooser("Hexadecimal Addresses",
@@ -147,8 +143,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
         NumberDisplayBaseChooser[] choosers = {addressDisplayBase, valueDisplayBase};
 
         Simulator.getInstance().addObserver(this);
-        settings = Main.getSettings();
-        settings.addObserver(this);
+        Main.getSettings().addObserver(this);
 
         homeAddress = Memory.dataBaseAddress;  // address for Home button
         firstAddress = homeAddress;  // first address to display at any given time
@@ -835,12 +830,13 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
                 // Simulated MIPS execution stops.  Stop responding.
                 Memory.getInstance().deleteObserver(this);
         }
-        else if (observable == settings) {
+        else if (observable == Main.getSettings()) {
             // Suspended work in progress. Intended to disable combobox item for text segment. DPS 9-July-2013.
             //baseAddressSelector.getModel().getElementAt(TEXT_BASE_ADDRESS_INDEX)
             //*.setEnabled(settings.getBooleanSetting(Settings.SELF_MODIFYING_CODE));
         }
-        else if (obj instanceof MemoryAccessNotice) {          	// NOTE: observable != Memory.getInstance() because Memory class delegates notification duty.
+        else if (obj instanceof MemoryAccessNotice) {
+            // NOTE: observable != Memory.getInstance() because Memory class delegates notification duty.
             MemoryAccessNotice access = (MemoryAccessNotice) obj;
             if (access.getAccessType() == AccessNotice.WRITE) {
                 int address = access.getAddress();
@@ -1110,8 +1106,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
             updateModelForMemoryRange(firstAddress);
         }
     }//////////////////////////////////////////////////////////////////////
-    
-    
+
     /**
      * Retrieve the number system base for displaying values (mem/register
      * contents)
@@ -1151,8 +1146,6 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
         return addressDisplayBase;
     }
 
-    
-    
     /**
      * Update display of columns based on state of given chooser. Normally
      * called only by the chooser's ItemListener.
@@ -1177,5 +1170,5 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
             Main.getGUI().textSegment.updateBasicStatements();
         }
     }
-    
+
 }

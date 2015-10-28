@@ -39,12 +39,12 @@ import mars.Main;
  */
 public enum ColorSettings {
 
-    EVEN_ROW("EvenRow", 0x00e0e0e0, 0),
-    ODD_ROW("OddRow", 0x00ffffff, 0),
     TEXTSEGMENT_HIGHLIGHT("TextSegmentHighlight", 0x00ffff99, 0),
     TEXTSEGMENT_DELAYSLOT_HIGHLIGHT("TextSegmentDelaySlotHighlight", 0x0033ff00, 0),
     DATASEGMENT_HIGHLIGHT("DataSegmentHighlight", 0x0099ccff, 0),
-    REGISTER_HIGHLIGHT("RegisterHighlight", 0x0099cc55, 0);
+    REGISTER_HIGHLIGHT("RegisterHighlight", 0x0099cc55, 0),
+    EVEN_ROW("EvenRow", 0x00e0e0e0, 0),
+    ODD_ROW("OddRow", 0x00ffffff, 0);
 
     final String bgID, fgID;
     final Color bgDefault, fgDefault;
@@ -57,7 +57,7 @@ public enum ColorSettings {
         int val;
 
         try {
-            val = Integer.decode(Main.props.getProperty(bgID));
+            val = Integer.decode(Main.properties.getProperty(bgID));
         }
         catch (NumberFormatException | NullPointerException ex) {
             Main.logger.log(Level.WARNING, Settings.errorMessage,
@@ -68,7 +68,7 @@ public enum ColorSettings {
         bgDefault = new Color(val, true);
 
         try {
-            val = Integer.decode(Main.props.getProperty(fgID));
+            val = Integer.decode(Main.properties.getProperty(fgID));
         }
         catch (NumberFormatException | NullPointerException ex) {
             Main.logger.log(Level.WARNING, Settings.errorMessage,

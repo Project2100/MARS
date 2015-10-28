@@ -51,7 +51,7 @@ public enum StringSettings {
     private StringSettings(String id, String def) {
         identifier = id;
 
-        String val = Main.props.getProperty(identifier);
+        String val = Main.properties.getProperty(identifier);
 
         vDefault = val = (val == null ? def : val);
 

@@ -51,7 +51,7 @@ public enum IntegerSettings {
 
         int val;
         try {
-            val = Integer.decode(Main.props.getProperty(identifier));
+            val = Integer.decode(Main.properties.getProperty(identifier));
         }
         catch (NumberFormatException | NullPointerException ex) {
             Main.logger.log(Level.WARNING, Settings.errorMessage,

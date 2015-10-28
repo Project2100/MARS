@@ -67,12 +67,10 @@ public class Main {
     private static final String syscallPropertiesFile = "Syscall";
 
     // Properties file used to hold default settings
-    public static final String settingsFile = "/Settings.properties";
-    public static final Properties props = new Properties();
-
+    public static final Properties properties = new Properties();
     static {
         try {
-            props.load(Main.class.getResourceAsStream(settingsFile));
+            properties.load(Main.class.getResourceAsStream("/Settings.properties"));
         }
         catch (IOException e) {
             Main.logger.log(Level.WARNING, "Unable to read Settings.properties file. Using built-in defaults.", e);
@@ -100,7 +98,7 @@ public class Main {
      * Lock variable used at head of synchronized block to guard MIPS memory and
      * registers
      */
-    public static Object memoryAndRegistersLock = new Object();
+    public static final Object memoryAndRegistersLock = new Object();
     /**
      * Flag to determine whether or not to produce internal debugging
      * information.

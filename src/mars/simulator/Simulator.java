@@ -403,7 +403,7 @@ public class Simulator extends Observable {
                 else if (DelayedBranch.isRegistered())
                     DelayedBranch.trigger();//////////////////////////////////////////////////////////////////////
 
-                // Volatile variable initialized false but can be setStatusMenu true by the main thread.
+                // Volatile variable initialized false but can be set true by the main thread.
                 // Used to stop or pause a running MIPS program.  See stopSimulation() above.
                 if (stop == true) {
                     constructReturnReason = PAUSE_OR_STOP;
@@ -430,21 +430,22 @@ public class Simulator extends Observable {
                     }
                 }
 
-                // schedule GUI simUpdate only if: there is in fact a GUI! AND
-                //                              using Run,  not Step (maxSteps > 1) AND
-                //                              running slowly enough for GUI to keep up
-                //if (Globals.getGui() != null && maxSteps != 1 &&             
+                // schedule GUI update only if:
+                //  - there is in fact a GUI
+                //  - using Run, not Step (maxSteps > 1)
+                //  - running slowly enough for GUI to keep up
+                double executionSpeed = RunSpeedPanel.getInstance().getRunSpeed();
                 if (Main.getGUI() != null && maxSteps != 1
-                        && RunSpeedPanel.getInstance().getRunSpeed() < RunSpeedPanel.UNLIMITED_SPEED)
+                        && executionSpeed < RunSpeedPanel.UNLIMITED_SPEED) {
                     EventQueue.invokeLater(Main.getGUI()::simUpdate);
-                if (Main.getGUI() != null || Main.runSpeedPanelExists) // OR added by DPS 24 July 2008 to enable speed control by stand-alone tool
-                    if (maxSteps != 1
-                            && RunSpeedPanel.getInstance().getRunSpeed() < RunSpeedPanel.UNLIMITED_SPEED)
-                        try {
-                            Thread.sleep((int) (1000 / RunSpeedPanel.getInstance().getRunSpeed())); // make sure it's never zero!
-                        }
-                        catch (InterruptedException e) {
-                        }
+                    try {
+                        // make sure it's never zero!
+                        Thread.sleep((int) (1000 / executionSpeed));
+                    }
+                    catch (InterruptedException e) {
+                    }
+
+                }
 
                 // Get next instruction in preparation for next iteration.
                 try {
@@ -511,7 +512,6 @@ public class Simulator extends Observable {
                     else if (stopperName.equals("Stop"))
                         RunGoAction.stopped(pe, constructReturnReason);
                 }
-            return;
         }
 
     }
