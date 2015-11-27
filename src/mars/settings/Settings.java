@@ -2,6 +2,7 @@ package mars.settings;
 
 import java.awt.Color;
 import java.util.Observable;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -42,11 +43,11 @@ import mars.venus.editors.jeditsyntax.SyntaxUtilities;
  * class. Failing that, default setting values come from Settings.properties
  * file. If both of those fail, default values come from static arrays defined
  * in this class. The latter can can be modified prior to instantiating Settings
- * object.<p/>
- *
+ * object.
+ * <p>
  * If the Preference objects fail due to security exceptions, changes to
- * settings will not carry over from one MARS session to the next.<p/>
- *
+ * settings will not carry over from one MARS session to the next.
+ * <p>
  * Actual implementation of the Preference objects is platform-dependent. For
  * Windows, they are stored in Registry. To see, run {@code regedit} and browse
  * to: {@code HKEY_CURRENT_USER\Software\JavaSoft\Prefs\mars}
@@ -57,10 +58,13 @@ import mars.venus.editors.jeditsyntax.SyntaxUtilities;
 public class Settings extends Observable {
 
     // Preferences node - see documentation
-    static final Preferences preferences = Preferences.userNodeForPackage(Main.class);
-    static final String errorMessage
+    static final Preferences PREFS_NODE = Preferences.userNodeForPackage(Main.class);
+    static final String ERROR_MESSAGE
             = "Invalid value retrieved from property \"{0}\": {1}";
-
+    
+    // Properties object which holds default settings
+    static final Properties properties = Main.loadPropertiesFromFile(Main.SETTINGS_FILENAME);
+    
     /**
      * Create Settings object and set to saved values. If saved values not
      * found, will set based on defaults stored in Settings.properties file. If
@@ -108,9 +112,9 @@ public class Settings extends Observable {
         }
 
         for (int i = 0; i < syntaxStyleColorSettingsKeys.length; i++) {
-            syntaxStyleColorSettingsValues[i] = preferences.get(syntaxStyleColorSettingsKeys[i], syntaxStyleColorSettingsValues[i]);
-            syntaxStyleBoldSettingsValues[i] = preferences.getBoolean(syntaxStyleBoldSettingsKeys[i], syntaxStyleBoldSettingsValues[i]);
-            syntaxStyleItalicSettingsValues[i] = preferences.getBoolean(syntaxStyleItalicSettingsKeys[i], syntaxStyleItalicSettingsValues[i]);
+            syntaxStyleColorSettingsValues[i] = PREFS_NODE.get(syntaxStyleColorSettingsKeys[i], syntaxStyleColorSettingsValues[i]);
+            syntaxStyleBoldSettingsValues[i] = PREFS_NODE.getBoolean(syntaxStyleBoldSettingsKeys[i], syntaxStyleBoldSettingsValues[i]);
+            syntaxStyleItalicSettingsValues[i] = PREFS_NODE.getBoolean(syntaxStyleItalicSettingsKeys[i], syntaxStyleItalicSettingsValues[i]);
         }
     }
 
@@ -173,10 +177,10 @@ public class Settings extends Observable {
 
     private void saveEditorSyntaxStyle(int index) {
         try {
-            preferences.put(syntaxStyleColorSettingsKeys[index], syntaxStyleColorSettingsValues[index]);
-            preferences.putBoolean(syntaxStyleBoldSettingsKeys[index], syntaxStyleBoldSettingsValues[index]);
-            preferences.putBoolean(syntaxStyleItalicSettingsKeys[index], syntaxStyleItalicSettingsValues[index]);
-            preferences.flush();
+            PREFS_NODE.put(syntaxStyleColorSettingsKeys[index], syntaxStyleColorSettingsValues[index]);
+            PREFS_NODE.putBoolean(syntaxStyleBoldSettingsKeys[index], syntaxStyleBoldSettingsValues[index]);
+            PREFS_NODE.putBoolean(syntaxStyleItalicSettingsKeys[index], syntaxStyleItalicSettingsValues[index]);
+            PREFS_NODE.flush();
         }
         catch (SecurityException | BackingStoreException se) {
             Main.logger.log(Level.SEVERE, "Can't save application settings!", se);

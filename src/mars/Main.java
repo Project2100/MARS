@@ -9,10 +9,13 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import mars.assembler.SymbolTable;
 import mars.mips.hardware.Memory;
 import mars.mips.instructions.InstructionSet;
 import mars.mips.instructions.syscalls.SyscallNumberOverride;
+import mars.settings.StringSettings;
 //import mars.venus.MarsSplashScreen;
 import mars.venus.VenusUI;
 
@@ -52,38 +55,26 @@ import mars.venus.VenusUI;
 public class Main {
 
     /**
-     * Application logger, central point for exception reporting
+     * Application logger, central point for exception-debug information
      */
     public static final Logger logger = Logger.getLogger(Main.class.getName());
 
-    /**
-     * This lambda will be used as the default handler for uncaught exceptions
-     */
-    public static final Thread.UncaughtExceptionHandler exHandler = (thread, exception)
+    // This lambda will be used as the default handler for uncaught exceptions
+    private static final Thread.UncaughtExceptionHandler exHandler = (thread, exception)
             -> Main.logger.log(Level.SEVERE, "Uncaught exception in thread: " + thread.getName(), exception);
 
     // List these first because they are referenced by methods called at initialization.
-    private static final String configPropertiesFile = "Config";
-    private static final String syscallPropertiesFile = "Syscall";
-
-    // Properties file used to hold default settings
-    public static final Properties properties = new Properties();
-    static {
-        try {
-            properties.load(Main.class.getResourceAsStream("/Settings.properties"));
-        }
-        catch (IOException e) {
-            Main.logger.log(Level.WARNING, "Unable to read Settings.properties file. Using built-in defaults.", e);
-        }
-    }
-
+    private static final String CONFIG_FILENAME = "Config";
+    private static final String SYSCALL_FILENAME = "Syscall";
+    public static final String SETTINGS_FILENAME = "Settings";
+    
     /**
      * The status of implemented MIPS instructions.
      */
     public static InstructionSet instructionSet;
     /**
      * the program currently being worked with. Used by GUI only, not command
-     * line. *
+     * line.
      */
     public static MIPSprogram program;
     /**
@@ -93,7 +84,7 @@ public class Main {
     /**
      * Simulated MIPS memory component.
      */
-    public static Memory memory;
+    public static Memory memory = Memory.getInstance();
     /**
      * Lock variable used at head of synchronized block to guard MIPS memory and
      * registers
@@ -134,41 +125,76 @@ public class Main {
     /**
      * MARS copyright years
      */
-    public static final String copyrightYears = "2003-2014";
+    public static final String COPYRIGHT_YEARS = "2003-2014";
     /**
      * MARS copyright holders
      */
-    public static final String copyrightHolders = "Pete Sanderson and Kenneth Vollmar";
+    public static final String COPYRIGHT_HOLDERS = "Pete Sanderson and Kenneth Vollmar";
     /**
      * The current MARS version number. Can't wait for "initialize()" call to
      * set it.
      */
-    public static final String version = "4.5";
+    public static final String VERSION = "4.5";
     /**
      * List of accepted file extensions for MIPS assembly source files.
      */
-    public static final ArrayList<String> fileExtensions = getFileExtensions();
+    public static final ArrayList<String> fileExtensions;
     /**
      * Maximum length of scrolled message window (MARS Messages and Run I/O)
      */
-    public static final int maximumMessageCharacters = getMessageLimit();
+    public static final int maximumMessageCharacters;
     /**
      * Maximum number of assembler errors produced by one assemble operation
      */
-    public static final int maximumErrorMessages = getErrorLimit();
+    public static final int maximumErrorMessages;
     /**
      * Maximum number of back-step operations to buffer
      */
-    public static final int maximumBacksteps = getBackstepLimit();
+    public static final int maximumBacksteps;
     /**
-     * Placeholder for non-printable ASCII codes
+     * Placeholder for non-printable ASCII codes, default is: {@code .}
      */
-    public static final String ASCII_NON_PRINT = getAsciiNonPrint();
+    public static final String ASCII_NON_PRINT;
     /**
      * Array of strings to display for ASCII codes in ASCII display of data
-     * segment. ASCII code 0-255 is array index.
+     * segment. ASCII code 0-255 is array index. {@code "null"} codes are
+     * translated as non-printable, while {@code "space"} codes will be
+     * represented by the proper space character.
      */
-    public static final String[] ASCII_TABLE = getAsciiStrings();
+    public static final String[] ASCII_TABLE;
+
+    static {
+        Properties configProps = loadPropertiesFromFile(CONFIG_FILENAME);
+
+        String extensions = configProps.getProperty("Extensions", "");
+        fileExtensions = (extensions.isEmpty()
+                ? new ArrayList<>()
+                : Stream.of(extensions.split(" "))
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toCollection(ArrayList::new)));
+
+        maximumMessageCharacters = getIntegerProperty(configProps, "MessageLimit", 1000000);
+        maximumErrorMessages = getIntegerProperty(configProps, "ErrorLimit", 200);
+        maximumBacksteps = getIntegerProperty(configProps, "BackstepLimit", 1000);
+
+        String anp = configProps.getProperty("AsciiNonPrint", ".");
+        ASCII_NON_PRINT = anp.equals("space") ? " " : anp;
+
+        String[] literals = configProps.getProperty("AsciiTable").split(" +");
+        int maxLength = 0;
+        for (int i = 0; i < literals.length; i++) {
+            if (literals[i].equals("null")) literals[i] = ASCII_NON_PRINT;
+            if (literals[i].equals("space")) literals[i] = " ";
+            if (literals[i].length() > maxLength)
+                maxLength = literals[i].length();
+        }
+        String padding = "        ";
+        maxLength++;
+        for (int i = 0; i < literals.length; i++)
+            literals[i] = padding.substring(0, maxLength - literals[i].length()) + literals[i];
+        ASCII_TABLE = literals;
+    }
+
     /**
      * MARS exit code -- useful with SYSCALL 17 when running from command line
      * (not GUI)
@@ -204,81 +230,24 @@ public class Main {
             Thread.setDefaultUncaughtExceptionHandler(Main.exHandler);
             logger.setLevel(debug ? Level.INFO : Level.WARNING);
             settings = new Settings();
-            memory = Memory.getInstance();  //clients can use Memory.getInstance instead of Globals.memory
             instructionSet = new InstructionSet();
             instructionSet.populate();
             symbolTable = new SymbolTable("global");
             initialized = true;
             debug = false;
-            memory.clear(); // will establish memory configuration from setting
         }
-    }
-
-    // Read byte limit of Run I/O or MARS Messages text to buffer.
-    private static int getMessageLimit() {
-        return getIntegerProperty(configPropertiesFile, "MessageLimit", 1000000);
-    }
-
-    // Read limit on number of error messages produced by one assemble operation.
-    private static int getErrorLimit() {
-        return getIntegerProperty(configPropertiesFile, "ErrorLimit", 200);
-    }
-
-    // Read backstep limit (number of operations to buffer) from properties file.
-    private static int getBackstepLimit() {
-        return getIntegerProperty(configPropertiesFile, "BackstepLimit", 1000);
-    }
-
-    // Read ASCII default display character for non-printing characters, from properties file.
-    public static String getAsciiNonPrint() {
-        String anp = getPropertyEntry(configPropertiesFile, "AsciiNonPrint");
-        return (anp == null) ? "." : ((anp.equals("space")) ? " " : anp);
-    }
-
-    // Read ASCII strings for codes 0-255, from properties file. If string
-    // value is "null", substitute value of ASCII_NON_PRINT.  If string is
-    // "space", substitute string containing one space character.
-    public static String[] getAsciiStrings() {
-        String let = getPropertyEntry(configPropertiesFile, "AsciiTable");
-        String placeHolder = getAsciiNonPrint();
-        String[] lets = let.split(" +");
-        int maxLength = 0;
-        for (int i = 0; i < lets.length; i++) {
-            if (lets[i].equals("null")) lets[i] = placeHolder;
-            if (lets[i].equals("space")) lets[i] = " ";
-            if (lets[i].length() > maxLength) maxLength = lets[i].length();
-        }
-        String padding = "        ";
-        maxLength++;
-        for (int i = 0; i < lets.length; i++)
-            lets[i] = padding.substring(0, maxLength - lets[i].length()) + lets[i];
-        return lets;
     }
 
     // Read and return integer property value for given file and property name.
     // Default value is returned if property file or name not found.
-    private static int getIntegerProperty(String propertiesFile, String propertyName, int defaultValue) {
+    private static int getIntegerProperty(Properties propertiesFile, String propertyName, int defaultValue) {
         int limit = defaultValue;  // just in case no entry is found
-        Properties properties = loadPropertiesFromFile(propertiesFile);
         try {
-            limit = Integer.parseInt(properties.getProperty(propertyName, Integer.toString(defaultValue)));
+            limit = Integer.parseInt(propertiesFile.getProperty(propertyName, Integer.toString(defaultValue)));
         }
         catch (NumberFormatException nfe) {
         } // do nothing, I already have a default
         return limit;
-    }
-
-    // Read assembly language file extensions from properties file.  Resulting
-    // string is tokenized into array list (assume StringTokenizer default delimiters).
-    private static ArrayList<String> getFileExtensions() {
-        ArrayList<String> extensionsList = new ArrayList<>();
-        String extensions = getPropertyEntry(configPropertiesFile, "Extensions");
-        if (extensions != null) {
-            StringTokenizer st = new StringTokenizer(extensions);
-            while (st.hasMoreTokens())
-                extensionsList.add(st.nextToken());
-        }
-        return extensionsList;
     }
 
     /**
@@ -292,25 +261,13 @@ public class Main {
     public static ArrayList<String> getExternalTools() {
         ArrayList<String> toolsList = new ArrayList<>();
         String delimiter = ";";
-        String tools = getPropertyEntry(configPropertiesFile, "ExternalTools");
+        String tools = loadPropertiesFromFile(CONFIG_FILENAME).getProperty("ExternalTools");
         if (tools != null) {
             StringTokenizer st = new StringTokenizer(tools, delimiter);
             while (st.hasMoreTokens())
                 toolsList.add(st.nextToken());
         }
         return toolsList;
-    }
-
-    /**
-     * Read and return property file value (if any) for requested property.
-     *
-     * @param propertiesFile name of properties file (do NOT include filename
-     * extension, which is assumed to be ".properties")
-     * @param propertyName String containing desired property name
-     * @return String containing associated value; null if property not found
-     */
-    public static String getPropertyEntry(String propertiesFile, String propertyName) {
-        return loadPropertiesFromFile(propertiesFile).getProperty(propertyName);
     }
 
     /**
@@ -323,14 +280,14 @@ public class Main {
      * @return Properties (Hashtable) of key-value pairs read from the file.
      */
     public static Properties loadPropertiesFromFile(String file) {
-        Properties properties = new Properties();
+        Properties p = new Properties();
         try {
-            properties.load(Main.class.getResourceAsStream("/" + file + ".properties"));
+            p.load(Main.class.getResourceAsStream("/" + file + ".properties"));
         }
         catch (NullPointerException | IOException ioe) {
             // If it doesn't work, properties will be empty
         }
-        return properties;
+        return p;
     }
 
     /**
@@ -351,11 +308,11 @@ public class Main {
      */
     public ArrayList<SyscallNumberOverride> getSyscallOverrides() {
         ArrayList<SyscallNumberOverride> overrides = new ArrayList<>();
-        Properties properties = loadPropertiesFromFile(syscallPropertiesFile);
-        Enumeration<Object> keys = properties.keys();
+        Properties p = loadPropertiesFromFile(SYSCALL_FILENAME);
+        Enumeration<Object> keys = p.keys();
         while (keys.hasMoreElements()) {
             String key = keys.nextElement().toString();
-            overrides.add(new SyscallNumberOverride(key, properties.getProperty(key)));
+            overrides.add(new SyscallNumberOverride(key, p.getProperty(key)));
         }
         return overrides;
     }
@@ -381,9 +338,9 @@ public class Main {
             //
             // Andrea Proietto, 15/04/28 21:37
             //
-            // NOTE 151016 - This seems to slow down startup - removing
+            // NOTE 151016 - This seems to actually slow down startup - removing
 //            MarsSplashScreen.showSplash(2000);
-
+            memory.configure(Memory.getConfigByName(StringSettings.MEMORY_CONFIGURATION.get()));
             EventQueue.invokeLater(() -> {
                 settings.AWTinit();
                 Thread.setDefaultUncaughtExceptionHandler(exHandler);

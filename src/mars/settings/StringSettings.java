@@ -51,11 +51,11 @@ public enum StringSettings {
     private StringSettings(String id, String def) {
         identifier = id;
 
-        String val = Main.properties.getProperty(identifier);
+        String val = Settings.properties.getProperty(identifier);
 
         vDefault = val = (val == null ? def : val);
 
-        value = Settings.preferences.get(identifier,
+        value = Settings.PREFS_NODE.get(identifier,
                 val != null ? val : vDefault);
     }
 
@@ -65,9 +65,9 @@ public enum StringSettings {
 
     public void set(String value) {
         this.value = value;
-        Settings.preferences.put(identifier, value);
+        Settings.PREFS_NODE.put(identifier, value);
         try {
-            Settings.preferences.flush();
+            Settings.PREFS_NODE.flush();
         }
         catch (SecurityException | BackingStoreException e) {
             Main.logger.log(Level.SEVERE, "Unable to save string setting: " + identifier, e);

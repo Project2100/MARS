@@ -57,25 +57,25 @@ public enum ColorSettings {
         int val;
 
         try {
-            val = Integer.decode(Main.properties.getProperty(bgID));
+            val = Integer.decode(Settings.properties.getProperty(bgID));
         }
         catch (NumberFormatException | NullPointerException ex) {
-            Main.logger.log(Level.WARNING, Settings.errorMessage,
+            Main.logger.log(Level.WARNING, Settings.ERROR_MESSAGE,
                     new Object[] {bgID, ex.getMessage()});
             val = bg;
         }
-        background = new Color(Settings.preferences.getInt(bgID, val));
+        background = new Color(Settings.PREFS_NODE.getInt(bgID, val));
         bgDefault = new Color(val, true);
 
         try {
-            val = Integer.decode(Main.properties.getProperty(fgID));
+            val = Integer.decode(Settings.properties.getProperty(fgID));
         }
         catch (NumberFormatException | NullPointerException ex) {
-            Main.logger.log(Level.WARNING, Settings.errorMessage,
+            Main.logger.log(Level.WARNING, Settings.ERROR_MESSAGE,
                     new Object[] {fgID, ex.getMessage()});
             val = fg;
         }
-        foreground = new Color(Settings.preferences.getInt(fgID, val));
+        foreground = new Color(Settings.PREFS_NODE.getInt(fgID, val));
         fgDefault = new Color(val, true);
 
     }
@@ -124,8 +124,8 @@ public enum ColorSettings {
     public void setBackground(Color color) {
         background = color;
         try {
-            Settings.preferences.putInt(bgID, background.getRGB());
-            Settings.preferences.flush();
+            Settings.PREFS_NODE.putInt(bgID, background.getRGB());
+            Settings.PREFS_NODE.flush();
         }
         catch (SecurityException | BackingStoreException e) {
             Main.logger.log(Level.SEVERE, "Unable to save color setting: " + bgID, e);
@@ -140,8 +140,8 @@ public enum ColorSettings {
     public void setForeground(Color color) {
         foreground = color;
         try {
-            Settings.preferences.putInt(fgID, foreground.getRGB());
-            Settings.preferences.flush();
+            Settings.PREFS_NODE.putInt(fgID, foreground.getRGB());
+            Settings.PREFS_NODE.flush();
         }
         catch (SecurityException | BackingStoreException e) {
             Main.logger.log(Level.WARNING, "Unable to save color setting: " + fgID, e);

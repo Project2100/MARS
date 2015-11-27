@@ -60,33 +60,33 @@ public enum FontSettings {
         styleID = identifier + "Style";
         sizeID = identifier + "Size";
 
-        String val1 = Main.properties.getProperty(familyID);
+        String val1 = Settings.properties.getProperty(familyID);
         if (val1 == null) val1 = type;
 
         int val2;
         try {
-            val2 = Integer.decode(Main.properties.getProperty(styleID));
+            val2 = Integer.decode(Settings.properties.getProperty(styleID));
         }
         catch (NumberFormatException | NullPointerException ex) {
-            Main.logger.log(Level.WARNING, Settings.errorMessage,
+            Main.logger.log(Level.WARNING, Settings.ERROR_MESSAGE,
                     new Object[] {styleID, ex.getMessage()});
             val2 = style;
         }
 
         int val3;
         try {
-            val3 = Integer.decode(Main.properties.getProperty(sizeID));
+            val3 = Integer.decode(Settings.properties.getProperty(sizeID));
         }
         catch (NumberFormatException | NullPointerException ex) {
-            Main.logger.log(Level.WARNING, Settings.errorMessage,
+            Main.logger.log(Level.WARNING, Settings.ERROR_MESSAGE,
                     new Object[] {sizeID, ex.getMessage()});
             val3 = size;
         }
 
         font = new Font(
-                Settings.preferences.get(familyID, val1),
-                Settings.preferences.getInt(styleID, val2),
-                Settings.preferences.getInt(sizeID, val3));
+                Settings.PREFS_NODE.get(familyID, val1),
+                Settings.PREFS_NODE.getInt(styleID, val2),
+                Settings.PREFS_NODE.getInt(sizeID, val3));
         fDefault = new Font(val1, val2, val3);
     }
 
@@ -116,11 +116,11 @@ public enum FontSettings {
      */
     public void set(Font font) {
         this.font = font;
-        Settings.preferences.put(familyID, font.getFamily());
-        Settings.preferences.putInt(styleID, font.getStyle());
-        Settings.preferences.putInt(sizeID, font.getSize());
+        Settings.PREFS_NODE.put(familyID, font.getFamily());
+        Settings.PREFS_NODE.putInt(styleID, font.getStyle());
+        Settings.PREFS_NODE.putInt(sizeID, font.getSize());
         try {
-            Settings.preferences.flush();
+            Settings.PREFS_NODE.flush();
         }
         catch (SecurityException | BackingStoreException e) {
             Main.logger.log(Level.SEVERE, "Unable to save font setting: " + familyID, e);

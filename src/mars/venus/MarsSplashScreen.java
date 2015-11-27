@@ -54,9 +54,9 @@ public class MarsSplashScreen extends JWindow {
         title.setFont(new Font("Sans-Serif", Font.BOLD, 16));
         title.setForeground(Color.black);
         
-        JLabel copyright = new JLabel("<html><br/><br/>Version " + Main.version
-                + " Copyright (c) " + Main.copyrightYears
-                + "<br/><br/><br/>" + Main.copyrightHolders + "</html>",
+        JLabel copyright = new JLabel("<html><br/><br/>Version " + Main.VERSION
+                + " Copyright (c) " + Main.COPYRIGHT_YEARS
+                + "<br/><br/><br/>" + Main.COPYRIGHT_HOLDERS + "</html>",
                 JLabel.CENTER);
         copyright.setFont(new Font("Sans-Serif", Font.BOLD, 14));
         copyright.setForeground(Color.white);

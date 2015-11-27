@@ -51,15 +51,15 @@ public enum IntegerSettings {
 
         int val;
         try {
-            val = Integer.decode(Main.properties.getProperty(identifier));
+            val = Integer.decode(Settings.properties.getProperty(identifier));
         }
         catch (NumberFormatException | NullPointerException ex) {
-            Main.logger.log(Level.WARNING, Settings.errorMessage,
+            Main.logger.log(Level.WARNING, Settings.ERROR_MESSAGE,
                     new Object[] {identifier, ex.getMessage()});
             val = def;
         }
 
-        value = Settings.preferences.getInt(identifier, val);
+        value = Settings.PREFS_NODE.getInt(identifier, val);
         defaultValue = val;
     }
 
@@ -69,9 +69,9 @@ public enum IntegerSettings {
 
     public void set(int value) {
         this.value = value;
-        Settings.preferences.putInt(identifier, value);
+        Settings.PREFS_NODE.putInt(identifier, value);
         try {
-            Settings.preferences.flush();
+            Settings.PREFS_NODE.flush();
         }
         catch (SecurityException | BackingStoreException e) {
             Main.logger.log(Level.SEVERE, "Unable to save integer setting: " + identifier, e);

@@ -67,8 +67,8 @@ public enum BooleanSettings {
     private BooleanSettings(String id, boolean def) {
         identifier = id;
 
-        String prop = Main.properties.getProperty(identifier);
-        this.state = Settings.preferences.getBoolean(identifier,
+        String prop = Settings.properties.getProperty(identifier);
+        this.state = Settings.PREFS_NODE.getBoolean(identifier,
                 prop != null ? Boolean.parseBoolean(prop) : def);
     }
 
@@ -89,8 +89,8 @@ public enum BooleanSettings {
     public void set(boolean newState) {
         if (state != newState) {
             try {
-                Settings.preferences.putBoolean(identifier, newState);
-                Settings.preferences.flush();
+                Settings.PREFS_NODE.putBoolean(identifier, newState);
+                Settings.PREFS_NODE.flush();
             }
             catch (SecurityException | BackingStoreException e) {
                 Main.logger.log(Level.SEVERE, "Unable to save boolean setting: " + identifier, e);

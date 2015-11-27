@@ -148,7 +148,7 @@ public final class VenusUI {
         // the "restore" size (window control button that toggles with maximize)
         // I want to keep it large, with enough room for user to get handles
         //this.setSize((int)(screenWidth*.8),(int)(screenHeight*.8));
-        mainFrame = new JFrame(baseTitle = "MARS " + Main.version);
+        mainFrame = new JFrame(baseTitle = "MARS " + Main.VERSION);
 
         // image courtesy of NASA/JPL.
         Image icon = toolkit.getImage(c.getResource(
@@ -508,8 +508,8 @@ public final class VenusUI {
         JMenuItem aboutItem = new JMenuItem("About...");
         aboutItem.setToolTipText("Information about MARS");
         aboutItem.addActionListener((event) -> JOptionPane.showMessageDialog(mainFrame,
-                "MARS " + Main.version + "    Copyright " + Main.copyrightYears + "\n"
-                + Main.copyrightHolders + "\n"
+                "MARS " + Main.VERSION + "    Copyright " + Main.COPYRIGHT_YEARS + "\n"
+                + Main.COPYRIGHT_HOLDERS + "\n"
                 + "MARS is the Mips Assembler and Runtime Simulator.\n\n"
                 + "Mars image courtesy of NASA/JPL.\n"
                 + "Application icon taken from [PLACEHOLDER]\n"

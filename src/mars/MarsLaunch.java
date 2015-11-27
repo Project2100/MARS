@@ -16,8 +16,6 @@ import mars.mips.hardware.Coprocessor1;
 import mars.mips.hardware.InvalidRegisterAccessException;
 import mars.mips.hardware.Memory;
 import mars.mips.hardware.MemoryAccessNotice;
-import mars.mips.hardware.MemoryConfiguration;
-import mars.mips.hardware.MemoryConfigurations;
 import mars.mips.hardware.RegisterFile;
 import mars.settings.BooleanSettings;
 import mars.simulator.ProgramArgumentList;
@@ -174,7 +172,7 @@ public class MarsLaunch {
         registerDisplayList = new ArrayList<>();
         memoryDisplayList = new ArrayList<>();
         filenameList = new ArrayList<>();
-        MemoryConfigurations.setCurrentConfiguration(MemoryConfigurations.getDefaultConfiguration());
+        Main.memory.configure(Memory.defaultConfig);
         // do NOT use Globals.program for command line MARS -- it triggers 'backstep' log.
         code = new MIPSprogram();
         maxSteps = -1;
@@ -303,20 +301,20 @@ public class MarsLaunch {
                 else {
                     if (dumpTriples == null)
                         dumpTriples = new ArrayList<>();
-                    dumpTriples.add(new String[]{args[++i], args[++i], args[++i]});
+                    dumpTriples.add(new String[] {args[++i], args[++i], args[++i]});
                     //simulate = false;
                 }
                 continue;
             }
             if (args[i].toLowerCase().equals("mc")) {
                 String configName = args[++i];
-                MemoryConfiguration config = MemoryConfigurations.getConfigurationByName(configName);
+                Memory.Configuration config = Memory.getConfigByName(configName);
                 if (config == null) {
                     out.println("Invalid memory configuration: " + configName);
                     argsOK = false;
                 }
                 else
-                    MemoryConfigurations.setCurrentConfiguration(config);
+                    Main.memory.configure(config);
                 continue;
             }
             // Set MARS exit code for assemble error
@@ -725,7 +723,7 @@ public class MarsLaunch {
     private void displayCopyright(String[] args, String noCopyrightSwitch) {
         for (String arg : args)
             if (arg.toLowerCase().equals(noCopyrightSwitch)) return;
-        out.println("MARS " + Main.version + "  Copyright " + Main.copyrightYears + " " + Main.copyrightHolders + "\n");
+        out.println("MARS " + Main.VERSION + "  Copyright " + Main.COPYRIGHT_YEARS + " " + Main.COPYRIGHT_HOLDERS + "\n");
     }
 
     ///////////////////////////////////////////////////////////////////////
