@@ -424,7 +424,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
                 // the MIPS program is running, and even then only in timed or step mode.  There are good reasons
                 // for that.  So we'll pretend to be Memory observable and send it a fake memory write update.
                 try {
-                    Main.getGUI().dataSegment.update(Memory.getInstance(),
+                    Main.getGUI().dataSegment.update(Main.memory,
                             new MemoryAccessNotice(AccessNotice.WRITE, address, value));
                 }
                 catch (Exception e) {
@@ -662,7 +662,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
      */
     private void addAsTextSegmentObserver() {
         try {
-            Memory.getInstance().addObserver(this, Memory.textBaseAddress, Memory.dataSegmentBaseAddress);
+            (Main.memory).addObserver(this, Memory.textBaseAddress, Memory.dataSegmentBaseAddress);
         }
         catch (AddressErrorException aee) {
         }
@@ -672,7 +672,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
      *  Little convenience method to remove this as observer of text segment
      */
     private void deleteAsTextSegmentObserver() {
-        Memory.getInstance().deleteObserver(this);
+        (Main.memory).deleteObserver(this);
     }
 
     /*

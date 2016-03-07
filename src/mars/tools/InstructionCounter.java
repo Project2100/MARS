@@ -36,6 +36,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
+import mars.Main;
 
 import mars.ProgramStatement;
 import mars.mips.hardware.AccessNotice;
@@ -211,7 +212,7 @@ public class InstructionCounter extends AbstractMarsToolAndApplication {
 		lastAddress = a;
 		counter++;
 		try {
-			ProgramStatement stmt = Memory.getInstance().getStatement(a);
+			ProgramStatement stmt = (Main.memory).getStatement(a);
 			BasicInstruction instr = (BasicInstruction) stmt.getInstruction();
 			BasicInstructionFormat format = instr.getInstructionFormat();
 			if (format == BasicInstructionFormat.R_FORMAT)

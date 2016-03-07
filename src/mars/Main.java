@@ -84,7 +84,7 @@ public class Main {
     /**
      * Simulated MIPS memory component.
      */
-    public static Memory memory = Memory.getInstance();
+    public static Memory memory = new Memory();
     /**
      * Lock variable used at head of synchronized block to guard MIPS memory and
      * registers

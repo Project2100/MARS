@@ -404,7 +404,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    	
        public static void resetRegisters(){
          for(int i=0; i < registers.length; i++)
-            registers[i].resetValue();
+            registers[i].reset();
          clearConditionFlags();
       }
       

@@ -37,6 +37,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    import javax.swing.JPanel;
    import javax.swing.JProgressBar;
    import javax.swing.JTextField;
+import mars.Main;
 
    import mars.ProgramStatement;
    import mars.mips.hardware.AccessNotice;
@@ -291,7 +292,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             try {
             
             // access the statement in the text segment without notifying other tools etc.
-               ProgramStatement stmt = Memory.getInstance().getStatementNoNotify(memAccNotice.getAddress());
+               ProgramStatement stmt = (Main.memory).getStatementNoNotify(memAccNotice.getAddress());
             
             // necessary to handle possible null pointers at the end of the program 
             // (e.g., if the simulator tries to execute the next instruction after the last instruction in the text segment) 

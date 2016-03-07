@@ -72,12 +72,12 @@ public class RunBackstepAction extends AbstractAction {
 
         if (Main.isBackSteppingEnabled()) {
             boolean inDelaySlot = Main.program.getBackStepper().inDelaySlot(); // Added 25 June 2007
-            Memory.getInstance().addObserver(Main.getGUI().dataSegment);
+            (Main.memory).addObserver(Main.getGUI().dataSegment);
             RegisterFile.addRegistersObserver(Main.getGUI().registersTab);
             Coprocessor0.addRegistersObserver(Main.getGUI().coprocessor0Tab);
             Coprocessor1.addRegistersObserver(Main.getGUI().coprocessor1Tab);
             Main.program.getBackStepper().backStep();
-            Memory.getInstance().deleteObserver(Main.getGUI().dataSegment);
+            (Main.memory).deleteObserver(Main.getGUI().dataSegment);
             RegisterFile.deleteRegistersObserver(Main.getGUI().registersTab);
             Main.getGUI().registersTab.updateRegisters();
             Main.getGUI().coprocessor1Tab.updateRegisters();

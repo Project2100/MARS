@@ -1,17 +1,16 @@
-package mars.mips.hardware;
+package mars.mips.newhardware;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.logging.Level;
 import mars.Main;
 import mars.ProgramStatement;
+import mars.mips.hardware.AccessNotice;
+import mars.mips.hardware.AddressErrorException;
+import mars.mips.hardware.MemoryAccessNotice;
 import mars.mips.instructions.Instruction;
 import mars.settings.BooleanSettings;
 import mars.simulator.Exceptions;
@@ -48,80 +47,96 @@ import mars.util.Binary;
  * Represents MIPS memory. Different segments are represented by different data
  * structures.
  *
- * @implNote This implementation is purely big-endian. MIPS can handle either
- * one.
- * PENDING - Is it true?!?
+ * @implNote
+ *
+ * <h3>Data Segments</h3>
+ *
+ * The data segment is allocated in blocks of 1024 ints (4096 bytes). Each block
+ * is referenced by a "block table" entry, and the table has 1024 entries. The
+ * capacity is thus 1024 entries * 4096 bytes = 4 MB. Should be enough to cover
+ * most programs!! Beyond that it would go to an "indirect" block (similar to
+ * Unix i-nodes), which is not implemented.
+ * <p/>
+ * Although this scheme is an array of arrays, it is relatively space-efficient
+ * since only the table is created initially. A 4096-byte block is not allocated
+ * until a value is written to an address within it. Thus most small programs
+ * will use only 8K bytes of space (the table plus one block). The index into
+ * both arrays is easily computed from the address; access time is constant.
+ * <p/>
+ * SPIM stores statically allocated data (following first .data directive)
+ * starting at location 0x10010000. This is the first Data Segment word beyond
+ * the reach of $gp used in conjunction with signed 16 bit immediate offset. $gp
+ * has value 0x10008000 and with the signed 16 bit offset can reach from
+ * 0x10008000 - 0xFFFF = 0x10000000 (Data Segment base) to 0x10008000 + 0x7FFF =
+ * 0x1000FFFF (the byte preceding 0x10010000).
+ * <p/>
+ * Using my scheme, 0x10010000 falls at the beginning of the 17'th block --
+ * table entry 16. SPIM uses a heap base address of 0x10040000 which is not part
+ * of the MIPS specification. (I don't have a reference for that offhand...)
+ * Using my scheme, 0x10040000 falls at the start of the 65'th block -- table
+ * entry 64. That leaves (1024-64) * 4096 = 3,932,160 bytes of space available
+ * without going indirect.
+ *
+ * <h3>Text Segments</h3>
+ *
+ * I use a similar scheme for storing instructions. MIPS text segment ranges
+ * from 0x00400000 all the way to data segment (0x10000000) a range of about 250
+ * MB! So I'll provide table of blocks with similar capacity. This differs from
+ * data segment somewhat in that the block entries do not contain int's, but
+ * instead contain references to ProgramStatement objects.
+ *
+* * <h3>Stack</h3>
+ *
+ * The stack is modeled similarly to the data segment. It cannot share the same
+ * data structure because the stack base address is very large. To store it in
+ * the same data structure would require implementation of indirect blocks,
+ * which has not been realized. So the stack gets its own table of blocks using
+ * the same dimensions and allocation scheme used for data segment.
+ * <p/>
+ * The other major difference is the stack grows DOWNWARD from its base address,
+ * not upward. I.e., the stack base is the largest stack address. This turns the
+ * whole scheme for translating memory address to block-offset on its head! The
+ * simplest solution is to calculate relative address (offset from base) by
+ * subtracting the desired address from the stack base address (rather than
+ * subtracting base address from desired address). Thus as the address gets
+ * smaller the offset gets larger. Everything else works the same, so it shares
+ * some private helper methods with data segment algorithms.
+ *
+ * <h3>Memory-mapped I/O</h3>
+ *
+ * Memory mapped I/O is simulated with a separate table using the same structure
+ * and logic as data segment. Memory is allocated in 4K byte blocks. But since
+ * MMIO address range is limited to 0xffff0000 to 0xfffffffc, there are only 64K
+ * bytes total. Thus there will be a maximum of 16 blocks, and I suspect never
+ * more than one since only the first few addresses are typically used. The only
+ * exception may be a rogue program generating such addresses in a loop. Note
+ * that the MMIO addresses are interpreted by Java as negative numbers since it
+ * does not have unsigned types. As long as the absolute address is correctly
+ * translated into a table offset, this is of no concern.
+ *
+ * <h3>Byte Order</h3>
+ *
+ * This implementation is purely big-endian, MIPS can handle either one.
  *
  * @author Pete Sanderson
  * @version August 2003
  */
 public final class Memory extends Observable {
 
-    // The data segment is allocated in blocks of 1024 ints (4096 bytes).  Each block is
-    // referenced by a "block table" entry, and the table has 1024 entries.  The capacity
-    // is thus 1024 entries * 4096 bytes = 4 MB.  Should be enough to cover most
-    // programs!!  Beyond that it would go to an "indirect" block (similar to Unix i-nodes),
-    // which is not implemented.
-    //
-    // Although this scheme is an array of arrays, it is relatively space-efficient since
-    // only the table is created initially. A 4096-byte block is not allocated until a value 
-    // is written to an address within it.  Thus most small programs will use only 8K bytes 
-    // of space (the table plus one block).  The index into both arrays is easily computed 
-    // from the address; access time is constant.
-    //
-    // SPIM stores statically allocated data (following first .data directive) starting
-    // at location 0x10010000.  This is the first Data Segment word beyond the reach of $gp
-    // used in conjunction with signed 16 bit immediate offset.  $gp has value 0x10008000
-    // and with the signed 16 bit offset can reach from 0x10008000 - 0xFFFF = 0x10000000 
-    // (Data Segment base) to 0x10008000 + 0x7FFF = 0x1000FFFF (the byte preceding 0x10010000).
-    //
-    // Using my scheme, 0x10010000 falls at the beginning of the 17'th block -- table entry 16.
-    // SPIM uses a heap base address of 0x10040000 which is not part of the MIPS specification.
-    // (I don't have a reference for that offhand...)  Using my scheme, 0x10040000 falls at
-    // the start of the 65'th block -- table entry 64.  That leaves (1024-64) * 4096 = 3,932,160
-    // bytes of space available without going indirect.
     private static final int BLOCK_LENGTH_WORDS = 1024;  // allocated blocksize 1024 ints == 4K bytes
     private static final int BLOCK_TABLE_LENGTH = 1024; // Each entry of table points to a block.
-    private int[][] dataBlockTable;
-    private int[][] kernelDataBlockTable;
-
-    // The stack is modeled similarly to the data segment.  It cannot share the same
-    // data structure because the stack base address is very large.  To store it in the
-    // same data structure would require implementation of indirect blocks, which has not
-    // been realized.  So the stack gets its own table of blocks using the same dimensions 
-    // and allocation scheme used for data segment.
-    //
-    // The other major difference is the stack grows DOWNWARD from its base address, not
-    // upward.  I.e., the stack base is the largest stack address. This turns the whole 
-    // scheme for translating memory address to block-offset on its head!  The simplest
-    // solution is to calculate relative address (offset from base) by subtracting the 
-    // desired address from the stack base address (rather than subtracting base address 
-    // from desired address).  Thus as the address gets smaller the offset gets larger.
-    // Everything else works the same, so it shares some private helper methods with
-    // data segment algorithms.
-    private int[][] stackBlockTable;
-
-    // Memory mapped I/O is simulated with a separate table using the same structure and
-    // logic as data segment.  Memory is allocated in 4K byte blocks.  But since MMIO
-    // address range is limited to 0xffff0000 to 0xfffffffc, there are only 64K bytes 
-    // total.  Thus there will be a maximum of 16 blocks, and I suspect never more than
-    // one since only the first few addresses are typically used.  The only exception
-    // may be a rogue program generating such addresses in a loop.  Note that the
-    // MMIO addresses are interpreted by Java as negative numbers since it does not 
-    // have unsigned types.  As long as the absolute address is correctly translated
-    // into a table offset, this is of no concern.
-    private static final int MMIO_TABLE_LENGTH = 16; // Each entry of table points to a 4K block.
-    private int[][] memoryMapBlockTable;
-
-    // I use a similar scheme for storing instructions.  MIPS text segment ranges from
-    // 0x00400000 all the way to data segment (0x10000000) a range of about 250 MB!  So
-    // I'll provide table of blocks with similar capacity.  This differs from data segment
-    // somewhat in that the block entries do not contain int's, but instead contain
-    // references to ProgramStatement objects.  
     private static final int TEXT_BLOCK_LENGTH_WORDS = 1024;  // allocated blocksize 1024 ints == 4K bytes
     private static final int TEXT_BLOCK_TABLE_LENGTH = 1024; // Each entry of table points to a block.
+    private static final int MMIO_TABLE_LENGTH = 16; // Each entry of table points to a 4K block.
+    
+    private int[][] dataBlockTable;
+    private int[][] kernelDataBlockTable;
     private ProgramStatement[][] textBlockTable;
     private ProgramStatement[][] kernelTextBlockTable;
+    
+    private int[][] stackBlockTable;
+
+    private int[][] memoryMapBlockTable;
 
     /**
      * MIPS word length in bytes.
@@ -131,189 +146,50 @@ public final class Memory extends Observable {
      */
     public static final int WORD_LENGTH_BYTES = 4;
     /**
-     * Constant representing byte order of each memory word. Little-endian means
-     * lowest numbered byte is right most [3][2][1][0].
+     * Current setting for endianness: true is for little-endian, false for
+     * big-endian. Default is little-endian (true)
+     * <p/>
+     * Big-endian means lowest numbered byte is leftmost: [0][1][2][3]
+     * <br/>
+     * Little-endian means lowest numbered byte is rightmost: [3][2][1][0]
      */
-    public static final boolean LITTLE_ENDIAN = true;
-    /**
-     * Constant representing byte order of each memory word. Big-endian means
-     * lowest numbered byte is left most [0][1][2][3].
-     */
-    public static final boolean BIG_ENDIAN = false;
-    /**
-     * Current setting for endian (default LITTLE_ENDIAN)
-     */
-    private static boolean byteOrder = LITTLE_ENDIAN;
+    private boolean littleEndian = true;
 
-    /**
-     * base address for (user) text segment: 0x00400000
-     */
-    public static int textBaseAddress = Configuration.defaultConfigValues[0];
-    /**
-     * base address for (user) data segment: 0x10000000
-     */
-    public static int dataSegmentBaseAddress = Configuration.defaultConfigValues[1];
-    /**
-     * base address for .extern directive: 0x10000000
-     */
-    public static int externBaseAddress = Configuration.defaultConfigValues[2];
-    /**
-     * base address for storing globals: 0x10008000
-     */
-    public static int globalPointer = Configuration.defaultConfigValues[3];
-    /**
-     * base address for storage of non-global static data in data segment:
-     * 0x10010000 (from SPIM not MIPS)
-     */
-    public static int dataBaseAddress = Configuration.defaultConfigValues[4];
-    /**
-     * base address for heap: 0x10040000 (I think from SPIM not MIPS)
-     */
-    public static int heapBaseAddress = Configuration.defaultConfigValues[5];
-    /**
-     * starting address for stack: 0x7fffeffc (this is from SPIM not MIPS)
-     */
-    public static int stackPointer = Configuration.defaultConfigValues[6];
-    /**
-     * base address for stack: 0x7ffffffc (this is mine - start of highest word
-     * below kernel space)
-     */
-    public static int stackBaseAddress = Configuration.defaultConfigValues[7];
-    /**
-     * highest address accessible in user (not kernel) mode: 0x7fffffff
-     */
-    public static int userHighAddress = Configuration.defaultConfigValues[8];
-    /**
-     * kernel boundary. Only OS can access this or higher address: 0x80000000
-     */
-    public static int kernelBaseAddress = Configuration.defaultConfigValues[9];
-    /**
-     * base address for kernel text segment: 0x80000000
-     */
-    public static int kernelTextBaseAddress = Configuration.defaultConfigValues[10];
-    /**
-     * starting address for exception handlers: 0x80000180
-     */
-    public static int exceptionHandlerAddress = Configuration.defaultConfigValues[11];
-    /**
-     * base address for kernel data segment: 0x90000000
-     */
-    public static int kernelDataBaseAddress = Configuration.defaultConfigValues[12];
-    /**
-     * starting address for memory mapped I/O: 0xffff0000 (-65536)
-     */
-    public static int memoryMapBaseAddress = Configuration.defaultConfigValues[13];
-    /**
-     * highest address accessible in kernel mode: 0xffffffff
-     */
-    public static int kernelHighAddress = Configuration.defaultConfigValues[14];
+    public static final int dataSegmentMaxSize, kernelDataSegmentMaxSize, stackMaxSize;
+    public static final int kernelTextSegmentMaxSize, textSegmentMaxSize;
+    public static final int memoryMapMaxSize;
+
+    static {
+        dataSegmentMaxSize = kernelDataSegmentMaxSize = stackMaxSize
+                = BLOCK_LENGTH_WORDS * BLOCK_TABLE_LENGTH * WORD_LENGTH_BYTES;
+        textSegmentMaxSize = kernelTextSegmentMaxSize
+                = TEXT_BLOCK_LENGTH_WORDS * TEXT_BLOCK_TABLE_LENGTH * WORD_LENGTH_BYTES;
+        memoryMapMaxSize
+                = BLOCK_LENGTH_WORDS * MMIO_TABLE_LENGTH * WORD_LENGTH_BYTES;
+    }
+
+    //--------------------------------------------------------------------------
+    // Address cache
+    private int textSegBaseAddress;
+    private int dataSegBaseAddress;
+    private int heapBaseAddress;
+    private int stackBaseAddress;
+    private int kernelTextBaseAddress;
+    private int kernelDataBaseAddress;
+    private int memoryMapBaseAddress;
+    private int kernelHighAddress;
 
     // Set "top" address boundary to go with each "base" address.  This determines permissable
     // address range for user program.  Currently limit is 4MB, or 1024 * 1024 * 4 bytes based
     // on the table structures described above (except memory mapped IO, limited to 64KB by range).
-    public static int dataSegmentLimitAddress = dataSegmentBaseAddress
-            + BLOCK_LENGTH_WORDS * BLOCK_TABLE_LENGTH * WORD_LENGTH_BYTES;
-    public static int textLimitAddress = textBaseAddress
-            + TEXT_BLOCK_LENGTH_WORDS * TEXT_BLOCK_TABLE_LENGTH * WORD_LENGTH_BYTES;
-    public static int kernelDataSegmentLimitAddress = kernelDataBaseAddress
-            + BLOCK_LENGTH_WORDS * BLOCK_TABLE_LENGTH * WORD_LENGTH_BYTES;
-    public static int kernelTextLimitAddress = kernelTextBaseAddress
-            + TEXT_BLOCK_LENGTH_WORDS * TEXT_BLOCK_TABLE_LENGTH * WORD_LENGTH_BYTES;
-    public static int stackLimitAddress = stackBaseAddress
-            - BLOCK_LENGTH_WORDS * BLOCK_TABLE_LENGTH * WORD_LENGTH_BYTES;
-    public static int memoryMapLimitAddress = memoryMapBaseAddress
-            + BLOCK_LENGTH_WORDS * MMIO_TABLE_LENGTH * WORD_LENGTH_BYTES;
+    private int dataSegmentLimitAddress;
+    private int textLimitAddress;
+    private int stackLimitAddress;
+    private int kernelDataSegmentLimitAddress;
+    private int kernelTextLimitAddress;
+    private int memoryMapLimitAddress;
 
-    public static int heapAddress;
-    /**
-     * A mapping from segments names (like ".text") to the base and limit for
-     * that segment.
-     */
-    public static final HashMap<String, Integer[]> segmentBoundMap = new HashMap<>();
-
-    static {
-        Memory.segmentBoundMap.put(".text", new Integer[] {Memory.textBaseAddress, Memory.textLimitAddress});
-        Memory.segmentBoundMap.put(".data", new Integer[] {Memory.dataBaseAddress, Memory.dataSegmentLimitAddress});
-    }
-
-    /**
-     * Get the names of segments available for memory dump.
-     *
-     * @return array of Strings, each string is segment name (e.g. ".text",
-     * ".data")
-     */
-    public static String[] getSegmentNames() {
-        return segmentBoundMap.keySet().toArray(new String[2]);
-    }
-
-    /**
-     * Return array with segment address bounds for specified segment.
-     *
-     * @param segment String with segment name (initially ".text" and ".data")
-     * @return array of two Integer, the base and limit address for that
-     * segment. Null if parameter name does not match a known segment name.
-     */
-    public static int[] getSegmentBounds(String segment) {
-        Integer[] bounds = segmentBoundMap.get(segment);
-        return new int[] {bounds[0], bounds[1]};
-    }
-
-    // Starting with MARS 3.7, the configuration can be changed.
-    private static final HashSet<Configuration> configurations = new HashSet<>(3);
-    // The default configuration is based on SPIM.
-    public static final Configuration defaultConfig;
-
-    static {
-        defaultConfig = new Configuration("Default", "Default", Configuration.defaultConfigValues);
-        configurations.add(defaultConfig);
-        configurations.add(new Configuration("CompactDataAtZero", "Compact, Data at Address 0", Configuration.dataCompactConfigValues));
-        configurations.add(new Configuration("CompactTextAtZero", "Compact, Text at Address 0", Configuration.textCompactConfigValues));
-    }
-
-    // Memory current configuration
-    private Configuration currentConfig = defaultConfig;
-    
-    /*
-     * Config getter
-     */
-    public Configuration getCurrentConfig() {
-        return currentConfig;
-    }
-
-    /**
-     * Sets current memory configuration for simulated MIPS. Configuration is
-     * collection of memory segment addresses. e.g. text segment starting at
-     * address 0x00400000. Configuration can be modified starting with MARS 3.7.
-     *
-     * Changing memory configuration will clear it
-     *
-     * @param config
-     * @return {@code true} if configuration has been changed, {@code false}
-     * otherwise
-     */
-    public boolean configure(Configuration config) {
-        if (config == null || config == currentConfig)
-            return false;
-        currentConfig = config;
-        clear();
-        RegisterFile.getUserRegister("$gp").changeResetValue(config.getAddress(Descriptor.GLOBAL_POINTER));
-        RegisterFile.getUserRegister("$sp").changeResetValue(config.getAddress(Descriptor.STACK_POINTER));
-        RegisterFile.getProgramCounterRegister().changeResetValue(config.getAddress(Descriptor.TEXT_BASE_ADDRESS));
-        RegisterFile.initializeProgramCounter(config.getAddress(Descriptor.TEXT_BASE_ADDRESS));
-        RegisterFile.resetRegisters();
-        return true;
-
-    }
-
-    public static ArrayList<Configuration> getConfigurations() {
-        return new ArrayList<>(configurations);
-    }
-
-    public static Configuration getConfigByName(String name) {
-        return configurations.stream()
-                .filter(config -> name.equals(config.getID()))
-                .findFirst().orElse(null);
-    }
+    private int heapAddress;
 
     // Memory will maintain a collection of observables.  Each one is associated
     // with a specific memory address or address range, and each will have at least
@@ -331,60 +207,72 @@ public final class Memory extends Observable {
     final Collection<MemoryObservable> observables
             = Collections.synchronizedList(new ArrayList<MemoryObservable>());
 
-    // Default constructor
-    public Memory() {
-        this(defaultConfig);
-    }
-    
-    // Constructor which takes a memory configuration as argument
-    public Memory(Memory.Configuration config) {
-        configure(config);
+    /**
+     * Get the names of segments available for memory dump.
+     *
+     * @return array of Strings, each string is segment name (e.g. ".text",
+     * ".data")
+     */
+    public static String[] getSegmentNames() {
+        return new String[] {".text", ".data"};
     }
 
     /**
-     * Explicitly clear the contents of memory. Typically done at start of
-     * assembly.
+     * Return array with segment address bounds for specified segment.
+     *
+     * @param segment String with segment name (initially ".text" and ".data")
+     * @return array of two Integer, the base and limit address for that
+     * segment. Null if parameter name does not match a known segment name.
      */
-    public void clear() {
-        textBaseAddress = getCurrentConfig().getAddress(Descriptor.TEXT_BASE_ADDRESS); //0x00400000;
-        dataSegmentBaseAddress = getCurrentConfig().getAddress(Descriptor.DATA_SEGMENT_ADDRESS); //0x10000000;
-        externBaseAddress = getCurrentConfig().getAddress(Descriptor.EXTERN_BASE_ADDRESS); //0x10000000;
-        globalPointer = getCurrentConfig().getAddress(Descriptor.GLOBAL_POINTER); //0x10008000;
-        dataBaseAddress = getCurrentConfig().getAddress(Descriptor.DATA_BASE_ADDRESS); //0x10010000; // from SPIM not MIPS
-        heapBaseAddress = getCurrentConfig().getAddress(Descriptor.HEAP_BASE_ADDRESS); //0x10040000; // I think from SPIM not MIPS
-        stackPointer = getCurrentConfig().getAddress(Descriptor.STACK_POINTER); //0x7fffeffc;
-        stackBaseAddress = getCurrentConfig().getAddress(Descriptor.STACK_BASE_ADDRESS); //0x7ffffffc;
-        userHighAddress = getCurrentConfig().getAddress(Descriptor.USER_SPACE_HIGH_ADDRESS); //0x7fffffff;
-        kernelBaseAddress = getCurrentConfig().getAddress(Descriptor.KERNEL_SPACE_BASE_ADDRESS); //0x80000000;
-        kernelTextBaseAddress = getCurrentConfig().getAddress(Descriptor.KTEXT_BASE_ADDRESS); //0x80000000;
-        exceptionHandlerAddress = getCurrentConfig().getAddress(Descriptor.EXCEPTION_HANDLER_ADDRESS); //0x80000180;
-        kernelDataBaseAddress = getCurrentConfig().getAddress(Descriptor.KDATA_BASE_ADDRESS); //0x90000000;
-        memoryMapBaseAddress = getCurrentConfig().getAddress(Descriptor.MMIO_BASE_ADDRESS); //0xffff0000;
-        kernelHighAddress = getCurrentConfig().getAddress(Descriptor.KERNEL_SPACE_HIGH_ADDRESS); //0xffffffff;		
-        dataSegmentLimitAddress = Math.min(getCurrentConfig().getAddress(Descriptor.DATA_SEGMENT_LIMIT_ADDRESS),
-                dataSegmentBaseAddress
-                + BLOCK_LENGTH_WORDS * BLOCK_TABLE_LENGTH * WORD_LENGTH_BYTES);
-        textLimitAddress = Math.min(getCurrentConfig().getAddress(Descriptor.TEXT_LIMIT_ADDRESS),
-                textBaseAddress
-                + TEXT_BLOCK_LENGTH_WORDS * TEXT_BLOCK_TABLE_LENGTH * WORD_LENGTH_BYTES);
-        kernelDataSegmentLimitAddress = Math.min(getCurrentConfig().getAddress(Descriptor.KERNEL_DATA_SEGMENT_LIMIT_ADDRESS),
-                kernelDataBaseAddress
-                + BLOCK_LENGTH_WORDS * BLOCK_TABLE_LENGTH * WORD_LENGTH_BYTES);
-        kernelTextLimitAddress = Math.min(getCurrentConfig().getAddress(Descriptor.KERNEL_TEXT_LIMIT_ADDRESS),
-                kernelTextBaseAddress
-                + TEXT_BLOCK_LENGTH_WORDS * TEXT_BLOCK_TABLE_LENGTH * WORD_LENGTH_BYTES);
-        stackLimitAddress = Math.max(getCurrentConfig().getAddress(Descriptor.STACK_LIMIT_ADDRESS),
-                stackBaseAddress
-                - BLOCK_LENGTH_WORDS * BLOCK_TABLE_LENGTH * WORD_LENGTH_BYTES);
-        memoryMapLimitAddress = Math.min(getCurrentConfig().getAddress(Descriptor.MEMORY_MAP_LIMIT_ADDRESS),
-                memoryMapBaseAddress
-                + BLOCK_LENGTH_WORDS * MMIO_TABLE_LENGTH * WORD_LENGTH_BYTES);
-        Main.logger.log(Level.INFO, "dataSegmentLimitAddress {0}", Binary.intToHexString(dataSegmentLimitAddress));
-        Main.logger.log(Level.INFO, "textLimitAddress {0}", Binary.intToHexString(textLimitAddress));
-        Main.logger.log(Level.INFO, "kernelDataSegmentLimitAddress {0}", Binary.intToHexString(kernelDataSegmentLimitAddress));
-        Main.logger.log(Level.INFO, "kernelTextLimitAddress {0}", Binary.intToHexString(kernelTextLimitAddress));
-        Main.logger.log(Level.INFO, "stackLimitAddress {0}", Binary.intToHexString(stackLimitAddress));
-        Main.logger.log(Level.INFO, "memoryMapLimitAddress {0}", Binary.intToHexString(memoryMapLimitAddress));
+    public int[] getSegmentBounds(String segment) {
+        switch (segment) {
+            case ".text":
+                return new int[] {textSegBaseAddress,textLimitAddress};
+            case ".data":
+                return new int[] {dataSegBaseAddress+0x00010000,dataSegmentLimitAddress};
+            default:
+                return null;
+        }
+    }
+
+    // Default constructor
+    public Memory() {
+        this(MIPSMachine.defaultConfig);
+    }
+
+    // Constructor which takes a memory configuration as argument
+    Memory(MIPSMachine.Configuration config) {
+        configure(config);
+    }
+
+    void configure(MIPSMachine.Configuration config) {
+        textSegBaseAddress = config.getAddress(Descriptor.TEXT_BASE_ADDRESS);
+        dataSegBaseAddress = config.getAddress(Descriptor.DATA_SEGMENT_ADDRESS);
+        heapBaseAddress = config.getAddress(Descriptor.HEAP_BASE_ADDRESS);
+        stackBaseAddress = config.getAddress(Descriptor.STACK_BASE_ADDRESS);
+        kernelTextBaseAddress = config.getAddress(Descriptor.KTEXT_BASE_ADDRESS);
+        kernelDataBaseAddress = config.getAddress(Descriptor.KDATA_BASE_ADDRESS);
+        memoryMapBaseAddress = config.getAddress(Descriptor.MMIO_BASE_ADDRESS);
+        kernelHighAddress = config.getAddress(Descriptor.KERNEL_SPACE_HIGH_ADDRESS);
+
+        dataSegmentLimitAddress = Math.min(
+                config.getAddress(Descriptor.DATA_SEGMENT_LIMIT_ADDRESS),
+                dataSegBaseAddress + dataSegmentMaxSize);
+        textLimitAddress = Math.min(
+                config.getAddress(Descriptor.TEXT_LIMIT_ADDRESS),
+                textSegBaseAddress + textSegmentMaxSize);
+        kernelDataSegmentLimitAddress = Math.min(
+                config.getAddress(Descriptor.KERNEL_DATA_SEGMENT_LIMIT_ADDRESS),
+                kernelDataBaseAddress + kernelDataSegmentMaxSize);
+        kernelTextLimitAddress = Math.min(
+                config.getAddress(Descriptor.KERNEL_TEXT_LIMIT_ADDRESS),
+                kernelTextBaseAddress + kernelTextSegmentMaxSize);
+        stackLimitAddress = Math.max( //caution: address inversion
+                config.getAddress(Descriptor.STACK_LIMIT_ADDRESS),
+                stackBaseAddress - stackMaxSize);
+        memoryMapLimitAddress = Math.min(
+                config.getAddress(Descriptor.MEMORY_MAP_LIMIT_ADDRESS),
+                memoryMapBaseAddress + memoryMapMaxSize);
         initialize();
     }
 
@@ -441,7 +329,7 @@ public final class Memory extends Observable {
      * @param order either LITTLE_ENDIAN or BIG_ENDIAN
      */
     public void setByteOrder(boolean order) {
-        byteOrder = order;
+        littleEndian = order;
     }
 
     /**
@@ -449,8 +337,8 @@ public final class Memory extends Observable {
      *
      * @return either LITTLE_ENDIAN or BIG_ENDIAN
      */
-    public boolean getByteOrder() {
-        return byteOrder;
+    public boolean isLittleEndian() {
+        return littleEndian;
     }
 
     /**
@@ -467,7 +355,7 @@ public final class Memory extends Observable {
      * @param address Starting address of Memory address to be set.
      * @param value Value to be stored starting at that address.
      * @param length Number of bytes to be written.
-     * @return old value that was replaced by the set operation
+     * @return old value that was replaced by the configure operation
      * @throws mars.mips.hardware.AddressErrorException
      */
     public int set(int address, int value, int length) throws AddressErrorException {
@@ -475,9 +363,10 @@ public final class Memory extends Observable {
         if (Main.debug)
             System.out.println("memory[" + address + "] set to " + value + "(" + length + " bytes)");
         int relativeByteAddress;
+        
         if (inDataSegment(address)) {
             // in data segment.  Will write one byte at a time, w/o regard to boundaries.
-            relativeByteAddress = address - dataSegmentBaseAddress; // relative to data segment start, in bytes
+            relativeByteAddress = address - dataSegBaseAddress; // relative to data segment start, in bytes
             oldValue = storeBytesInTable(dataBlockTable, relativeByteAddress, length, value);
         }
         else if (address > stackLimitAddress && address <= stackBaseAddress) {
@@ -527,9 +416,9 @@ public final class Memory extends Observable {
      * word). It must be written as is, without adjusting for byte order (little
      * vs big endian). Address must be word-aligned.
      *
-     * @param address Starting address of Memory address to be set.
+     * @param address Starting address of Memory address to be configure.
      * @param value Value to be stored starting at that address.
-     * @return old value that was replaced by the set operation.
+     * @return old value that was replaced by the configure operation.
      * @throws AddressErrorException If address is not on word boundary.
      */
     public int setRawWord(int address, int value) throws AddressErrorException {
@@ -539,7 +428,7 @@ public final class Memory extends Observable {
                     Exceptions.ADDRESS_EXCEPTION_STORE, address);
         if (inDataSegment(address)) {
             // in data segment
-            relative = (address - dataSegmentBaseAddress) >> 2; // convert byte address to words
+            relative = (address - dataSegBaseAddress) >> 2; // convert byte address to words
             oldValue = storeWordInTable(dataBlockTable, relative, value);
         }
         else if (address > stackLimitAddress && address <= stackBaseAddress) {
@@ -590,7 +479,7 @@ public final class Memory extends Observable {
      * Starting at the given word address, write the given value over 4 bytes (a
      * word). The address must be word-aligned.
      *
-     * @param address Starting address of Memory address to be set.
+     * @param address Starting address of Memory address to be configure.
      * @param value Value to be stored starting at that address.
      * @return old value that was replaced by setWord operation.
      * @throws AddressErrorException If address is not on word boundary.
@@ -609,7 +498,7 @@ public final class Memory extends Observable {
      * Starting at the given halfword address, write the lower 16 bits of given
      * value into 2 bytes (a halfword).
      *
-     * @param address Starting address of Memory address to be set.
+     * @param address Starting address of Memory address to be configure.
      * @param value Value to be stored starting at that address. Only low order
      * 16 bits used.
      * @return old value that was replaced by setHalf operation.
@@ -627,7 +516,7 @@ public final class Memory extends Observable {
     /**
      * Writes low order 8 bits of given value into specified Memory byte.
      *
-     * @param address Address of Memory byte to be set.
+     * @param address Address of Memory byte to be configure.
      * @param value Value to be stored at that address. Only low order 8 bits
      * used.
      * @return old value that was replaced by setByte operation.
@@ -660,8 +549,8 @@ public final class Memory extends Observable {
     /**
      * Stores ProgramStatement in Text Segment.
      *
-     * @param address Starting address of Memory address to be set. Must be word
-     * boundary.
+     * @param address Starting address of Memory address to be configure. Must
+     * be word boundary.
      * @param statement Machine code to be stored starting at that address --
      * for simulation purposes, actually stores reference to ProgramStatement
      * instead of 32-bit machine code.
@@ -677,7 +566,7 @@ public final class Memory extends Observable {
         if (Main.debug)
             System.out.println("memory[" + address + "] set to " + statement.getBinaryStatement());
         if (inTextSegment(address))
-            storeProgramStatement(address, statement, textBaseAddress, textBlockTable);
+            storeProgramStatement(address, statement, textSegBaseAddress, textBlockTable);
         else
             storeProgramStatement(address, statement, kernelTextBaseAddress, kernelTextBlockTable);
     }
@@ -706,7 +595,7 @@ public final class Memory extends Observable {
         int relativeByteAddress;
         if (inDataSegment(address)) {
             // in data segment.  Will read one byte at a time, w/o regard to boundaries.
-            relativeByteAddress = address - dataSegmentBaseAddress; // relative to data segment start, in bytes
+            relativeByteAddress = address - dataSegBaseAddress; // relative to data segment start, in bytes
             value = fetchBytesFromTable(dataBlockTable, relativeByteAddress, length);
         }
         else if (address > stackLimitAddress && address <= stackBaseAddress) {
@@ -773,7 +662,7 @@ public final class Memory extends Observable {
                     Exceptions.ADDRESS_EXCEPTION_LOAD, address);
         if (inDataSegment(address)) {
             // in data segment
-            relative = (address - dataSegmentBaseAddress) >> 2; // convert byte address to words
+            relative = (address - dataSegBaseAddress) >> 2; // convert byte address to words
             value = fetchWordFromTable(dataBlockTable, relative);
         }
         else if (address > stackLimitAddress && address <= stackBaseAddress) {
@@ -845,7 +734,7 @@ public final class Memory extends Observable {
                     Exceptions.ADDRESS_EXCEPTION_LOAD, address);
         if (inDataSegment(address)) {
             // in data segment
-            relative = (address - dataSegmentBaseAddress) >> 2; // convert byte address to words
+            relative = (address - dataSegBaseAddress) >> 2; // convert byte address to words
             value = fetchWordOrNullFromTable(dataBlockTable, relative);
         }
         else if (address > stackLimitAddress && address <= stackBaseAddress) {
@@ -997,7 +886,7 @@ public final class Memory extends Observable {
                     "fetch address for text segment out of range ",
                     Exceptions.ADDRESS_EXCEPTION_LOAD, address);
         if (inTextSegment(address))
-            return readProgramStatement(address, textBaseAddress, textBlockTable, notify);
+            return readProgramStatement(address, textSegBaseAddress, textBlockTable, notify);
         else if (inKernelTextSegment(address))
             return readProgramStatement(address, kernelTextBaseAddress, kernelTextBlockTable, notify);
         else
@@ -1053,8 +942,8 @@ public final class Memory extends Observable {
      * @return true if that address is within MARS-defined text segment, false
      * otherwise.
      */
-    public static boolean inTextSegment(int address) {
-        return address >= textBaseAddress && address < textLimitAddress;
+    public boolean inTextSegment(int address) {
+        return address >= textSegBaseAddress && address < textLimitAddress;
     }
 
     /**
@@ -1065,7 +954,7 @@ public final class Memory extends Observable {
      * @return true if that address is within MARS-defined kernel text segment,
      * false otherwise.
      */
-    public static boolean inKernelTextSegment(int address) {
+    public boolean inKernelTextSegment(int address) {
         return address >= kernelTextBaseAddress && address < kernelTextLimitAddress;
     }
 
@@ -1079,8 +968,8 @@ public final class Memory extends Observable {
      * @return true if that address is within MARS-defined data segment, false
      * otherwise.
      */
-    public static boolean inDataSegment(int address) {
-        return address >= dataSegmentBaseAddress && address < dataSegmentLimitAddress;
+    public boolean inDataSegment(int address) {
+        return address >= dataSegBaseAddress && address < dataSegmentLimitAddress;
     }
 
     /**
@@ -1091,7 +980,7 @@ public final class Memory extends Observable {
      * @return true if that address is within MARS-defined kernel data segment,
      * false otherwise.
      */
-    public static boolean inKernelDataSegment(int address) {
+    public boolean inKernelDataSegment(int address) {
         return address >= kernelDataBaseAddress && address < kernelDataSegmentLimitAddress;
     }
 
@@ -1104,7 +993,7 @@ public final class Memory extends Observable {
      * @return true if that address is within MARS-defined memory map (MMIO)
      * area, false otherwise.
      */
-    public static boolean inMemoryMapSegment(int address) {
+    public boolean inMemoryMapSegment(int address) {
         return address >= memoryMapBaseAddress && address < kernelHighAddress;
     }
 
@@ -1284,7 +1173,7 @@ public final class Memory extends Observable {
             while (it.hasNext()) {
                 mo = it.next();
                 if (mo.match(address))
-                    mo.notifyObserver(new MemoryAccessNotice(type, address, length, value));
+                    mo.notifyObserver(new MemoryAccessNotice(type, address, /*length,*/ value));
             }
         }
     }
@@ -1351,7 +1240,7 @@ public final class Memory extends Observable {
                     blockTable[block] = new int[BLOCK_LENGTH_WORDS];
                 else
                     return 0;
-            if (byteOrder == LITTLE_ENDIAN)
+            if (littleEndian)
                 bytePositionInMemory = 3 - bytePositionInMemory;
             if (op == STORE) {
                 oldValue = replaceByte(blockTable[block][offset], bytePositionInMemory,
@@ -1497,146 +1386,81 @@ public final class Memory extends Observable {
 
     //--------------------------------------------------------------------------
     // Internal classes
-    /**
-     * Models the memory configuration for the simulated MIPS machine.
-     * "configuration" refers to the starting memory addresses for the various
-     * memory segments. The default configuration is based on SPIM. Starting
-     * with MARS 3.7, the configuration can be changed.
-     *
-     * @author Pete Sanderson
-     * @version August 2009
-     */
-    public static class Configuration {
-
-        // Default configuration comes from SPIM
-        private static final int[] defaultConfigValues = {
-            0x00400000, // .text Base Address
-            0x10000000, // Data Segment base address
-            0x10000000, // .extern Base Address
-            0x10008000, // Global Pointer $gp)
-            0x10010000, // .data base Address
-            0x10040000, // heap base address
-            0x7fffeffc, // stack pointer $sp (from SPIM not MIPS)
-            0x7ffffffc, // stack base address
-            0x7fffffff, // highest address in user space
-            0x80000000, // lowest address in kernel space
-            0x80000000, // .ktext base address
-            0x80000180, // exception handler address
-            0x90000000, // .kdata base address
-            0xffff0000, // MMIO base address
-            0xffffffff, // highest address in kernel (and memory)
-            0x7fffffff, // data segment limit address
-            0x0ffffffc, // text limit address
-            0xfffeffff, // kernel data segment limit address
-            0x8ffffffc, // kernel text limit address
-            0x10040000, // stack limit address
-            0xffffffff // memory map limit address
-        };
-
-        // Compact allows 16 bit addressing, data segment starts at 0
-        private static final int[] dataCompactConfigValues = {
-            0x00003000, // .text Base Address
-            0x00000000, // Data Segment base address
-            0x00001000, // .extern Base Address
-            0x00001800, // Global Pointer $gp)
-            0x00000000, // .data base Address
-            0x00002000, // heap base address
-            0x00002ffc, // stack pointer $sp 
-            0x00002ffc, // stack base address
-            0x00003fff, // highest address in user space
-            0x00004000, // lowest address in kernel space
-            0x00004000, // .ktext base address
-            0x00004180, // exception handler address
-            0x00005000, // .kdata base address
-            0x00007f00, // MMIO base address
-            0x00007fff, // highest address in kernel (and memory)
-            0x00002fff, // data segment limit address
-            0x00003ffc, // text limit address
-            0x00007eff, // kernel data segment limit address
-            0x00004ffc, // kernel text limit address
-            0x00002000, // stack limit address
-            0x00007fff // memory map limit address
-        };
-
-        // Compact allows 16 bit addressing, text segment starts at 0
-        private static final int[] textCompactConfigValues = {
-            0x00000000, // .text Base Address
-            0x00001000, // Data Segment base address
-            0x00001000, // .extern Base Address
-            0x00001800, // Global Pointer $gp)
-            0x00002000, // .data base Address
-            0x00003000, // heap base address
-            0x00003ffc, // stack pointer $sp 
-            0x00003ffc, // stack base address
-            0x00003fff, // highest address in user space
-            0x00004000, // lowest address in kernel space
-            0x00004000, // .ktext base address
-            0x00004180, // exception handler address
-            0x00005000, // .kdata base address
-            0x00007f00, // MMIO base address
-            0x00007fff, // highest address in kernel (and memory)
-            0x00003fff, // data segment limit address
-            0x00000ffc, // text limit address
-            0x00007eff, // kernel data segment limit address
-            0x00004ffc, // kernel text limit address
-            0x00003000, // stack limit address
-            0x00007fff // memory map limit address
-        };
-
-        // Identifier is used for saving setting; name is used for display
-        private final String identifier;
-        private final String name;
-        private final int[] addresses;
-
-        private Configuration(String id, String name, int[] values) {
-            super();
-            identifier = id;
-            this.name = name;
-            addresses = values;
-        }
-
-        public String getID() {
-            return identifier;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public int[] getAddresses() {
-            return Arrays.copyOf(addresses, addresses.length);
-        }
-
-        public int getAddress(Descriptor d) {
-            return addresses[d.ordinal()];
-        }
-    }
+    
 
     /**
-     * Enumeration of MIPS memory bounds, hereby called {@code Descriptor}s.
+     * Enumeration of MIPS memory bounds.
      *
-     * @implNote Memory configurations are stored as arrays of ints, changing
-     * the declaration order here affects them
+     * @implNote Memory configurations are stored as arrays of ints, caution is
+     * advised while changing this enum's value declaration order
      *
      * @author Andrea "Project2100" Proietto
      * @since Oct 15, 2015
      */
-    public enum Descriptor {
+    public static enum Descriptor {
 
+        /**
+         * base address for (user) text segment: 0x00400000
+         */
         TEXT_BASE_ADDRESS(".text base address"),
+        /**
+         * base address for (user) data segment: 0x10000000
+         */
         DATA_SEGMENT_ADDRESS("data segment base address"), //DataSegmentBaseAddress
+        /**
+         * base address for .extern directive: 0x10000000
+         */
         EXTERN_BASE_ADDRESS(".extern base address"),
+        /**
+         * base address for storing globals: 0x10008000
+         */
         GLOBAL_POINTER("global pointer $gp"),
+        /**
+         * base address for storage of non-global static data in data segment:
+         * 0x10010000 (from SPIM not MIPS)
+         */
         DATA_BASE_ADDRESS(".data base address"),
+        /**
+         * base address for heap: 0x10040000 (I think from SPIM not MIPS)
+         */
         HEAP_BASE_ADDRESS("heap base address"),
+        /**
+         * starting address for stack: 0x7fffeffc (this is from SPIM not MIPS)
+         */
         STACK_POINTER("stack pointer $sp"),
+        /**
+         * base address for stack: 0x7ffffffc (this is mine - start of highest
+         * word below kernel space)
+         */
         STACK_BASE_ADDRESS("stack base address"),
+        /**
+         * highest address accessible in user (not kernel) mode: 0x7fffffff
+         */
         USER_SPACE_HIGH_ADDRESS("user space high address"), //UserHighAddress
+        /**
+         * kernel boundary. Only OS can access this or higher address:
+         * 0x80000000
+         */
         KERNEL_SPACE_BASE_ADDRESS("kernel space base address"), //KernelBaseAddress
+        /**
+         * base address for kernel text segment: 0x80000000
+         */
         KTEXT_BASE_ADDRESS(".ktext base address"), //KernelTextBaseAddress
+        /**
+         * starting address for exception handlers: 0x80000180
+         */
         EXCEPTION_HANDLER_ADDRESS("exception handler address"),
+        /**
+         * base address for kernel data segment: 0x90000000
+         */
         KDATA_BASE_ADDRESS(".kdata base address"), //KernelDataBaseAddress
+        /**
+         * starting address for memory mapped I/O: 0xffff0000 (-65536)
+         */
         MMIO_BASE_ADDRESS("MMIO base address"), //MemoryMapBaseAddress
+        /**
+         * highest address accessible in kernel mode: 0xffffffff
+         */
         KERNEL_SPACE_HIGH_ADDRESS("kernel space high address"), // KernelHighAddress
         DATA_SEGMENT_LIMIT_ADDRESS("data segment limit address"),
         TEXT_LIMIT_ADDRESS("text limit address"),

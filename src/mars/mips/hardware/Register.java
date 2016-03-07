@@ -28,8 +28,7 @@ import java.util.Observable;
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
  (MIT license, http://www.opensource.org/licenses/mit-license.html)
-*/
-
+ */
 /**
  * Abstraction to represent a register of a MIPS Assembler.
  *
@@ -38,10 +37,11 @@ import java.util.Observable;
  */
 public class Register extends Observable {
 
-    private String name;
-    private int number, resetValue;
+    private final String name;
+    private final int number;
+    private int resetValue;
     // volatile should be enough to allow safe multi-threaded access  
-    // w/o the use of synchronized methods.  getValue and setValue
+    // w/o the use of synchronized methods. getValue() and setValue()
     // are the only methods here used by the register collection
     // (RegisterFile, Coprocessor0, Coprocessor1) methods. 
     private volatile int value;
@@ -100,8 +100,8 @@ public class Register extends Observable {
     }
 
     /**
-     * Sets the value of the register.
-     * Observers are notified of the WRITE operation.
+     * Sets the value of the register. Observers are notified of the WRITE
+     * operation.
      *
      * @param val Value to set the Register to.
      * @return previous value of register
@@ -126,14 +126,14 @@ public class Register extends Observable {
      * Resets the value of the register to the value it was constructed with.
      * Observers are not notified.
      */
-    public synchronized void resetValue() {
+    public synchronized void reset() {
         value = resetValue;
     }
 
     /**
      * Change the register's reset value; the value to which it will be set when
-     * <tt>resetValue()</tt> is called.
-     * 
+     * {@code resetValue()} is called.
+     *
      * @param reset The register's new reset value
      */
     public synchronized void changeResetValue(int reset) {
