@@ -54,300 +54,302 @@ import mars.venus.VenusUI;
  */
 public class Main {
 
-    /**
-     * Application logger, central point for exception-debug information
-     */
-    public static final Logger logger = Logger.getLogger(Main.class.getName());
+	/**
+	 * Application logger, central point for exception-debug information
+	 */
+	public static final Logger logger = Logger.getLogger(Main.class.getName());
 
-    // This lambda will be used as the default handler for uncaught exceptions
-    private static final Thread.UncaughtExceptionHandler exHandler = (thread, exception)
-            -> Main.logger.log(Level.SEVERE, "Uncaught exception in thread: " + thread.getName(), exception);
+	// This lambda will be used as the default handler for uncaught exceptions
+	private static final Thread.UncaughtExceptionHandler exHandler = (thread, exception) ->
+			 Main.logger.log(Level.SEVERE, "Uncaught exception in thread: " + thread.getName(), exception);
 
-    // List these first because they are referenced by methods called at initialization.
-    private static final String CONFIG_FILENAME = "Config";
-    private static final String SYSCALL_FILENAME = "Syscall";
-    public static final String SETTINGS_FILENAME = "Settings";
-    
-    /**
-     * The status of implemented MIPS instructions.
-     */
-    public static InstructionSet instructionSet;
-    /**
-     * the program currently being worked with. Used by GUI only, not command
-     * line.
-     */
-    public static MIPSprogram program;
-    /**
-     * Symbol table for file currently being assembled.
-     */
-    public static SymbolTable symbolTable;
-    /**
-     * Simulated MIPS memory component.
-     */
-    public static Memory memory = new Memory();
-    /**
-     * Lock variable used at head of synchronized block to guard MIPS memory and
-     * registers
-     */
-    public static final Object memoryAndRegistersLock = new Object();
-    /**
-     * Flag to determine whether or not to produce internal debugging
-     * information.
-     */
-    public static boolean debug = false;
-    /**
-     * Object that contains various settings that can be accessed modified
-     * internally.
-     */
-    private static Settings settings;
-    /**
-     * String to GUI's RunI/O text area when echoing user input from pop-up
-     * dialog.
-     */
-    public static String userInputAlert = "**** user input : ";
-    /**
-     * Path to folder that contains images. The leading "/" in file path
-     * prevents package name from being pre-pended.
-     */
-    public static final String imagesPath = "/images/";
-    /**
-     * Path to folder that contains help text
-     */
-    public static final String helpPath = "/help/";
-    /**
-     * Flag that indicates whether or not instructionSet has been initialized.
-     */
-    private static boolean initialized = false;
-    /**
-     * The GUI being used (if any) with this simulator.
-     */
-    private static VenusUI gui = null;
-    /**
-     * MARS copyright years
-     */
-    public static final String COPYRIGHT_YEARS = "2003-2014";
-    /**
-     * MARS copyright holders
-     */
-    public static final String COPYRIGHT_HOLDERS = "Pete Sanderson and Kenneth Vollmar";
-    /**
-     * The current MARS version number. Can't wait for "initialize()" call to
-     * set it.
-     */
-    public static final String VERSION = "4.5";
-    /**
-     * List of accepted file extensions for MIPS assembly source files.
-     */
-    public static final ArrayList<String> fileExtensions;
-    /**
-     * Maximum length of scrolled message window (MARS Messages and Run I/O)
-     */
-    public static final int maximumMessageCharacters;
-    /**
-     * Maximum number of assembler errors produced by one assemble operation
-     */
-    public static final int maximumErrorMessages;
-    /**
-     * Maximum number of back-step operations to buffer
-     */
-    public static final int maximumBacksteps;
-    /**
-     * Placeholder for non-printable ASCII codes, default is: {@code .}
-     */
-    public static final String ASCII_NON_PRINT;
-    /**
-     * Array of strings to display for ASCII codes in ASCII display of data
-     * segment. ASCII code 0-255 is array index. {@code "null"} codes are
-     * translated as non-printable, while {@code "space"} codes will be
-     * represented by the proper space character.
-     */
-    public static final String[] ASCII_TABLE;
+	// List these first because they are referenced by methods called at initialization.
+	private static final String CONFIG_FILENAME = "Config";
+	private static final String SYSCALL_FILENAME = "Syscall";
+	public static final String SETTINGS_FILENAME = "Settings";
 
-    static {
-        Properties configProps = loadPropertiesFromFile(CONFIG_FILENAME);
+	/**
+	 * The status of implemented MIPS instructions.
+	 */
+	public static InstructionSet instructionSet;
+	/**
+	 * the program currently being worked with. Used by GUI only, not command
+	 * line.
+	 */
+	public static MIPSprogram program;
+	/**
+	 * Symbol table for file currently being assembled.
+	 */
+	public static SymbolTable symbolTable;
+	/**
+	 * Simulated MIPS memory component.
+	 */
+	public static Memory memory = new Memory();
+	/**
+	 * Lock variable used at head of synchronized block to guard MIPS memory and
+	 * registers
+	 */
+	public static final Object memoryAndRegistersLock = new Object();
+	/**
+	 * Flag to determine whether or not to produce internal debugging
+	 * information.
+	 */
+	public static boolean debug = false;
+	/**
+	 * Object that contains various settings that can be accessed modified
+	 * internally.
+	 */
+	private static Settings settings;
+	/**
+	 * String to GUI's RunI/O text area when echoing user input from pop-up
+	 * dialog.
+	 */
+	public static String userInputAlert = "**** user input : ";
+	/**
+	 * Path to folder that contains images. The leading "/" in file path
+	 * prevents package name from being pre-pended.
+	 */
+	public static final String imagesPath = "/images/";
+	/**
+	 * Path to folder that contains help text
+	 */
+	public static final String helpPath = "/help/";
+	/**
+	 * Flag that indicates whether or not instructionSet has been initialized.
+	 */
+	private static boolean initialized = false;
+	/**
+	 * The GUI being used (if any) with this simulator.
+	 */
+	private static VenusUI gui = null;
+	/**
+	 * MARS copyright years
+	 */
+	public static final String COPYRIGHT_YEARS = "2003-2014";
+	/**
+	 * MARS copyright holders
+	 */
+	public static final String COPYRIGHT_HOLDERS = "Pete Sanderson and Kenneth Vollmar";
+	/**
+	 * The current MARS version number. Can't wait for "initialize()" call to
+	 * set it.
+	 */
+	public static final String VERSION = "4.5";
+	/**
+	 * List of accepted file extensions for MIPS assembly source files.
+	 */
+	public static final ArrayList<String> fileExtensions;
+	/**
+	 * Maximum length of scrolled message window (MARS Messages and Run I/O)
+	 */
+	public static final int maximumMessageCharacters;
+	/**
+	 * Maximum number of assembler errors produced by one assemble operation
+	 */
+	public static final int maximumErrorMessages;
+	/**
+	 * Maximum number of back-step operations to buffer
+	 */
+	public static final int maximumTraceSize;
+	/**
+	 * Placeholder for non-printable ASCII codes, default is: {@code .}
+	 */
+	public static final String ASCII_NON_PRINT;
+	/**
+	 * Array of strings to display for ASCII codes in ASCII display of data
+	 * segment. ASCII code 0-255 is array index. {@code "null"} codes are
+	 * translated as non-printable, while {@code "space"} codes will be
+	 * represented by the proper space character.
+	 */
+	public static final String[] ASCII_TABLE;
 
-        String extensions = configProps.getProperty("Extensions", "");
-        fileExtensions = (extensions.isEmpty()
-                ? new ArrayList<>()
-                : Stream.of(extensions.split(" "))
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toCollection(ArrayList::new)));
+	static {
+		Properties configProps = loadPropertiesFromFile(CONFIG_FILENAME);
 
-        maximumMessageCharacters = getIntegerProperty(configProps, "MessageLimit", 1000000);
-        maximumErrorMessages = getIntegerProperty(configProps, "ErrorLimit", 200);
-        maximumBacksteps = getIntegerProperty(configProps, "BackstepLimit", 1000);
+		String extensions = configProps.getProperty("Extensions", "");
+		fileExtensions = (extensions.isEmpty()
+				? new ArrayList<>()
+				: Stream.of(extensions.split(" "))
+						.filter(s -> !s.isEmpty())
+						.collect(Collectors.toCollection(ArrayList::new)));
 
-        String anp = configProps.getProperty("AsciiNonPrint", ".");
-        ASCII_NON_PRINT = anp.equals("space") ? " " : anp;
+		maximumMessageCharacters = getIntegerProperty(configProps, "MessageLimit", 1000000);
+		maximumErrorMessages = getIntegerProperty(configProps, "ErrorLimit", 200);
+		maximumTraceSize = getIntegerProperty(configProps, "BackstepLimit", 1000);
 
-        String[] literals = configProps.getProperty("AsciiTable").split(" +");
-        int maxLength = 0;
-        for (int i = 0; i < literals.length; i++) {
-            if (literals[i].equals("null")) literals[i] = ASCII_NON_PRINT;
-            if (literals[i].equals("space")) literals[i] = " ";
-            if (literals[i].length() > maxLength)
-                maxLength = literals[i].length();
-        }
-        String padding = "        ";
-        maxLength++;
-        for (int i = 0; i < literals.length; i++)
-            literals[i] = padding.substring(0, maxLength - literals[i].length()) + literals[i];
-        ASCII_TABLE = literals;
-    }
+		String anp = configProps.getProperty("AsciiNonPrint", ".");
+		ASCII_NON_PRINT = anp.equals("space") ? " " : anp;
 
-    /**
-     * MARS exit code -- useful with SYSCALL 17 when running from command line
-     * (not GUI)
-     */
-    public static int exitCode = 0;
+		String[] literals = configProps.getProperty("AsciiTable").split(" +");
+		int maxLength = 0;
+		for (int i = 0; i < literals.length; i++) {
+			if (literals[i].equals("null")) literals[i] = ASCII_NON_PRINT;
+			if (literals[i].equals("space")) literals[i] = " ";
+			if (literals[i].length() > maxLength)
+				maxLength = literals[i].length();
+		}
+		String padding = "        ";
+		maxLength++;
+		for (int i = 0; i < literals.length; i++)
+			literals[i] = padding.substring(0, maxLength - literals[i].length()) + literals[i];
+		ASCII_TABLE = literals;
+	}
 
-    public static boolean runSpeedPanelExists = false;
+	/**
+	 * MARS exit code -- useful with SYSCALL 17 when running from command line
+	 * (not GUI)
+	 */
+	public static int exitCode = 0;
 
-    /**
-     * Getter for MARS' GUI, is null if arguments were provided at application
-     * start
-     *
-     * @return the GUI's main class reference
-     */
-    public static VenusUI getGUI() {
-        return gui;
-    }
+	public static boolean runSpeedPanelExists = false;
 
-    /**
-     * Getter for MARS' settings
-     *
-     * @return the Settings object containing all application settings
-     */
-    public static Settings getSettings() {
-        return settings;
-    }
+	/**
+	 * Getter for MARS' GUI, is null if arguments were provided at application
+	 * start
+	 *
+	 * @return the GUI's main class reference
+	 */
+	public static VenusUI getGUI() {
+		return gui;
+	}
 
-    /**
-     * Method called at system initialization to create global data structures.
-     */
-    public static void initialize() {
-        if (!initialized) {
-            Thread.setDefaultUncaughtExceptionHandler(Main.exHandler);
-            logger.setLevel(debug ? Level.INFO : Level.WARNING);
-            settings = new Settings();
-            instructionSet = new InstructionSet();
-            instructionSet.populate();
-            symbolTable = new SymbolTable("global");
-            initialized = true;
-            debug = false;
-        }
-    }
+	/**
+	 * Getter for MARS' settings
+	 *
+	 * @return the Settings object containing all application settings
+	 */
+	public static Settings getSettings() {
+		return settings;
+	}
 
-    // Read and return integer property value for given file and property name.
-    // Default value is returned if property file or name not found.
-    private static int getIntegerProperty(Properties propertiesFile, String propertyName, int defaultValue) {
-        int limit = defaultValue;  // just in case no entry is found
-        try {
-            limit = Integer.parseInt(propertiesFile.getProperty(propertyName, Integer.toString(defaultValue)));
-        }
-        catch (NumberFormatException nfe) {
-        } // do nothing, I already have a default
-        return limit;
-    }
+	/**
+	 * Method called at system initialization to create global data structures.
+	 * This procedure exists in order to initialize MARS machinery for use from
+	 * external tools
+	 */
+	public static void initialize() {
+		if (!initialized) {
+			Thread.setDefaultUncaughtExceptionHandler(Main.exHandler);
+			logger.setLevel(debug ? Level.INFO : Level.WARNING);
+			settings = new Settings();
+			instructionSet = new InstructionSet();
+			instructionSet.populate();
+			symbolTable = new SymbolTable("global");
+			initialized = true;
+			debug = false;
+		}
+	}
 
-    /**
-     * Get list of MarsTools that reside outside the MARS distribution.
-     * Currently this is done by adding the tool's path name to the list of
-     * values for the external_tools property. Use ";" as delimiter!
-     *
-     * @return ArrayList. Each item is file path to .class file of a class that
-     * implements MarsTool. If none, returns empty list.
-     */
-    public static ArrayList<String> getExternalTools() {
-        ArrayList<String> toolsList = new ArrayList<>();
-        String delimiter = ";";
-        String tools = loadPropertiesFromFile(CONFIG_FILENAME).getProperty("ExternalTools");
-        if (tools != null) {
-            StringTokenizer st = new StringTokenizer(tools, delimiter);
-            while (st.hasMoreTokens())
-                toolsList.add(st.nextToken());
-        }
-        return toolsList;
-    }
+	// Read and return integer property value for given file and property name.
+	// Default value is returned if property file or name not found.
+	private static int getIntegerProperty(Properties propertiesFile, String propertyName, int defaultValue) {
+		int limit = defaultValue;  // just in case no entry is found
+		try {
+			limit = Integer.parseInt(propertiesFile.getProperty(propertyName, Integer.toString(defaultValue)));
+		}
+		catch (NumberFormatException nfe) {
+		} // do nothing, I already have a default
+		return limit;
+	}
 
-    /**
-     * Produce Properties (a Hashtable) object containing key-value pairs from
-     * specified properties file. This may be used as an alternative to
-     * readPropertiesFile() which uses a different implementation.
-     *
-     * @param file Properties filename. Do NOT include the file extension as it
-     * is assumed to be ".properties" and is added here.
-     * @return Properties (Hashtable) of key-value pairs read from the file.
-     */
-    public static Properties loadPropertiesFromFile(String file) {
-        Properties p = new Properties();
-        try {
-            p.load(Main.class.getResourceAsStream("/" + file + ".properties"));
-        }
-        catch (NullPointerException | IOException ioe) {
-            // If it doesn't work, properties will be empty
-        }
-        return p;
-    }
+	/**
+	 * Get list of MarsTools that reside outside the MARS distribution.
+	 * Currently this is done by adding the tool's path name to the list of
+	 * values for the external_tools property. Use ";" as delimiter!
+	 *
+	 * @return ArrayList. Each item is file path to .class file of a class that
+	 * implements MarsTool. If none, returns empty list.
+	 */
+	public static ArrayList<String> getExternalTools() {
+		ArrayList<String> toolsList = new ArrayList<>();
+		String delimiter = ";";
+		String tools = loadPropertiesFromFile(CONFIG_FILENAME).getProperty("ExternalTools");
+		if (tools != null) {
+			StringTokenizer st = new StringTokenizer(tools, delimiter);
+			while (st.hasMoreTokens())
+				toolsList.add(st.nextToken());
+		}
+		return toolsList;
+	}
 
-    /**
-     * Return whether backstepping is permitted at this time. Backstepping is
-     * ability to undo execution steps one at a time. Available only in the IDE.
-     * This is not a persistent setting and is not under MARS user control.
-     *
-     * @return true if backstepping is permitted, false otherwise.
-     */
-    public static boolean isBackSteppingEnabled() {
-        return program != null && program.getBackStepper() != null && program.getBackStepper().enabled();
-    }
+	/**
+	 * Produce Properties (a Hashtable) object containing key-value pairs from
+	 * specified properties file. This may be used as an alternative to
+	 * readPropertiesFile() which uses a different implementation.
+	 *
+	 * @param file Properties filename. Do NOT include the file extension as it
+	 * is assumed to be ".properties" and is added here.
+	 * @return Properties (Hashtable) of key-value pairs read from the file.
+	 */
+	public static Properties loadPropertiesFromFile(String file) {
+		Properties p = new Properties();
+		try {
+			p.load(Main.class.getResourceAsStream("/" + file + ".properties"));
+		}
+		catch (NullPointerException | IOException ioe) {
+			// If it doesn't work, properties will be empty
+		}
+		return p;
+	}
 
-    /**
-     * Read any syscall number assignment overrides from configuration file.
-     *
-     * @return ArrayList of SyscallNumberOverride objects
-     */
-    public ArrayList<SyscallNumberOverride> getSyscallOverrides() {
-        ArrayList<SyscallNumberOverride> overrides = new ArrayList<>();
-        Properties p = loadPropertiesFromFile(SYSCALL_FILENAME);
-        Enumeration<Object> keys = p.keys();
-        while (keys.hasMoreElements()) {
-            String key = keys.nextElement().toString();
-            overrides.add(new SyscallNumberOverride(key, p.getProperty(key)));
-        }
-        return overrides;
-    }
+	/**
+	 * Return whether backstepping is permitted at this time. Backstepping is
+	 * ability to undo execution steps one at a time. Available only in the IDE.
+	 * This is not a persistent setting and is not under MARS user control.
+	 *
+	 * @return true if backstepping is permitted, false otherwise.
+	 */
+	public static boolean isBackSteppingEnabled() {
+		return program != null && program.getBackStepper() != null && program.getBackStepper().enabled();
+	}
 
-    /**
-     * Starting point of MARS
-     *
-     * @param args the program arguments. If none are provided, the application
-     * will start its GUI
-     */
-    public static void main(String[] args) {
-        initialize();
+	/**
+	 * Read any syscall number assignment overrides from configuration file.
+	 *
+	 * @return ArrayList of SyscallNumberOverride objects
+	 */
+	public ArrayList<SyscallNumberOverride> getSyscallOverrides() {
+		ArrayList<SyscallNumberOverride> overrides = new ArrayList<>();
+		Properties p = loadPropertiesFromFile(SYSCALL_FILENAME);
+		Enumeration<Object> keys = p.keys();
+		while (keys.hasMoreElements()) {
+			String key = keys.nextElement().toString();
+			overrides.add(new SyscallNumberOverride(key, p.getProperty(key)));
+		}
+		return overrides;
+	}
 
-        if (args.length == 0) {
-            // Puts MARS menu on Mac OS menu bar
-            System.setProperty("apple.laf.useScreenMenuBar", "true");
+	/**
+	 * Starting point of MARS
+	 *
+	 * @param args the program arguments. If none are provided, the application
+	 * will start its GUI
+	 */
+	public static void main(String[] args) {
+		initialize();
 
-            // Calling GUI related functionality outside EDT!
-            //----------------------------------------------------------------------
-            // Putting this call inside EDT will cause both the splash and the main
-            // frame to show at the same time, effectively forfeiting the splash's
-            // purpose; calling it externally seems to be safe
-            //
-            // Andrea Proietto, 15/04/28 21:37
-            //
-            // NOTE 151016 - This seems to actually slow down startup - removing
+		if (args.length == 0) {
+			// Puts MARS menu on Mac OS menu bar
+			System.setProperty("apple.laf.useScreenMenuBar", "true");
+
+			// Calling GUI related functionality outside EDT!
+			//----------------------------------------------------------------------
+			// Putting this call inside EDT will cause both the splash and the main
+			// frame to show at the same time, effectively forfeiting the splash's
+			// purpose; calling it externally seems to be safe
+			//
+			// Andrea Proietto, 15/04/28 21:37
+			//
+			// NOTE 151016 - This seems to actually slow down startup - removing
 //            MarsSplashScreen.showSplash(2000);
-            memory.configure(Memory.getConfigByName(StringSettings.MEMORY_CONFIGURATION.get()));
-            EventQueue.invokeLater(() -> {
-                settings.AWTinit();
-                Thread.setDefaultUncaughtExceptionHandler(exHandler);
-                gui = new VenusUI();
-            });
-        }
-        else
-            new MarsLaunch(args);
-    }
+			memory.configure(Memory.getConfigByName(StringSettings.MEMORY_CONFIGURATION.get()));
+			EventQueue.invokeLater(() -> {
+				settings.AWTinit();
+				Thread.setDefaultUncaughtExceptionHandler(exHandler);
+				gui = new VenusUI();
+			});
+		}
+		else
+			new MarsLaunch(args);
+	}
 }

@@ -1,0 +1,544 @@
+{
+    "basicInstructions": [{
+            "mnemonic": "nop",
+            "format": "R",
+            "example": "nop",
+            "description": "Null operation"
+        },
+        {
+            "mnemonic": "sll",
+            "format": "R",
+            "example": "sll $rd, $rs, N",
+            "description": "Shift Left Logical: Set $rd to result of shifting $rt left by N[5-bit] bits"
+        },
+        {
+            "mnemonic": "srl",
+            "format": "R",
+            "example": "srl $rd, $rs, N",
+            "description": "Shift Right Logical: Set $rd to result of shifting $rt right by N[5-bit] bits without sign extension"
+        },
+        {
+            "mnemonic": "sra",
+            "format": "R",
+            "example": "sra $rd, $rs, N",
+            "description": "Shift Right Arithmetic: Set $rd to result of shifting $rt right by N[5-bit] bits with sign extension"
+        },
+        {
+            "mnemonic": "sllv",
+            "format": "R",
+            "example": "sllv $rd, $rs, $rt",
+            "description": "Shift Left Logical Variable: Set $rd to result of shifting $rs left by number of bits specified by value in low-order 5 bits of $rt"
+        },
+        {
+            "mnemonic": "srlv",
+            "format": "R",
+            "example": "srlv $rd, $rs, $rt",
+            "description": "Shift Right Logical Variable : Set $rd to result of shifting $rs right by number of bits specified by value in low-order 5 bits of $rt without sign extension"
+        },
+        {
+            "mnemonic": "srav",
+            "format": "R",
+            "example": "srav $rd, $rs, $rt",
+            "description": "Shift Right Arithmetic Variable: Set $rd to result of shifting $rs right by number of bits specified by value in low-order 5 bits of $rt with sign extension"
+        },
+        {
+            "mnemonic": "add",
+            "format": "R",
+            "example": "add $rd, $rs, $rt",
+            "description": "ADDition: set $rd to ($rs + $rt), trap on overflow"
+        },
+        {
+            "mnemonic": "addu",
+            "format": "R",
+            "example": "addu $rd, $rs, $rt",
+            "description": "ADDition Unsigned : set $rd to ($rs + $rt), no trap on overflow"
+        },
+        {
+            "mnemonic": "sub",
+            "format": "R",
+            "example": "sub $rd, $rs, $rt",
+            "description": "SUBtraction: set $rd to ($rs - $rt), trap on overflow "
+        },
+        {
+            "mnemonic": "subu",
+            "format": "R",
+            "example": "subu $rd, $rs, $rt",
+            "description": "SUBtraction Unsigned: set $rd to ($rs - $rt), no trap on overflow"
+        },
+        {
+            "mnemonic": "and",
+            "format": "R",
+            "example": "and $rd, $rs, $rt",
+            "description": "Set $rd to bitwise AND of $rs and $rt"
+        },
+        {
+            "mnemonic": "or",
+            "format": "R",
+            "example": "or $rd, $rs, $rt",
+            "description": "Set $rd to bitwise OR of $rs and $rt"
+        },
+        {
+            "mnemonic": "xor",
+            "format": "R",
+            "example": "xor $rd, $rs, $rt",
+            "description": "Set $rd to bitwise XOR of $rs and $rt"
+        },
+        {
+            "mnemonic": "nor",
+            "format": "R",
+            "example": "nor $rd, $rs, $rt",
+            "description": "Set $rd to bitwise NOR of $rs and $rt"
+        },
+        {
+            "mnemonic": "slt",
+            "format": "R",
+            "example": "slt $rd, $rs ,$rt",
+            "description": "Set Less Than: If $rs is less than $rt, then set $rd to 1, else set $rd to 0"
+        },
+        {
+            "mnemonic": "sltu",
+            "format": "R",
+            "example": "sltu $rd, $rs, $rt",
+            "description": "Set Less Than Unsigned: If $rs is less than $rt using unsigned comparison, then set $rd to 1, else set $rd to 0"
+        },
+        {
+            "mnemonic": "movz",
+            "format": "R",
+            "example": "movz $rd, $rs, $rt",
+            "description": "MOVe conditional Zero : Set $rd to $rs if $rt is zero"
+        },
+        {
+            "mnemonic": "movn",
+            "format": "R",
+            "example": "movn $rd, $rs, $rt",
+            "description": "MOVe conditional Not zero : Set $rd to $rs if $rt is not zero"
+        },
+
+        {
+            "mnemonic": "addi",
+            "format": "I",
+            "example": "addi $rt, $rs, Z",
+            "description": "ADDition Immediate: set $rt to ($rs + Z[16bit]), trap on overflow"
+        },
+
+        {
+            "mnemonic": "addiu",
+            "format": "I",
+            "example": "addiu $rt, $rs, Z",
+            "description": "ADDition Immediate Unsigned: set $rt to ($rs + Z[16bit]), no trap on overflow"
+        },
+        {
+            "mnemonic": "andi",
+            "format": "I",
+            "example": "andi $rt, $rs, N",
+            "description": "Bitwise AND Immediate : Set $rt to bitwise AND of $rs and N[16bit]"
+        },
+        {        
+            "mnemonic": "ori",
+            "format": "I",
+            "example": "ori $rt, $rs, N",
+            "description": "Bitwise OR Immediate : Set $rt to bitwise OR of $rs and N[16bit]"
+        },
+        { 
+            "mnemonic": "xori",
+            "format": "I",
+            "example": "xori $rt, $rs, N",
+            "description": "Bitwise XOR Immediate : Set $rt to bitwise OR of $rs and N[16bit]"
+        },
+        {
+            "mnemonic": "slti",
+            "format": "I",
+            "example": "slti $rt, $rs, Z",
+            "description": "Set Less Than Immediate : If $rs is less than Z[16bit], then set $rt to 1, else set $rt to 0"
+        },
+        {
+            "mnemonic": "sltiu",
+            "format": "I",
+            "example": "sltiu $rt, $rs, Z",
+            "description": "Set Less Than Immediate Unsigned : If $rs is less than Z[16bit] using unsigned comparison, then set $rt to 1, else set $rt to 0"
+        },
+        {
+            "mnemonic": "lui",
+            "format": "I",
+            "example": "lui $rt, N",
+            "description": "Load Upper Immediate: Set high-order 16 bits of $rt to N[16bit] and low-order 16 bits to 0"
+        },
+        {
+            "mnemonic": "lb",
+            "format": "I",
+            "example": "lb $rt, Z($rs)",
+            "description": "Load Byte : Set $rt to sign-extended 8-bit value from effective memory byte address"
+        },
+        {
+            "mnemonic": "lh",
+            "format": "I",
+            "example": "lh $rt, Z($rs)",
+            "description": "Load Halfword : Set $rt to sign-extended 16-bit value from effective memory halfword address"
+        },
+        {
+            "mnemonic": "lwl",
+            "format": "I",
+            "example": "lwl $rt, Z($rs)",
+            "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $rt, starting with effective memory byte address and continuing through the low-order byte of its word"
+        },
+        {
+            "mnemonic": "lw",
+            "format": "I",
+            "example": "lw $rt, Z($rs)",
+            "description": "Load Word : Set $rt to contents of effective memory word address"
+        },
+        {
+            "mnemonic": "lbu",
+            "format": "I",
+            "example": "lbu $rt, Z($rs)",
+            "description": "Load byte unsigned : Set $rt to zero-extended 8-bit value from effective memory byte address"
+        },
+        {
+            "mnemonic": "lhu",
+            "format": "I",
+            "example": "lhu $rt, Z($rs)",
+            "description": "Load halfword unsigned : Set $rt to zero-extended 16-bit value from effective memory halfword address"
+        },
+        {
+            "mnemonic": "lwr",
+            "format": "I",
+            "example": "lwr $rt, Z($rs)",
+            "description": "Load word right : Load from 1 to 4 bytes right-justified into $rt, starting with effective memory byte address and continuing through the high-order byte of its word"
+        },
+        {
+            "mnemonic": "sb",
+            "format": "I",
+            "example": "sb $rt, Z($rs)",
+            "description": "Store byte : Store the low-order 8 bits of $rt into the effective memory byte address"
+        },
+        {
+            "mnemonic": "sh",
+            "format": "I",
+            "example": "sh $rt, Z($rs)",
+            "description": "Store halfword : Store the low-order 16 bits of $rt into the effective memory halfword address"
+        },
+        {
+            "mnemonic": "swl",
+            "format": "I",
+            "example": "swl $rt, Z($rs)",
+            "description": "Store word left : Store high-order 1 to 4 bytes of $rt into memory, starting with effective byte address and continuing through the low-order byte of its word"
+        },
+        {
+            "mnemonic": "sw",
+            "format": "I",
+            "example": "sw $rt, Z($rs)",
+            "description": "Store word : Store contents of $rt into effective memory word address"
+        },
+        {
+            "mnemonic": "swr",
+            "format": "I",
+            "example": "swr $rt, Z($rs)",
+            "description": "Store word right : Store low-order 1 to 4 bytes of $rt into memory, starting with high-order byte of word containing effective byte address and continuing through that byte address"
+        },
+        
+        
+        {
+            "mnemonic": "ll",
+            "format": "I",
+            "example": "ll $rt, Z($rs)",
+            "description": "Load Linked: Set $rt to contents of effective memory address and start an atomic read-modify-write operation"
+        },
+        {
+            "mnemonic": "sc",
+            "format": "I",
+            "example": "sc $rt, Z($rs)",
+            "description": "Store Conditional: Store contents of $rt into effective memory word address and set $rt to 1 if the atomic RMW is successful, else write 0 to $rt"
+        },
+        
+        
+        
+        {
+            "mnemonic": "bgez",
+            "format": "I",
+            "example": "bgez $rs, L",
+            "description": "Branch if greater than or equal to zero : Branch to statement at label's address if $rs is greater than or equal to zero"
+        },
+        {
+            "mnemonic": "bgtz",
+            "format": "I",
+            "example": "bgtz $rs, L",
+            "description": "Branch if greater than zero : Branch to statement at label's address if $t1 is greater than zero"
+        },
+        {
+            "mnemonic": "blez",
+            "format": "I",
+            "example": "blez $rs, L",
+            "description": "Branch if less than or equal to zero : Branch to statement at label's address if $t1 is less than or equal to zero"
+        },
+        {
+            "mnemonic": "bltz",
+            "format": "I",
+            "example": "bltz $rs, L",
+            "description": "Branch if less than zero : Branch to statement at label's address if $t1 is less than zero"
+        },
+        {
+            "mnemonic": "bgezal",
+            "format": "I",
+            "example": "bgezal $rs, L",
+            "description": "Branch if greater then or equal to zero and link : If $t1 is greater than or equal to zero, then set $ra to the Program Counter and branch to statement at label's address"
+        },
+        {
+            "mnemonic": "bltzal",
+            "format": "I",
+            "example": "bltzal $rs, L",
+            "description": "Branch if less than zero and link : If $rs is less than or equal to zero, then set $ra to the Program Counter and branch to statement at label's address"
+        }
+    
+    
+    ,
+        {
+            "mnemonic": "beq",
+            "format": "I",
+            "example": "beq $rs, $rt, L",
+            "description": "Branch if equal : Branch to statement at label's address if $rs and $rt are equal"
+        },
+        {
+            "mnemonic": "bne",
+            "format": "I",
+            "example": "bne $rs, $rt, L",
+            "description": "Branch if not equal : Branch to statement at label's address if $rs and $rt are not equal"
+        }
+    
+    
+    
+    ,
+        {
+            "mnemonic": "mfhi",
+            "format": "R",
+            "example": "mfhi $rd",
+            "description": "Move from HI register : Set $rd to contents of HI"
+        },
+        {
+            "mnemonic": "mflo",
+            "format": "R",
+            "example": "mflo $rd",
+            "description": "Move from LO register : Set $rd to contents of LO"
+        },
+        {
+            "mnemonic": "mthi",
+            "format": "R",
+            "example": "mthi $rs",
+            "description": "Move to HI registerr : Set HI to contents of $rs"
+        },
+        {
+            "mnemonic": "mtlo",
+            "format": "R",
+            "example": "mtlo $rs",
+            "description": "Move to LO registerr : Set LO to contents of $rs"
+        }
+    
+    ,
+        {
+            "mnemonic": "mul",
+            "format": "R",
+            "example": "mul $rd, $rs, $rt",
+            "description": "Multiplication without overflow  : Set HI to high-order 32 bits, LO and $rd to low-order 32 bits of the product of $rs and $rt (use mfhi to access HI, mflo to access LO)"
+                        },
+        {
+            "mnemonic": "mult",
+            "format": "R",
+            "example": "mult $rs, $rt",
+            "description": "Multiplication : Set HI to high-order 32 bits, LO to low-order 32 bits of the product of $rs and $rt"
+        },
+        {
+            "mnemonic": "multu",
+            "format": "R",
+            "example": "multu $rs, $rt",
+            "description": "Multiplication unsigned : Set HI to high-order 32 bits, LO to low-order 32 bits of the product of unsigned $rs and $rt)"
+        },
+        {
+            "mnemonic": "madd",
+            "format": "R",
+            "example": "madd $rs, $rt",
+            "description": "Multiply add : Multiply $rs by $rt then increment HI by high-order 32 bits of product, increment LO by low-order 32 bits of product"
+        },
+        {
+            "mnemonic": "maddu",
+            "format": "R",
+            "example": "maddu $rs, $rt",
+            "description": "Multiply add unsigned : Multiply $rs by $rt then increment HI by high-order 32 bits of product, increment LO by low-order 32 bits of product, unsigned"
+        },
+        {
+            "mnemonic": "msub",
+            "format": "R",
+            "example": "msub $rs, $rt",
+            "description": "Multiply subtract : Multiply $rs by $rt then decrement HI by high-order 32 bits of product, decrement LO by low-order 32 bits of product"
+        },
+        {
+            "mnemonic": "msubu",
+            "format": "R",
+            "example": "msubu $rs, $rt",
+            "description": "Multiply subtract unsigned: Multiply $rs by $rt then decrement HI by high-order 32 bits of product, decrement LO by low-order 32 bits of product, unsigned"
+        },
+        {
+            "mnemonic": "div",
+            "format": "R",
+            "example": "div $rs, $rt",
+            "description": "Division with overflow : Divide $rs by $rt then set LO to quotient and HI to remainder"
+        },
+        {
+            "mnemonic": "divu",
+            "format": "R",
+            "example": "divu $rs, $rt",
+            "description": "Division unsigned without overflow : Divide unsigned $t1 by $t2 then set LO to quotient and HI to remainder"
+        }
+    
+    
+    
+    ,
+        {
+            "mnemonic": "break",
+            "format": "R",
+            "example": ["break", "break N"],
+            "description": "Break execution with code : Terminate program execution with specified exception code, or 0 if left unspecified"
+        },
+        {
+            "mnemonic": "syscall",
+            "format": "R",
+            "example": "syscall",
+            "description": "Issue a SYStem CALL : Execute the system call specified by value in $v0"
+        }
+    
+    
+    ,
+        {
+            "mnemonic": "j",
+            "format": "J",
+            "example": "j L",
+            "description": "Jump unconditionally : Jump to statement at target address"
+        },
+        {
+            "mnemonic": "jal",
+            "format": "J",
+            "example": "jal L",
+            "description": "Jump And Link : Set $ra to Program Counter (return address) then jump to statement at target address"
+        },
+        {
+            "mnemonic": "jr",
+            "format": "R",
+            "example": "jr $rs",
+            "description": "Jump Register unconditionally : Jump to statement whose address is in $rs"
+        },
+        {
+            "mnemonic": "jalr",
+            "format": "R",
+            "example": ["jalr $rs, $rd", "jalr $rd"],
+            "description": "Jump And Link Register : Set $rd ($ra if omitted) to Program Counter (return address) then jump to statement whose address is in $rs"
+        }
+        
+        ,
+        {
+            "mnemonic": "clz",
+            "format": "R",
+            "example": "clz $rd, $rs",
+            "description": "Count number of Leading Zeroes: Set $rd to the count of leading zero-bits in $rs starting at most significant bit position"
+        },
+        {
+            "mnemonic": "clo",
+            "format": "R",
+            "example": "clo $rd, $rs",
+            "description": "Count number of Leading Ones: Set $rd to the count of leading one-bits in $rs starting at most significant bit position"
+        }
+        
+        
+        ,
+        {
+            "mnemonic": "teq",
+            "format": "R",
+            "example": "teq $rs, $rt",
+            "description": "Trap if EQual: Raise an exception if $rs is equal to $rt"
+        },
+        {
+            "mnemonic": "tne",
+            "format": "R",
+            "example": "tne $rs, $rt",
+            "description": "Trap if Not Equal: Raise an exception if $rs is not equal to $rt"
+        },
+        {
+            "mnemonic": "tge",
+            "format": "R",
+            "example": "tge $rs, $rt",
+            "description": "Trap if Greater or Equal: Raise an exception if $rs is greater than or equal to $rt"
+        },
+        {
+            "mnemonic": "tgeu",
+            "format": "R",
+            "example": "tgeu $rs, $rt",
+            "description": "Trap if Greater or Equal Unsigned: Raise an exception if $rs is greater than or equal to $rt as unsigned values"
+        },
+        {
+            "mnemonic": "tlt",
+            "format": "R",
+            "example": "tlt $rs, $rt",
+            "description": "Trap if Less Than: Raise an exception if $rs is less than $rt"
+        },
+        {
+            "mnemonic": "tltu",
+            "format": "R",
+            "example": "tltu $rs, $rt",
+            "description": "Trap if Less Than Unsigned: Raise an exception if $rs less than $rt as unsigned values"
+        },
+        {
+            "mnemonic": "teqi",
+            "format": "I",
+            "example": "teqi $rs, Z",
+            "description": "Trap if EQual Immediate: Trap if $rs is equal to sign-extended 16 bit immediate"
+        },
+        {
+            "mnemonic": "tnei",
+            "format": "I",
+            "example": "tnei $rs, Z",
+            "description": "Trap if Not Equal Immediate: Trap if $rs is not equal to sign-extended 16 bit immediate"
+        },
+        {
+            "mnemonic": "tgei",
+            "format": "I",
+            "example": "tgei $rs, Z",
+            "description": "Trap if Greater than or Equal Immediate: Trap if $rs greater than or equal to sign-extended 16 bit immediate"
+        },
+        {
+            "mnemonic": "tgeiu",
+            "format": "I",
+            "example": "tgeiu $rs, Z",
+            "description": "Trap if greater or equal to immediate unsigned : Trap if $t1 greater than or equal to sign-extended 16 bit immediate, unsigned comparison"
+        },
+        {
+            "mnemonic": "tlti",
+            "format": "I",
+            "example": "tlti $rs, Z",
+            "description": "Trap if less than immediate : Trap if $t1 less than sign-extended 16-bit immediate"
+        },
+        {
+            "mnemonic": "tltiu",
+            "format": "I",
+            "example": "tltiu $rs, Z",
+            "description": "Trap if less than immediate unsigned : Trap if $t1 less than sign-extended 16-bit immediate, unsigned comparison"
+        },
+        {
+            "mnemonic": "eret",
+            "format": "R",
+            "example": "eret",
+            "description": "Exception RETurn: Set Program Counter to Coprocessor 0 EPC register value, set Coprocessor Status register bit 1 (exception level) to zero"
+        },
+        
+        {
+			"mnemonic": "movf",
+			"format": "R",
+			"example": "movf $t1, $t2, F",
+			"description": "Move if specified FP condition flag false : Set $t1 to $t2 if FPU (Coprocessor 1) condition flag specified by the immediate is false (zero)"
+		},
+		{
+			"mnemonic": "movt",
+			"format": "R",
+			"example": "movt $t1, $t2, F",
+			"description": "Move if specfied FP condition flag true : Set $t1 to $t2 if FPU (Coprocessor 1) condition flag specified by the immediate is true (one)"
+		}
+        
+        
+    ]
+}

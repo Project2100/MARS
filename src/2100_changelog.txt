@@ -1,3 +1,10 @@
+####2.0
+!! Replaced MIPS VM
+
+####1.9
+! Implemented new memory model, some work on preparing a full-blown machine
+re-implementation
+
 ####1.8
 
 ! Settings structure overhaul
