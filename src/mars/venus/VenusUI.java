@@ -151,7 +151,7 @@ public final class VenusUI {
         mainFrame = new JFrame(baseTitle = "MARS " + Main.VERSION);
 
         // image courtesy of NASA/JPL.
-        Image icon = toolkit.getImage(c.getResource(
+        Image icon = toolkit.createImage(c.getResource(
                 Main.imagesPath + "Mars_Icon_2_512x512x32.png"));
         mainFrame.setIconImage(icon);
 
