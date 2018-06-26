@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.logging.Level;
 import mars.Main;
+import mars.ProgramStatement;
 import mars.assembler.SymbolTable;
 import mars.settings.BooleanSettings;
 
@@ -1160,24 +1161,34 @@ public class MIPSMachine {
 	////////////////////////////////////////////////////////////////////////////
 	// TEST SECTION ------------------------------------------------------------
 	public static void main(String[] args) throws AddressErrorException {
-		testLWL();
+		testSWR();
 	}
 
-	static final void testLWL() throws AddressErrorException {
+	static final void testSWR() throws AddressErrorException {
 		Main.symbolTable = new SymbolTable("global");
 		MIPSMachine m = new MIPSMachine();
 		int userSpace = m.configuration().getAddress(Memory.Descriptor.DATA_BASE_ADDRESS);
-		m.gpRegisters.set(3, userSpace);
-
+		
+		m.gpRegisters.setUserRegister(Registers.Descriptor.$t0, userSpace);
 		m.memory.write(m, userSpace, 0x55120873, Memory.Boundary.WORD);
 		int readWord = m.memory.read(userSpace, Memory.Boundary.WORD, false);
 		System.out.println(Integer.toHexString(readWord));
 
-		m.gpRegisters.set(2, 0xFD327593);
-		System.out.println(Integer.toHexString(m.gpRegisters.read(2)));
+		m.gpRegisters.setUserRegister(Registers.Descriptor.$t1, 0xFD327593);
+		System.out.println(Integer.toHexString(m.gpRegisters.read(Registers.Descriptor.$t1.ordinal())));
 
-		//LWL
-		int instruction = genLoadStoreIinstr(new int[] {2, 1, 3}, 0xB8000000);
+		
+		Main.initialize();
+		ProgramStatement s = new ProgramStatement(genLoadStoreIinstr(new int[] {Registers.Descriptor.$t1.ordinal(), 1, Registers.Descriptor.$t0.ordinal()}, 0xB8000000), m.configuration().getAddress(Memory.Descriptor.TEXT_BASE_ADDRESS));
+		
+		System.out.println("statement constructed");
+		
+		System.out.println(s.getPrintableBasicAssemblyStatement());
+		
+		//SWR
+		InstructionSetArchitecture isa = new InstructionSetArchitecture();
+		isa.populate();
+		int instruction =isa.BasicInstructionEncodings.get("swr").applyAsInt(s);
 		System.out.println(Integer.toBinaryString(instruction));
 
 		m.executeInstruction(instruction);

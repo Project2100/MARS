@@ -326,6 +326,8 @@ public class Main {
 	 * will start its GUI
 	 */
 	public static void main(String[] args) {
+		
+		// Do init global structures
 		initialize();
 
 		if (args.length == 0) {

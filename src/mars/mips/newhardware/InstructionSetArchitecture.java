@@ -445,7 +445,7 @@ public class InstructionSetArchitecture {
 			// Setting MOVCI in func field
 			return i | 0x00000001;
 		});
-		
+
 		// 000000 sssss ttt 01 fffff 00000 000001
 		BasicInstructionEncodings.put("movt", (statement) -> {
 			int i = 0;
@@ -462,10 +462,6 @@ public class InstructionSetArchitecture {
 		});
 
 		////////////////////////////////////////////////////////////////////////
-
-
-
-
 //        instructionSet.add(
 //                new BasicInstruction("mfc0 $t1,$8",
 //                        "Move from Coprocessor 0 : Set $t1 to the value stored in Coprocessor 0 register $8",
@@ -1674,71 +1670,71 @@ public class InstructionSetArchitecture {
 		}
 
 		////////////// GET AND CREATE LIST OF SYSCALL FUNCTION OBJECTS ////////////////////
-		syscallLoader = new SyscallLoader();
-		syscallLoader.loadSyscalls();
-		// Initialization step.  Create token list for each instruction example.  This is
-		// used by parser to determine user program correct syntax.
-		for (Instruction inst : instructionSet)
-			inst.createExampleTokenList();
+//		syscallLoader = new SyscallLoader();
+//		syscallLoader.loadSyscalls();
+//		// Initialization step.  Create token list for each instruction example.  This is
+//		// used by parser to determine user program correct syntax.
+//		for (Instruction inst : instructionSet)
+//			inst.createExampleTokenList();
 	}
 
-	/**
-	 * Given an operator mnemonic, will return the corresponding Instruction
-	 * object(s) from the instruction set. Uses straight linear search
-	 * technique.
-	 *
-	 * @param name operator mnemonic (e.g. addi, sw,...)
-	 * @return list of corresponding Instruction object(s), or null if not
-	 * found.
-	 */
-	public ArrayList<Instruction> matchOperator(String name) {
-		ArrayList<Instruction> matchingInstructions = null;
-		// Linear search for now....
-		for (Instruction instruction : instructionSet)
-			if (instruction.getName().equalsIgnoreCase(name)) {
-				if (matchingInstructions == null)
-					matchingInstructions = new ArrayList<>();
-				matchingInstructions.add(instruction);
-			}
-		return matchingInstructions;
-	}
-
-	/**
-	 * Given a string, will return the Instruction object(s) from the
-	 * instruction set whose operator mnemonic prefix matches it.
-	 * Case-insensitive. For example "s" will match "sw", "sh", "sb", etc. Uses
-	 * straight linear search technique.
-	 *
-	 * @param name a string
-	 * @return list of matching Instruction object(s), or null if none match.
-	 */
-	public ArrayList<Instruction> prefixMatchOperator(String name) {
-		ArrayList<Instruction> matchingInstructions = null;
-		// Linear search for now....
-		if (name != null)
-			for (Instruction instruction : instructionSet)
-				if (instruction.getName().toLowerCase().startsWith(name.toLowerCase())) {
-					if (matchingInstructions == null)
-						matchingInstructions = new ArrayList<>();
-					matchingInstructions.add(instruction);
-				}
-		return matchingInstructions;
-	}
-
-	/*
-     * Method to find and invoke a syscall given its service number.  Each syscall
-     * function is represented by an object in an array list.  Each object is of
-     * a class that implements Syscall or extends AbstractSyscall.
-	 */
-	private void findAndSimulateSyscall(int number, ProgramStatement statement)
-			throws ProcessingException {
-		Syscall service = syscallLoader.findSyscall(number);
-		if (service != null) {
-			service.simulate(statement);
-			return;
-		}
-		throw new ProcessingException(statement,
-				"invalid or unimplemented syscall service: "
-				+ number + " ", Exceptions.SYSCALL_EXCEPTION);
-	}
+//	/**
+//	 * Given an operator mnemonic, will return the corresponding Instruction
+//	 * object(s) from the instruction set. Uses straight linear search
+//	 * technique.
+//	 *
+//	 * @param name operator mnemonic (e.g. addi, sw,...)
+//	 * @return list of corresponding Instruction object(s), or null if not
+//	 * found.
+//	 */
+//	public ArrayList<Instruction> matchOperator(String name) {
+//		ArrayList<Instruction> matchingInstructions = null;
+//		// Linear search for now....
+//		for (Instruction instruction : instructionSet)
+//			if (instruction.getName().equalsIgnoreCase(name)) {
+//				if (matchingInstructions == null)
+//					matchingInstructions = new ArrayList<>();
+//				matchingInstructions.add(instruction);
+//			}
+//		return matchingInstructions;
+//	}
+//
+//	/**
+//	 * Given a string, will return the Instruction object(s) from the
+//	 * instruction set whose operator mnemonic prefix matches it.
+//	 * Case-insensitive. For example "s" will match "sw", "sh", "sb", etc. Uses
+//	 * straight linear search technique.
+//	 *
+//	 * @param name a string
+//	 * @return list of matching Instruction object(s), or null if none match.
+//	 */
+//	public ArrayList<Instruction> prefixMatchOperator(String name) {
+//		ArrayList<Instruction> matchingInstructions = null;
+//		// Linear search for now....
+//		if (name != null)
+//			for (Instruction instruction : instructionSet)
+//				if (instruction.getName().toLowerCase().startsWith(name.toLowerCase())) {
+//					if (matchingInstructions == null)
+//						matchingInstructions = new ArrayList<>();
+//					matchingInstructions.add(instruction);
+//				}
+//		return matchingInstructions;
+//	}
+//
+//	/*
+//     * Method to find and invoke a syscall given its service number.  Each syscall
+//     * function is represented by an object in an array list.  Each object is of
+//     * a class that implements Syscall or extends AbstractSyscall.
+//	 */
+//	private void findAndSimulateSyscall(int number, ProgramStatement statement)
+//			throws ProcessingException {
+//		Syscall service = syscallLoader.findSyscall(number);
+//		if (service != null) {
+//			service.simulate(statement);
+//			return;
+//		}
+//		throw new ProcessingException(statement,
+//				"invalid or unimplemented syscall service: "
+//				+ number + " ", Exceptions.SYSCALL_EXCEPTION);
+//	}
 }

@@ -5,6 +5,11 @@
  */
 package mars.mips.newhardware;
 
+import mars.mips.hardware.Coprocessor0;
+import mars.mips.hardware.RegisterFile;
+import mars.mips.instructions.Instruction;
+import mars.util.Binary;
+
 /**
  * Placeholder, may implement basic MIPS trapping, e.g. arithmetic exceptions.
  * 
