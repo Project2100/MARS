@@ -763,7 +763,10 @@ public final class VenusUI {
      * then the mode isn't swapped
      */
     void toggleGUIMode() {
+		
+		// Get current mode by checking which main panel is showing
         if (leftPane.getTopComponent().equals(executePane)) {
+			// Go to "edit mode"
             marsMode.setText("Assemble");
             marsMode.setToolTipText("View and control program execution");
 
@@ -788,6 +791,8 @@ public final class VenusUI {
             leftPane.setTopComponent(editTabbedPane);
         }
         else if (ExecuteAction.assemble()) {
+			
+			// Program has been successfully assembled, go to "execute mode"
             marsMode.setText("Edit");
             marsMode.setToolTipText("Edit MIPS program");
 
@@ -809,6 +814,8 @@ public final class VenusUI {
 
             leftPane.setTopComponent(executePane);
         }
+		
+		// Repaint
         mainFrame.validate();
         updateGUIState();
     }

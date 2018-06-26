@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="system">
+    <system systemId="file:/C:/Users/Project2100/Documents/NetBeansProjects/MARS/src/mars/mips/instructions/set/MIPSInstruction.xsd" uri="xml-resources/jaxb/test/MIPSInstruction.xsd"/>
+</catalog>

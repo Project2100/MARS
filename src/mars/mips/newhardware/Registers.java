@@ -5,10 +5,10 @@
  */
 package mars.mips.newhardware;
 
-import java.util.ConcurrentModificationException;
 import java.util.Observer;
 import java.util.logging.Level;
 import mars.Main;
+import mars.mips.hardware.AccessNotice;
 
 /**
  * This class serves as the main access point to the MIPS Machine registers.
@@ -21,7 +21,6 @@ import mars.Main;
 public class Registers {
 
     private final Register[] userRegisters;
-
     private int defaultGP, defaultSP;
 
     Registers() {
@@ -37,12 +36,25 @@ public class Registers {
         userRegisters[Descriptor.$sp.ordinal()] = new Register(
                 Descriptor.$sp.name(),
                 config.getAddress(Memory.Descriptor.STACK_POINTER));
-        for (int i = 0; i < userRegisters.length; i++)
+
+        // Zero register is hardwired to do nothing on write
+        userRegisters[0] = new Register(Descriptor.values()[0].name(), 0) {
+            @Override
+            public synchronized int set(int value) {
+                // Do not write
+                if (countObservers() > 0) {
+                    setChanged();
+                    notifyObservers(new RegisterAccessNotice(AccessNotice.WRITE, name));
+                }
+                return 0;
+            }};
+
+        for (int i = 1; i < userRegisters.length; i++)
             if (userRegisters[i] == null)
                 userRegisters[i] = new Register(Descriptor.values()[i].name(), 0);
     }
 
-    public void configure(MIPSMachine.Configuration config) {
+    void configure(MIPSMachine.Configuration config) {
         defaultGP = config.getAddress(Memory.Descriptor.GLOBAL_POINTER);
         defaultSP = config.getAddress(Memory.Descriptor.STACK_POINTER);
         resetRegisters();
@@ -78,8 +90,7 @@ public class Registers {
     }
 
     /**
-     * This method updates the register value who's number is num. Also handles
-     * the lo and hi registers
+     * This method updates the register value whose number is num.
      *
      * @param reg Register to set the value of.
      * @param val The desired value for the register.
@@ -95,57 +106,31 @@ public class Registers {
         if (Thread.holdsLock(userRegisters[i]))
             throw new IllegalStateException("Reentrant call on register " + userRegisters[i].name);
 
-        if (reg.equals(Descriptor.$zero)) {
-//            throw new IllegalArgumentException("The $zero register cannot be set to any value!");
-            Main.logger.log(Level.INFO, "Writing on $zero register - ignoring");
-            return 0;
-        }
-
         return Main.isBackSteppingEnabled()
                 ? Main.program.getBackStepper().addRegisterFileRestore(i, userRegisters[i].set(val))
                 : userRegisters[i].set(val);
     }
 
+
     /**
-     * Returns the value of the register who's number is num.
+     * Sets the register identified by the specified number to the given value.
      *
-     * @param num The register number.
-     * @return The value of the given register.
+     * @param regNumber the number of the register to set
+     * @param value the value to set the register to
+     * @return the register's old value
      */
-    public int readUserRegister(Descriptor num) {
-        return userRegisters[num.ordinal()].get();
-
+    int set(int regNumber, int value) {
+        return setUserRegister(Descriptor.values()[regNumber], value);
     }
 
-    //PENDING deleteme
-    public int updateRegister(int num, int val) {
-        return setUserRegister(Descriptor.values()[num], val);
-    }
-
-    //PENDING deleteme
-    public void updateRegister(String reg, int val) {
-        setUserRegister(Descriptor.valueOf(reg), val);
-    }
-
-    //PENDING deleteme
-    public int getValue(int num) {
-        return readUserRegister(Descriptor.values()[num]);
-    }
-
-    //PENDING deleteme
-    public static int getNumber(String n) {
-        return Descriptor.valueOf(n).ordinal();
-    }
-
-    //WARNING DELETEME
-    public static Register[] getRegisters() throws IllegalAccessException {
-//        return regFile;
-        throw new IllegalAccessException("These are private now...");
-    }
-
-    //PENDING needed?
-    public Register getUserRegister(String Rname) {
-        return userRegisters[Descriptor.valueOf(Rname).ordinal()];
+    /**
+     * Reads the register identified by the specified number.
+     *
+     * @param regNumber the number of the register to read
+     * @return the register's value
+     */
+    int read(int regNumber) {
+        return userRegisters[regNumber].get();
     }
 
     /**

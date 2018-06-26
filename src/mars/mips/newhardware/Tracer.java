@@ -1,5 +1,6 @@
-package mars.simulator;
+package mars.mips.newhardware;
 
+import mars.simulator.*;
 import mars.Main;
 import mars.ProgramStatement;
 import mars.mips.hardware.Coprocessor0;
@@ -40,7 +41,7 @@ import mars.mips.instructions.Instruction;
  * @author Pete Sanderson
  * @version February 2006
  */
-public class BackStepper {
+public class Tracer {
     // The types of "undo" actions.  Under 1.5, these would be enumerated type.
     // These fit better in the BackStep class below but inner classes cannot have static members.
 
@@ -61,7 +62,7 @@ public class BackStepper {
     private static final int NOT_PC_VALUE = -1;
 
     private boolean engaged;
-    private BackstepStack backSteps;
+    private final Trace delegate;
 
     // One can argue using java.util.Stack, given its clumsy implementation.
     // A homegrown linked implementation will be more streamlined, but
@@ -73,9 +74,9 @@ public class BackStepper {
      * Create a fresh BackStepper. It is enabled, which means all subsequent
      * instruction executions will have their "undo" action recorded here.
      */
-    public BackStepper() {
+    public Tracer() {
         engaged = true;
-        backSteps = new BackstepStack(Main.maximumTraceSize);
+        delegate = new Trace(Main.maximumTraceSize);
     }
 
     /**
@@ -83,7 +84,7 @@ public class BackStepper {
      *
      * @return true if undo steps being recorded, false if not.
      */
-    public boolean enabled() {
+    public boolean isEngaged() {
         return engaged;
     }
 
@@ -93,7 +94,7 @@ public class BackStepper {
      * @param state If true, will begin (or continue) recoding "undo" steps. If
      * false, will stop.
      */
-    public void setEnabled(boolean state) {
+    public void engage(boolean state) {
         engaged = state;
     }
 
@@ -102,8 +103,8 @@ public class BackStepper {
      *
      * @return true if there are no steps to be undone, false otherwise.
      */
-    public boolean empty() {
-        return backSteps.empty();
+    public boolean isEmpty() {
+        return delegate.empty();
     }
 
     /**
@@ -114,8 +115,8 @@ public class BackStepper {
      * false otherwise.
      */
     // Added 25 June 2007
-    public boolean inDelaySlot() {
-        return !empty() && backSteps.peek().inDelaySlot;
+    public boolean isInDelaySlot() {
+        return !isEmpty() && delegate.peek().inDelaySlot;
     }
 
     /**
@@ -128,12 +129,12 @@ public class BackStepper {
     // Both must be undone transparently, so we need to detect that multiple steps happen
     // together and carry out all of them here.  
     // Use a do-while loop based on the backstep's program statement reference.
-    public void backStep() {
-        if (engaged && !backSteps.empty()) {
-            ProgramStatement statement = backSteps.peek().ps;
+    public void backtrace() {
+        if (engaged && !delegate.empty()) {
+            ProgramStatement statement = delegate.peek().ps;
             engaged = false; // GOTTA DO THIS SO METHOD CALL IN SWITCH WILL NOT RESULT IN NEW ACTION ON STACK!
             do {
-                BackStep step = backSteps.pop();
+                BackStep step = delegate.pop();
                 /*
                  System.out.println("backstep POP: action "+step.action+" pc "+mars.util.Binary.intToHexString(step.pc)+
                  " source "+((step.ps==null)? "none":step.ps.getSource())+
@@ -182,7 +183,7 @@ public class BackStepper {
                     System.out.println("Internal MARS error: address exception while back-stepping.");
                     System.exit(0);
                 }
-            } while (!backSteps.empty() && statement == backSteps.peek().ps);
+            } while (!delegate.empty() && statement == delegate.peek().ps);
             engaged = true;  // RESET IT (was disabled at top of loop -- see comment)
         }
     }
@@ -204,7 +205,7 @@ public class BackStepper {
      * @return the argument value
      */
     public int addMemoryRestoreRawWord(int address, int value) {
-        backSteps.push(MEMORY_RESTORE_RAW_WORD, pc(), address, value);
+        delegate.push(MEMORY_RESTORE_RAW_WORD, pc(), address, value);
         return value;
     }
 
@@ -217,7 +218,7 @@ public class BackStepper {
      * @return the argument value
      */
     public int addMemoryRestoreWord(int address, int value) {
-        backSteps.push(MEMORY_RESTORE_WORD, pc(), address, value);
+        delegate.push(MEMORY_RESTORE_WORD, pc(), address, value);
         return value;
     }
 
@@ -230,7 +231,7 @@ public class BackStepper {
      * @return the argument value
      */
     public int addMemoryRestoreHalf(int address, int value) {
-        backSteps.push(MEMORY_RESTORE_HALF, pc(), address, value);
+        delegate.push(MEMORY_RESTORE_HALF, pc(), address, value);
         return value;
     }
 
@@ -243,7 +244,7 @@ public class BackStepper {
      * @return the argument value
      */
     public int addMemoryRestoreByte(int address, int value) {
-        backSteps.push(MEMORY_RESTORE_BYTE, pc(), address, value);
+        delegate.push(MEMORY_RESTORE_BYTE, pc(), address, value);
         return value;
     }
 
@@ -256,7 +257,7 @@ public class BackStepper {
      * @return the argument value
      */
     public int addRegisterFileRestore(int register, int value) {
-        backSteps.push(REGISTER_RESTORE, pc(), register, value);
+        delegate.push(REGISTER_RESTORE, pc(), register, value);
         return value;
     }
 
@@ -272,7 +273,7 @@ public class BackStepper {
         value -= Instruction.INSTRUCTION_LENGTH;
         // Use "value" insead of "pc()" for second arg because RegisterFile.getProgramCounter() 
         // returns branch target address at this point.
-        backSteps.push(PC_RESTORE, value, value);
+        delegate.push(PC_RESTORE, value, value);
         return value;
     }
 
@@ -285,7 +286,7 @@ public class BackStepper {
      * @return the argument value
      */
     public int addCoprocessor0Restore(int register, int value) {
-        backSteps.push(COPROC0_REGISTER_RESTORE, pc(), register, value);
+        delegate.push(COPROC0_REGISTER_RESTORE, pc(), register, value);
         return value;
     }
 
@@ -298,7 +299,7 @@ public class BackStepper {
      * @return the argument value
      */
     public int addCoprocessor1Restore(int register, int value) {
-        backSteps.push(COPROC1_REGISTER_RESTORE, pc(), register, value);
+        delegate.push(COPROC1_REGISTER_RESTORE, pc(), register, value);
         return value;
     }
 
@@ -310,7 +311,7 @@ public class BackStepper {
      * @return the argument value
      */
     public int addConditionFlagSet(int flag) {
-        backSteps.push(COPROC1_CONDITION_SET, pc(), flag);
+        delegate.push(COPROC1_CONDITION_SET, pc(), flag);
         return flag;
     }
 
@@ -322,7 +323,7 @@ public class BackStepper {
      * @return the argument value
      */
     public int addConditionFlagClear(int flag) {
-        backSteps.push(COPROC1_CONDITION_CLEAR, pc(), flag);
+        delegate.push(COPROC1_CONDITION_CLEAR, pc(), flag);
         return flag;
     }
 
@@ -336,8 +337,8 @@ public class BackStepper {
      * @return 0
      */
     public int addDoNothing(int pc) {
-        if (backSteps.empty() || backSteps.peek().pc != pc)
-            backSteps.push(DO_NOTHING, pc);
+        if (delegate.empty() || delegate.peek().pc != pc)
+            delegate.push(DO_NOTHING, pc);
         return 0;
     }
 
@@ -395,7 +396,7 @@ public class BackStepper {
     // program (simulated) execution, BackStep objects are never created or junked
     // regardless of how many steps are executed.  This will speed things up a bit
     // and make life easier for the garbage collector.
-    private class BackstepStack {
+    private class Trace {
 
         private int capacity;
         private int size;
@@ -406,7 +407,7 @@ public class BackStepper {
         // creating all the BackStep objects will not be noticed by the user, and enhances
         // runtime performance by not having to create or recycle them during MIPS
         // program execution.
-        private BackstepStack(int capacity) {
+        private Trace(int capacity) {
             this.capacity = capacity;
             this.size = 0;
             this.top = -1;

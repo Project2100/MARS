@@ -52,10 +52,10 @@ class GuiAction extends AbstractAction {
 
         super(name, icon == null ? null : new ImageIcon(icon));
 
-        putValue(SHORT_DESCRIPTION, description);
-        putValue(LARGE_ICON_KEY, largeIcon == null ? null : new ImageIcon(largeIcon));
-        putValue(MNEMONIC_KEY, mnemonic);
-        putValue(ACCELERATOR_KEY, accel);
+        super.putValue(SHORT_DESCRIPTION, description);
+        super.putValue(LARGE_ICON_KEY, largeIcon == null ? null : new ImageIcon(largeIcon));
+        super.putValue(MNEMONIC_KEY, mnemonic);
+        super.putValue(ACCELERATOR_KEY, accel);
 
         delegate = act;
     }
