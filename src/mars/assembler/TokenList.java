@@ -1,5 +1,6 @@
 package mars.assembler;
 
+import java.util.AbstractList;
 import java.util.ArrayList;
 
 /*
@@ -36,7 +37,7 @@ import java.util.ArrayList;
  * @author Pete Sanderson
  * @version August 2003
  */
-public class TokenList implements Cloneable {
+public class TokenList extends AbstractList<Token> implements Cloneable {
 
     private ArrayList<Token> tokenList;
     private String processedLine;// DPS 03-Jan-2013
@@ -89,8 +90,8 @@ public class TokenList implements Cloneable {
      * @param pos Position in token list.
      * @param replacement Replacement token
      */
-    public void set(int pos, Token replacement) {
-        tokenList.set(pos, replacement);
+    public Token set(int pos, Token replacement) {
+        return tokenList.set(pos, replacement);
     }
 
     /**
@@ -107,9 +108,16 @@ public class TokenList implements Cloneable {
      *
      * @param token Token object to be added.
      */
-    public void add(Token token) {
-        tokenList.add(token);
+    public boolean add(Token token) {
+        return tokenList.add(token);
     }
+
+	@Override
+	public void add(int index, Token element) {
+		tokenList.add(index, element);
+	}
+	
+	
 
     /**
      * Removes Token object at specified list position. Uses ArrayList remove
@@ -120,8 +128,8 @@ public class TokenList implements Cloneable {
      * @throws IndexOutOfBoundsException if <tt>pos</tt> is < 0 or >=
      * <tt>size()</tt>
      */
-    public void remove(int pos) {
-        tokenList.remove(pos);
+    public Token remove(int pos) {
+        return tokenList.remove(pos);
     }
 
     /**

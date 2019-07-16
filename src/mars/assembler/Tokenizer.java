@@ -112,8 +112,8 @@ public class Tokenizer {
             // not the same object as the original line.  Thus I can use != instead of !equals()
             // This IF statement will replace original source with source modified by .eqv substitution.
             // Not needed by assembler, but looks better in the Text Segment Display.
-            if (sourceLine.length() > 0 && !sourceLine.equals(currentLineTokens.getProcessedLine()))
-                source.set(i, new SourceLine(currentLineTokens.getProcessedLine(), source.get(i).getMIPSprogram(), source.get(i).getLineNumber()));
+            if (sourceLine.length() > 0 && sourceLine != currentLineTokens.getProcessedLine()) 
+               source.set(i, new SourceLine(currentLineTokens.getProcessedLine(), source.get(i).getMIPSprogram(), source.get(i).getLineNumber())); 
         }
         if (errors.errorsOccurred())
             throw new ProcessingException(errors);
@@ -462,15 +462,19 @@ public class Tokenizer {
     // the substitution needs to be made.
     // DPS 11-July-2012
     private TokenList processEqv(MIPSprogram program, int lineNum, String theLine, TokenList tokens) {
+		
         // See if it is .eqv directive.  If so, record it...
         // Have to assure it is a well-formed statement right now (can't wait for assembler).
-
         if (tokens.size() > 2 && (tokens.get(0).getType() == TokenType.DIRECTIVE || tokens.get(2).getType() == TokenType.DIRECTIVE)) {
+			
             // There should not be a label but if there is, the directive is in token position 2 (ident, colon, directive).
             int dirPos = (tokens.get(0).getType() == TokenType.DIRECTIVE) ? 0 : 2;
+			
             if (Directive.matchDirective(tokens.get(dirPos).getValue()) == Directive.EQV) {
+				
                 // Get position in token list of last non-comment token
                 int tokenPosLastOperand = tokens.size() - ((tokens.get(tokens.size() - 1).getType() == TokenType.COMMENT) ? 2 : 1);
+				
                 // There have to be at least two non-comment tokens beyond the directive
                 if (tokenPosLastOperand < dirPos + 2) {
                     errors.add(new ErrorMessage(program, lineNum, tokens.get(dirPos).getStartPos(),
@@ -484,6 +488,7 @@ public class Tokenizer {
                     return tokens;
                 }
                 String symbol = tokens.get(dirPos + 1).getValue();
+				
                 // Make sure the symbol is not contained in the expression.  Not likely to occur but if left
                 // undetected it will result in infinite recursion.  e.g.  .eqv ONE, (ONE)
                 for (int i = dirPos + 2; i < tokens.size(); i++)
@@ -492,6 +497,7 @@ public class Tokenizer {
                                 "Cannot substitute " + symbol + " for itself in " + Directive.EQV.descriptor + " directive"));
                         return tokens;
                     }
+				
                 // Expected syntax is symbol, expression.  I'm allowing the expression to comprise
                 // multiple tokens, so I want to get everything from the IDENTIFIER to either the
                 // COMMENT or to the end.

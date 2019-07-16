@@ -674,7 +674,7 @@ public class Assembler {
                     + "\" directive is invalid or not implemented in MARS"));
             return;
         }
-        if (inMacroSegment) {
+        if (directive != Directive.END_MACRO && inMacroSegment) {
             // should not parse lines even directives in macro segment
             return;
         }

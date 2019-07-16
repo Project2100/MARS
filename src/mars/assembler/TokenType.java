@@ -113,7 +113,7 @@ public enum TokenType {
         if (Macro.tokenIsMacroParameter(value, false))
             return TokenType.MACRO_PARAMETER;
 
-//        // See if it is a register
+        // See if it is a register
         Register reg = RegisterFile.getUserRegister(value);
         if (reg != null)
             if (reg.getName().equals(value))

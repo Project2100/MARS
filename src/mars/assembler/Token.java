@@ -1,4 +1,5 @@
    package mars.assembler;
+import java.util.Objects;
    import mars.*;
 
 /*
@@ -180,6 +181,27 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
        public int getStartPos() {
          return sourcePos;
       }
+
+	@Override
+	public int hashCode() {
+		int hash = 5;
+		hash = 83 * hash + Objects.hashCode(this.type);
+		hash = 83 * hash + Objects.hashCode(this.value);
+		return hash;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
+		final Token other = (Token) obj;
+		if (!Objects.equals(this.value, other.value)) return false;
+		if (this.type != other.type) return false;
+		return true;
+	}
+	   
+	   
        
    }
 
