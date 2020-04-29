@@ -1,8 +1,27 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * MIT License
+ * 
+ * Copyright (c) 2020 Andrea Proietto
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
+
 package mars.mips.newhardware;
 
 import java.util.ArrayList;
@@ -10,7 +29,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.logging.Level;
 import mars.Main;
-import mars.ProgramStatement;
 import mars.assembler.SymbolTable;
 import mars.settings.BooleanSettings;
 
@@ -83,6 +101,15 @@ public class MIPSMachine {
 		delayArgument = 0;
 		branchState = DelayState.IDLE;
 	}
+
+    /**
+     * Gives a reference to this machine's memory
+     * 
+     * @return 
+     */
+    public Memory getMemory() {
+        return memory;
+    }
 
 	/**
 	 * For returning the program counter's initial (reset) value. PENDING: what
@@ -1179,16 +1206,8 @@ public class MIPSMachine {
 
 		
 		Main.initialize();
-		ProgramStatement s = new ProgramStatement(genLoadStoreIinstr(new int[] {Registers.Descriptor.$t1.ordinal(), 1, Registers.Descriptor.$t0.ordinal()}, 0xB8000000), m.configuration().getAddress(Memory.Descriptor.TEXT_BASE_ADDRESS));
-		
-		System.out.println("statement constructed");
-		
-		System.out.println(s.getPrintableBasicAssemblyStatement());
-		
-		//SWR
-		InstructionSetArchitecture isa = new InstructionSetArchitecture();
-		isa.populate();
-		int instruction =isa.BasicInstructionEncodings.get("swr").applyAsInt(s);
+		int[] s = new int[]{Registers.Descriptor.$t1.ordinal(), 1, Registers.Descriptor.$t0.ordinal()};
+		int instruction = InstructionSetArchitecture.BasicInstructionEncodings.get("swr").applyAsInt(s);
 		System.out.println(Integer.toBinaryString(instruction));
 
 		m.executeInstruction(instruction);

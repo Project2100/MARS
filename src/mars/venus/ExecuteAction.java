@@ -1,9 +1,36 @@
+/*
+ * MIT License
+ * 
+ * Copyright (c) 2003-2013,  Pete Sanderson and Kenneth Vollmar
+ * Developed by Pete Sanderson (psanderson@otterbein.edu)
+ * and Kenneth Vollmar (kenvollmar@missouristate.edu)
+ * 
+ * Copyright (c) 2020 Andrea Proietto [substantial edits]
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package mars.venus;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
@@ -12,42 +39,16 @@ import mars.ErrorMessage;
 import mars.MIPSprogram;
 import mars.Main;
 import mars.ProcessingException;
+import mars.assembler.staticassembler.StaticAssembler;
 import mars.mips.hardware.Coprocessor0;
 import mars.mips.hardware.Coprocessor1;
 import mars.mips.hardware.Memory;
 import mars.mips.hardware.RegisterFile;
+import mars.mips.newhardware.MIPSMachine;
 import mars.settings.BooleanSettings;
 import mars.settings.StringSettings;
-import mars.util.FilenameFinder;
 import mars.util.SystemIO;
 
-/*
- Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
-
- Developed by Pete Sanderson (psanderson@otterbein.edu)
- and Kenneth Vollmar (kenvollmar@missouristate.edu)
-
- Permission is hereby granted, free of charge, to any person obtaining 
- a copy of this software and associated documentation files (the 
- "Software"), to deal in the Software without restriction, including 
- without limitation the rights to use, copy, modify, merge, publish, 
- distribute, sublicense, and/or sell copies of the Software, and to 
- permit persons to whom the Software is furnished to do so, subject 
- to the following conditions:
-
- The above copyright notice and this permission notice shall be 
- included in all copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
- EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
- WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
- (MIT license, http://www.opensource.org/licenses/mit-license.html)
- */
 /**
  * Action for the Run -> Reset menu item
  */
@@ -71,44 +72,40 @@ class ExecuteAction extends AbstractAction {
         return MIPSprogramsToAssemble;
     }
 
+    // AP190718: Invoked by:
+    // - execute" action
+    // - delayed-branch toggling
+    // - memory segmentation updates
     public static boolean assemble() {
         extendedAssemblerEnabled = BooleanSettings.EXTENDED_ASSEMBLER.isSet();
         warningsAreErrors = BooleanSettings.WARNINGS_ARE_ERRORS.isSet();
 
         // NOTE: Guaranteed to be non-null from action enable-handling
-        EditPane current = Main.getGUI().editTabbedPane.getSelectedComponent();
+        EditPane leadingTab = Main.getGUI().editTabbedPane.getSelectedComponent();
 
-        // Return if file save is unsuccessful
-        if (Main.getGUI().editTabbedPane.isShowing()) {//PENDING is it necessary?
-            clearExecutePane();
-            if ((current.isNew() || current.hasUnsavedEdits()) && !current.save(false))
+        // Check if current file has unsaved edits (or is new) and attempt to save them if so
+        // Return without assembling if file save is unsuccessful
+        // AP190718: Show check shouldn't be necessary
+        //if (Main.getGUI().editTabbedPane.isShowing()) {
+            if ((leadingTab.isNew() || leadingTab.hasUnsavedEdits()) && !leadingTab.save(false))
                 return false;
-        }
-
-        Main.program = new MIPSprogram();
+        //}
+        
+        // Clear the execution environment
+        clearExecutePane();
+        
+        // Instantiate a new machine
+        MIPSMachine machine = new MIPSMachine(MIPSMachine.getConfigByName(StringSettings.MEMORY_CONFIGURATION.get()));
+        StaticAssembler.ExecutableProgram exec;
+        
+        // Start the assembling process
         try {
-            MIPSprogramsToAssemble = Main.program.prepareFilesForAssembly(
-                    BooleanSettings.ASSEMBLE_ALL.isSet()
-                            ? FilenameFinder.getFilenameList(current.getPath().getParent().toString(), Main.fileExtensions)
-                            : Collections.singletonList(current.getPath().toString()),
-                    current.getPath().toString(),
-                    BooleanSettings.EXCEPTION_HANDLER.isSet()
-                            ? StringSettings.EXCEPTION_HANDLER_FILE.get()
-                            : null);
-            Main.getGUI().messagesPane.postMarsMessage("Assembling files: "
-                    + MIPSprogramsToAssemble.stream()
-                    .map(s -> s.getFilename())
-                    .reduce((s, t) -> {
-                        int lowerBound = s.lastIndexOf('\n');
-
-                        return s + (s.substring(lowerBound == -1 ? 0 : lowerBound).length() >= LINE_LENGTH_LIMIT
-                                ? ",\n"
-                                : ", ") + t;
-                    }).get() + "\n\n");
-
-            ErrorList warnings = Main.program.assemble(MIPSprogramsToAssemble, extendedAssemblerEnabled, warningsAreErrors);
+            ErrorList warnings = new ErrorList();
+            
+            exec = StaticAssembler.beginAssembling(leadingTab.getPath(), machine, extendedAssemblerEnabled, warningsAreErrors, warnings);
             if (warnings.warningsOccurred())
                 Main.getGUI().messagesPane.postMarsMessage(warnings.generateWarningReport());
+            
         }
         catch (ProcessingException pe) {
             String errorReport = pe.errors().generateErrorAndWarningReport();
@@ -126,11 +123,18 @@ class ExecuteAction extends AbstractAction {
             return false;
         }
 
+        // If we're here, then assembling has been succesful
         Main.getGUI().messagesPane.postMarsMessage("Assemble operation completed successfully.\n\n");
+        
+        // Change interface state
         Main.getGUI().setMenuStateRunnable();
-        RegisterFile.resetRegisters();
-        Coprocessor1.resetRegisters();
-        Coprocessor0.resetRegisters();
+        
+        // LEGACY
+//        RegisterFile.resetRegisters();
+//        Coprocessor1.resetRegisters();
+//        Coprocessor0.resetRegisters();
+
+
         Main.getGUI().textSegment.setupTable();
         Main.getGUI().dataSegment.setupTable();
         Main.getGUI().dataSegment.highlightCellForAddress(Memory.dataBaseAddress);

@@ -1,8 +1,31 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * MIT License
+ * 
+ * Copyright (c) 2003-2013,  Pete Sanderson and Kenneth Vollmar
+ * Developed by Pete Sanderson (psanderson@otterbein.edu)
+ * and Kenneth Vollmar (kenvollmar@missouristate.edu)
+ * 
+ * Copyright (c) 2020 Andrea Proietto [substantial edits]
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
+
 package mars.mips.newhardware;
 
 import java.io.BufferedReader;
@@ -16,39 +39,9 @@ import java.util.StringTokenizer;
 import java.util.function.ToIntFunction;
 import java.util.logging.Level;
 import mars.Main;
-import mars.ProcessingException;
-import mars.ProgramStatement;
 import mars.mips.instructions.ExtendedInstruction;
 import mars.mips.instructions.Instruction;
-import mars.simulator.Exceptions;
 
-/*
- Copyright (c) 2003-2013,  Pete Sanderson and Kenneth Vollmar
-
- Developed by Pete Sanderson (psanderson@otterbein.edu)
- and Kenneth Vollmar (kenvollmar@missouristate.edu)
-
- Permission is hereby granted, free of charge, to any person obtaining 
- a copy of this software and associated documentation files (the 
- "Software"), to deal in the Software without restriction, including 
- without limitation the rights to use, copy, modify, merge, publish, 
- distribute, sublicense, and/or sell copies of the Software, and to 
- permit persons to whom the Software is furnished to do so, subject 
- to the following conditions:
-
- The above copyright notice and this permission notice shall be 
- included in all copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
- EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
- IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
- WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
- (MIT license, http://www.opensource.org/licenses/mit-license.html)
- */
 /**
  * The list of Instruction objects, each of which represents a MIPS instruction.
  * The instruction may either be basic (translates into binary machine code) or
@@ -65,12 +58,32 @@ public class InstructionSetArchitecture {
 	 */
 	public static final int INSTRUCTION_BYTES = 4;
 
-	// ###### fffff sssss 00000 00000 ######
-	static final int genZrdshamtRinstr(ProgramStatement s, int function) {
+	// ###### fffff sssss ccccc ccccc ######
+    // Format: OPERATOR rs, rt
+    //
+    //mult
+    //multu
+    //div
+    //divu
+    //
+    //madd
+    //maddu
+    //msub
+    //msubu
+    //
+    //tge
+    //tgeu
+    //tlt
+    //tltu
+    //teq
+    //tne
+    //
+    // NOTE: For traps, the fields rd and shamt compose into the code field, which is filled by the system! (?!?)
+    // Otherwise, they are zero-filled
+	static final int genZrdshamtRinstr(int[] operands, int function) {
 		// Extract register numbers
 		// NOTE ProgramStatement.getOperands return an array of
 		// register references, namely rd, rs and rt in order
-		int[] operands = s.getOperands();
 		int rs = operands[0];
 		int rt = operands[1];
 
@@ -84,16 +97,35 @@ public class InstructionSetArchitecture {
 		// Compose binary instruction - asserting shamt = 0
 		return function | rs | rt;
 	}
-
+    
 	// ###### sssss ttttt fffff 00000 ######
-	static final int genZshamtRinstr(ProgramStatement s, int function) {
+    // Format: OPERATOR rd, rs, rt  # MUL ADD ADDU SUB SUBU AND OR XOR NOR SLT SLTU MOVZ MOVN
+    //
+    //
+    // mul
+    //
+    // add
+    // addu
+    // sub
+    // subu
+    // and
+    // or
+    // xor
+    // nor
+    //
+    // slt
+    // sltu
+    //
+    // movz
+    // movn
+    // NOTE: the operands for the shift instructions are swapped beforehand in the assembler
+	static final int genZshamtRinstr(int[] operands, int function) {
 		// Extract register numbers
 		// NOTE ProgramStatement.getOperands return an array of
 		// register references, namely rd, rs and rt in order
-		int[] operands = s.getOperands();
 		int rd = operands[0];
-		int rs = operands[1];
-		int rt = operands[2];
+        int rs = operands[1];
+        int rt = operands[2];
 
 		// TODO must assure operands are less than 32!!!
 		assert (rs < 32 && rt < 32 && rd < 32);
@@ -106,13 +138,35 @@ public class InstructionSetArchitecture {
 		// Compose binary instruction - asserting shamt = 0
 		return function | rs | rt | rd;
 	}
-
+    
+	// ###### ttttt sssss fffff 00000 ######
+    // Format: OPERATOR rd, rt, rs  # SLLV SRLV SRAV
+    //
+    // sllv
+    // srlv
+    // srav
+    //
+    // NOTE: Basically swap the last two operands
+	static final int genZshamtReversedRinstr(int[] operands, int function) {
+        
+        // Swap
+        operands[1] ^= operands[2];
+        operands[2] ^= operands[1];
+        operands[1] ^= operands[2];
+        
+        return genZshamtRinstr(operands, function);
+	}
+    
 	// ###### 00000 sssss fffff ttttt ######
-	static final int genZrsRinstr(ProgramStatement s, int function) {
+    // Format: OPERATOR rd, rt, sa
+    // 
+    // sll
+    // srl
+    // sra
+	static final int genZrsRinstr(int[] operands, int function) {
 		// Extract register numbers
 		// NOTE ProgramStatement.getOperands return an array of
 		// register references, namely rd, rt and shamt in order
-		int[] operands = s.getOperands();
 		int rd = operands[0];
 		int rt = operands[1];
 		int shamt = operands[2];
@@ -130,12 +184,21 @@ public class InstructionSetArchitecture {
 	}
 
 	// ###### sssss fffff tttttttttttttttt
-	static final int genArithmIinstr(ProgramStatement s, int opcode) {
+    // Format: OPERATOR rt, rs, immediate[16]
+    //
+    // addi
+    // addiu
+    // andi
+    // ori
+    // xori
+    //
+    // slti
+    // sltiu
+	static final int genArithmIinstr(int[] operands, int opcode) {
 		// TODO Pass a SHORT as imm
 		// Extract operands
 		// NOTE ProgramStatement.getOperands return an array of
 		// register references, namely rs, rt and imm in order
-		int[] operands = s.getOperands();
 		int rt = operands[0];
 		int rs = operands[1];
 		int imm = operands[2];
@@ -152,12 +215,29 @@ public class InstructionSetArchitecture {
 	}
 
 	// ###### ttttt fffff ssssssssssssssss
-	static final int genLoadStoreIinstr(ProgramStatement s, int opcode) {
+    // Format: OPERATOR rt, offset(base) [FIELD ORDER: base, rt, offset(16)]
+    // 
+    // lb
+    // lh
+    // lwl
+    // lw
+    // lbu
+    // lhu
+    // lwr
+    // 
+    // sb
+    // sh
+    // swl
+    // sw
+    // swr
+    // 
+    // ll # PRERELEASE 6
+    // sc # PRERELEASE 6
+	static final int genLoadStoreIinstr(int[] operands, int opcode) {
 		// TODO Pass a SHORT as imm
 		// Extract operands
 		// NOTE ProgramStatement.getOperands return an array of
 		// register references, namely rs, rt and imm in order
-		int[] operands = s.getOperands();
 		int rt = operands[0];
 		int imm = operands[1];
 		int rs = operands[2];
@@ -174,12 +254,32 @@ public class InstructionSetArchitecture {
 	}
 
 	// ###### fffff ##### ssssssssssssssss
-	static final int genBranchFuncIinstr(ProgramStatement s, int opfunc) {
+    // Format: OPERATOR rs, offset[16]/immediate[16]
+    //
+    // bgez
+    // bgezal
+    // bgtz
+    // blez
+    // bltz
+    // bltzal
+    // 
+    // tgei
+    // tgeiu
+    // tlti
+    // tltiu
+    // teqi
+    // tnei
+    // 
+    // Note: BGTZ and BLEZ have each their own opcode, and explicitly specify their second field to be zero,
+    //      the other branches and all traps are under the REGIMM opcode and use said field to hold the function code
+    //
+    // Note: Branches denote the 16 bit field as "offset", whereas traps specify it as "immediate".
+    //      There may be semantic differences.
+	static final int genBranchFuncIinstr(int[] operands, int opfunc) {
 		// TODO Pass a SHORT as imm
 		// Extract operands
 		// NOTE ProgramStatement.getOperands return an array of
 		// register references, namely rs, rt and imm in order
-		int[] operands = s.getOperands();
 		int imm = operands[1];
 		int rs = operands[0];
 
@@ -194,12 +294,15 @@ public class InstructionSetArchitecture {
 	}
 
 	// ###### fffff sssss tttttttttttttttt
-	static final int genBranchIinstr(ProgramStatement s, int opcode) {
+    // Format: OPERATOR rs, rt, offset
+    //
+    // beq
+    // bne
+	static final int genBranchIinstr(int[] operands, int opcode) {
 		// TODO Pass a SHORT as imm
 		// Extract operands
 		// NOTE ProgramStatement.getOperands return an array of
 		// register references, namely rs, rt and imm in order
-		int[] operands = s.getOperands();
 		int rs = operands[0];
 		int rt = operands[1];
 		int imm = operands[2];
@@ -217,29 +320,50 @@ public class InstructionSetArchitecture {
 
 	// isFrom =  true -> 000000 00000 00000 fffff 00000 #####x
 	//          false -> 000000 fffff 00000 00000 00000 #####x
-	static final int genHiLoRinstr(ProgramStatement s, int function) {
-		int reg = s.getOperands()[0];
+    // Format: OPERATOR rd [FROM]
+    // Format: OPERATOR rs [TO]
+    //
+    // mfhi
+    // mflo
+    // mthi
+    // mtlo
+	static final int genHiLoRinstr(int[] operands, int function) {
 
-		assert (reg < 32);
+		assert (operands[0] < 32);
 
 		// Last bit (marked with x) decides if instruction moves "from" or "to"
-		return function | (reg << ((function & 1) == 0 ? 11 : 21));
+		return function | (operands[0] << ((function & 1) == 0 ? 11 : 21));
 	}
 
 	// ###### ffffffffffffffffffffffffff
-	static final int genJinstr(ProgramStatement s, int opcode) {
-		int reg = s.getOperands()[0];
-		assert (reg < 0x04000000);
-		return opcode | reg;
+    // Format: trivial
+    //
+    // j
+    // jal
+    //
+    // Note: Excerpt from MIPS spec shared between J and JAL instructions:
+    //      "This is a PC-region branch (not PC-relative); the effective target address is in the “current” 256 MB-aligned region. The low 28 bits of the target address is the instr_index field shifted left 2bits. The remaining upper bits are the corresponding bits of the address of the instruction in the delay slot (not the branch itself)."
+    //      
+	static final int genJinstr(int[] operands, int opcode) {
+        
+		assert (operands[0] < 0x04000000);
+		return opcode | operands[0];
 	}
 
 	// NOTE: rs field repeated in rt as per spec, basically a zshamt...
 	// ###### sssss fffff fffff 00000 ######
-	static final int genCountBitsRinstr(ProgramStatement s, int opfunc) {
+    // Format: OPERATOR rd, rs
+    //
+    // clo
+    // clz
+    //
+    // Note: Excerpt from spec shared by CLZ and CLO:
+    //      "Pre-Release 6: To be compliant with the MIPS32 Architecture, software must place the same GPR number in both the rt and rd fields of the instruction. The operation of the instruction is UNPREDICTABLE if the rt and rd fields of the instruction contain different values. Release 6’s new instruction encoding does not contain an rt field."
+    //
+	static final int genCountBitsRinstr(int[] operands, int opfunc) {
 		// Extract register numbers
 		// NOTE ProgramStatement.getOperands return an array of
 		// register references, namely rd, rs and rt in order
-		int[] operands = s.getOperands();
 		int rd = operands[0];
 		int rs = operands[1];
 		int rt = operands[1];
@@ -255,18 +379,46 @@ public class InstructionSetArchitecture {
 		// Compose binary instruction - asserting shamt = 0
 		return opfunc | rs | rt | rd;
 	}
+    
+    
+    // 000000 sssss ttt 0x fffff 00000 000001
+    // Format: OPERATOR rd, rs, cc[3]
+    //
+    // movf
+    // movt
+    //
+    // Note: 'x' bit is handled by the tfmask argument, opcode and func fields are fixed
+    //
+	static final int genFPUMOVinstr(int[] operands, int tfmask) {
+		int i = 0;
 
-	final Map<String, ToIntFunction<ProgramStatement>> BasicInstructionEncodings;
-	final List<ExtendedInstruction> pseudoInstructions;
+        // GEtting operands
+
+        i |= (operands[0] << 11);
+        i |= (operands[1] << 21);
+        i |= (operands[2] << 18);
+
+        // Setting SPECIAL opcode and MOVCI func
+        return i | tfmask | 0x00000001;
+	}
+    
+    
+    
+
+    // AP170314: Counting ~90 implemented instructions
+	public static final Map<String, ToIntFunction<int[]>> BasicInstructionEncodings = new HashMap<>(100);
+	static final List<ExtendedInstruction> pseudoInstructions = new ArrayList<>(400);
+    
+    static {
+        populate();
+    }
 
 	/**
 	 * Creates a new InstructionSet object.
 	 */
 	public InstructionSetArchitecture() {
-		// Counting ~90 implemented instructions as of 170314 - AP
-		BasicInstructionEncodings = new HashMap<>(100);
 		// Counting 378 pseudos as of 170314 - AP
-		pseudoInstructions = new ArrayList<>(400);
+		//pseudoInstructions = new ArrayList<>(400);
 	}
 
 	/**
@@ -278,7 +430,7 @@ public class InstructionSetArchitecture {
 	 * @see BasicInstruction
 	 * @see ExtendedInstruction
 	 */
-	public void populate() {
+	public static void populate() {
 		// The parade begins...
 
 		BasicInstructionEncodings.put("nop", (statement) -> 0);
@@ -288,9 +440,9 @@ public class InstructionSetArchitecture {
 		BasicInstructionEncodings.put("sll", (statement) -> genZrsRinstr(statement, 0x00000000));
 		BasicInstructionEncodings.put("srl", (statement) -> genZrsRinstr(statement, 0x00000002));
 		BasicInstructionEncodings.put("sra", (statement) -> genZrsRinstr(statement, 0x00000003));
-		BasicInstructionEncodings.put("sllv", (statement) -> genZshamtRinstr(statement, 0x00000004));
-		BasicInstructionEncodings.put("srlv", (statement) -> genZshamtRinstr(statement, 0x00000006));
-		BasicInstructionEncodings.put("srav", (statement) -> genZshamtRinstr(statement, 0x00000007));
+		BasicInstructionEncodings.put("sllv", (statement) -> genZshamtReversedRinstr(statement, 0x00000004));
+		BasicInstructionEncodings.put("srlv", (statement) -> genZshamtReversedRinstr(statement, 0x00000006));
+		BasicInstructionEncodings.put("srav", (statement) -> genZshamtReversedRinstr(statement, 0x00000007));
 
 		// ARITHMETIC-LOGIC INSTRUCTIONS ---------------------------------------
 		// R-TYPE
@@ -325,8 +477,7 @@ public class InstructionSetArchitecture {
 		BasicInstructionEncodings.put("xori", (statement) -> genArithmIinstr(statement, 0x38000000));
 
 		//###### 00000 fffff ssssssssssssssss
-		BasicInstructionEncodings.put("lui", (statement -> {
-			int[] operands = statement.getOperands();
+		BasicInstructionEncodings.put("lui", (operands -> {
 			return 0x3C000000 | (operands[0] << 16) | operands[1];
 		}));
 
@@ -384,16 +535,14 @@ public class InstructionSetArchitecture {
 
 		// R-TYPE
 		// ###### fffff 00000 00000 00000 ######
-		BasicInstructionEncodings.put("jr", (statement) -> {
-			int reg = statement.getOperands()[0];
-			assert (reg < 32);
-			return 0x00000008 | (reg << 21);
+		BasicInstructionEncodings.put("jr", (operands) -> {
+			assert (operands[0] < 32);
+			return 0x00000008 | (operands[0] << 21);
 		});
 		// ###### sssss 00000 fffff 00000 ######
 		// ###### fffff 00000 11111 00000 ######
-		BasicInstructionEncodings.put("jalr", (statement) -> {
+		BasicInstructionEncodings.put("jalr", (ops) -> {
 			//TODO
-			int[] ops = statement.getOperands();
 			int rs = ops.length == 1 ? ops[0] : ops[1];
 			int rd = ops.length == 1 ? 0b11111 : ops[0];
 			assert (rs < 32 && rd < 32);
@@ -420,8 +569,7 @@ public class InstructionSetArchitecture {
 		// R-TYPE SPECIAL
 		BasicInstructionEncodings.put("syscall", (statement) -> 0x0000000C);
 		// 000000 oooooooooooooooooooo 001101
-		BasicInstructionEncodings.put("break", (statement) -> {
-			int[] ops = statement.getOperands();
+		BasicInstructionEncodings.put("break", (ops) -> {
 			// Translates both the valued and unvalued variants, the boilerplate checks should disappear...
 			// Expected assert is missing
 			return 0x0000000D | ((ops != null && ops.length != 0) ? ops[0] : 0);
@@ -430,36 +578,11 @@ public class InstructionSetArchitecture {
 		// CP0 INSTRUCTIONS ----------------------------------------------------
 		BasicInstructionEncodings.put("eret", (statement) -> 0x42000018);
 
-		// OTHERS
-		// 000000 sssss ttt 00 fffff 00000 000001
-		BasicInstructionEncodings.put("movf", (statement) -> {
-			int i = 0;
-
-			// GEtting operands
-			int[] operands = statement.getOperands();
-
-			i |= (operands[0] << 11);
-			i |= (operands[1] << 21);
-			i |= (operands[2] << 18);
-
-			// Setting MOVCI in func field
-			return i | 0x00000001;
-		});
-
-		// 000000 sssss ttt 01 fffff 00000 000001
-		BasicInstructionEncodings.put("movt", (statement) -> {
-			int i = 0;
-
-			// GEtting operands
-			int[] operands = statement.getOperands();
-
-			i |= (operands[0] << 11);
-			i |= (operands[1] << 21);
-			i |= (operands[2] << 18);
-
-			// Setting MOVCI in func field
-			return i | 0x00010001;
-		});
+		// CP1 INSTRUCTIONS ----------------------------------------------------
+        
+		// R-TYOE FLAG
+		BasicInstructionEncodings.put("movf", (statement) -> genFPUMOVinstr(statement, 0x00000000));
+		BasicInstructionEncodings.put("movt", (statement) -> genFPUMOVinstr(statement, 0x00010000));
 
 		////////////////////////////////////////////////////////////////////////
 //        instructionSet.add(

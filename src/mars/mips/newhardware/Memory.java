@@ -1,10 +1,32 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * MIT License
+ * 
+ * Copyright (c) 2020 Andrea Proietto
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
+
 package mars.mips.newhardware;
 
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.util.Arrays;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import mars.Main;
@@ -32,15 +54,38 @@ import mars.util.Binary;
  * @author Project2100
  */
 public class Memory {
+    
+    // AP200412
+    static {assert (Integer.BYTES == 4);}
+    
+    // Using unsigned interpretation
+    static int log2(int value) {
+        assert(value > 0);
+        int bc = 0;
+        value--;
+        while (value > 0) {
+            value >>>= 1;
+            bc++;
+        } 
+        return bc;
+    }
 
     // Memory's basic structure constants
     // B = byte, W = word/integer , P = page
-    private final int WORD_BYTES_BIT_COUNT = 2; //log_2(Integer#BYTES)
-    private final int BLOCK_OFFSET_BITS = 10 + WORD_BYTES_BIT_COUNT; // log_2(BLOCK_WORDS)+WORD_BYTES_BIT_COUNT
-    private final int BLOCK_INDEX_BITS = 32 - BLOCK_OFFSET_BITS;
-    private final int BLOCK_WORDS = 0x00000400; // 1KiW(or integers) = 4KiB
-    private final int BLOCK_OFFSET_MASK = (BLOCK_WORDS << WORD_BYTES_BIT_COUNT) - 1;
-    private final int MEMORY_BLOCK_COUNT = 0x00100000; // 1MiP (4GiB(in 32bit)/BLOCK_SIZE)
+    /**
+     * The number of bits needed to encode an index of any byte in an integer
+     */
+    private static final int WORD_BYTES_BITS;
+    static {
+        assert(Integer.BYTES > 1);
+        WORD_BYTES_BITS = log2(Integer.BYTES);
+    }
+    
+    private static final int BLOCK_OFFSET_BITS = log2(Memory.BLOCK_WORDS) + WORD_BYTES_BITS;
+    private static final int BLOCK_INDEX_BITS = 32 - BLOCK_OFFSET_BITS;
+    private static final int BLOCK_WORDS = 0x00000400; // 1KiW(or integers) (= 4KiB)
+    private static final int BLOCK_OFFSET_MASK = (BLOCK_WORDS << WORD_BYTES_BITS) - 1;
+    private static final int MEMORY_BLOCK_COUNT = 0x00100000; // 1MiP (4GiB(in 32bit)/BLOCK_SIZE)
 
     //--------------------------------------------------------------------------
     // Segment addresses cache
@@ -98,14 +143,88 @@ public class Memory {
         heapAddress = heapBaseAddress;
         //TODO call gc?
     }
+    
+    /**
+     * FOR ASSEMBLING USE!
+     * 
+     * Loads the given bytes into memory, starting from the specified address onwards. No segmentation checks are performed.
+     * 
+     * @param data 
+     * @param address
+     */
+    public void loadBytes(byte[] data, int address) {
+        // AP200422: CAUTION - TODO: the aligned bytes must be OR-ed with the already present values
+        
+        // Copy the data into an int array that is aligned with the memory word structure
+        //<editor-fold defaultstate="collapsed" desc="Array alignment">
+        {
+            int alignmentPrefixBytes = address & 0x3;
+            int alignmentSuffixBytes = (address + data.length) & 0x3;
+            if (alignmentPrefixBytes != 0 || alignmentSuffixBytes != 0) {
+                byte newdata[] = new byte[data.length + alignmentPrefixBytes + alignmentSuffixBytes];
+                Arrays.fill(newdata, (byte) 0);
+                System.arraycopy(data, 0, newdata, alignmentPrefixBytes, data.length);
+                data = newdata;
+            }
+        }
 
-    private int[] getBlock(int blockIndex) {
-        // Method is private and all calls ensure index validity,
-        // but it never hurts to put a check... indeed
-        if (blockIndex < 0 || blockIndex >= MEMORY_BLOCK_COUNT)
-            throw new IndexOutOfBoundsException("INTERNAL ERROR: invalid memory block index " + blockIndex);
+        // Transcode the data into an array of ints CAUTION: WATCH OUT FOR ENDIANNESS HERE
+        IntBuffer intBuf = ByteBuffer.wrap(data).asIntBuffer();
+        int[] dataAsInt = new int[intBuf.remaining()];
+        intBuf.get(dataAsInt);
 
+        //</editor-fold>
+        
+        
+        //<editor-fold defaultstate="collapsed" desc="Data transcription">
+        int DWI = 0;
+        int BWI = (address & BLOCK_OFFSET_MASK) >> WORD_BYTES_BITS;
+        while (true) {
+            
+            int[] block = getBlock(address);
+            
+            for (; BWI < block.length && DWI < dataAsInt.length; BWI++, DWI++) {
+                block[BWI] = dataAsInt[DWI];
+            }
+            
+            if (DWI == dataAsInt.length) break;
+            
+            address += BLOCK_WORDS * Integer.BYTES;
+            BWI = 0;
+        }
+        //</editor-fold>
+        
+    }
+    
+    /**
+     * FOR ASSEMBLING USE!
+     * 
+     * Loads the given instruction into memory, in the specified address. No segmentation checks are performed.
+     * 
+     * @param instruction 
+     * @param address
+     */
+    public void loadInstruction(int instruction, int address) {
+        //AP200422: How does endianness interact with instruction encoding?
+        
+        int[] block = getBlock(address);
+        int BWI = (address & BLOCK_OFFSET_MASK) >> WORD_BYTES_BITS;
+        block[BWI] = instruction;
+        
+    }
+
+    /**
+     * Given a memory address, returns the block containing it.
+     * 
+     * @param blockIndex
+     * @return 
+     */
+    private int[] getBlock(int address) {
+        
+        // AP200412: No bound checks, memory uses whole int range
         // Get page from memmap - will return null if not allocated
+        // Logical shift - pages will have nonnegative indices
+        int blockIndex = address >>> BLOCK_OFFSET_BITS;
         int[] block = primaryMemory.get(blockIndex);
 
         // if null, then allocate
@@ -156,8 +275,8 @@ public class Memory {
 
         // Validate address and compute memory coordinates
         checkAddress(address, type, inKMode);
-        int[] block = getBlock(address >> BLOCK_OFFSET_BITS);
-        int wordIndex = (address & BLOCK_OFFSET_MASK) >> WORD_BYTES_BIT_COUNT;
+        int[] block = getBlock(address);
+        int wordIndex = (address & BLOCK_OFFSET_MASK) >> WORD_BYTES_BITS;
         int byteShift = (address & 3) << 3;
 
         // MUTEX over block (should implement readers/writers, affects performance?)
@@ -194,10 +313,10 @@ public class Memory {
      * <li>Kernel Text: Previous conditions must be met</li>
      * </ul>
      *
+     * @param machine
      * @param address Starting address of Memory address to be set.
      * @param value Value to be stored starting at that address.
      * @param type the data format
-     * @param inKMode true if in kernel mode, false otherwise
      * @return old value that was replaced by the set operation
      * @throws AddressErrorException if the specified address is not in a valid
      * space or is misaligned
@@ -209,8 +328,8 @@ public class Memory {
         
         // Verify address and compute memory coordinates
         checkAddress(address, type, machine.coprocessor0.isInKMode());
-        int[] block = getBlock(address >> BLOCK_OFFSET_BITS);
-        int wordIndex = (address & BLOCK_OFFSET_MASK) >> WORD_BYTES_BIT_COUNT;
+        int[] block = getBlock(address);
+        int wordIndex = (address & BLOCK_OFFSET_MASK) >> WORD_BYTES_BITS;
         int byteShift = (address & 3) << 3;
 
         // MUTEX over block (should implement readers/writers, affects performance?)
@@ -283,8 +402,8 @@ public class Memory {
         checkAddress(address, Boundary.DOUBLE_WORD, inKernelMode);
 
         // Get the corresponding block and calculate word index
-        int[] block = getBlock(address >> BLOCK_OFFSET_BITS);
-        int wordIndex = (address & BLOCK_OFFSET_MASK) >> WORD_BYTES_BIT_COUNT;
+        int[] block = getBlock(address);
+        int wordIndex = (address & BLOCK_OFFSET_MASK) >> WORD_BYTES_BITS;
 
         // WORD-SPECIFIC SECTION
         //------------------
@@ -396,9 +515,9 @@ public class Memory {
         WORD(4, 3, 0xFFFFFFFF),
         HALF_WORD(2, 1, 0xFFFF),
         BYTE(1, 0, 0xFF);
-        final int size;
-        final int mask;
-        final long tmask;
+        public final int size;
+        public final int mask;
+        public final long tmask;
 
         Boundary(int s, int m, long tm) {
             size = s;
