@@ -512,7 +512,8 @@ public final class VenusUI {
                 + Main.COPYRIGHT_HOLDERS + "\n"
                 + "MARS is the Mips Assembler and Runtime Simulator.\n\n"
                 + "Mars image courtesy of NASA/JPL.\n"
-                + "Application icon taken from [PLACEHOLDER]\n"
+                + "Application icon licensed under CC0 Public Domain"
+                + "Source: https://icon-library.net/icon/mars-icon-5.html\n"
                 + "Toolbar and menu icons are from:\n"
                 + "  *  Tango Desktop Project (tango.freedesktop.org),\n"
                 + "  *  glyFX (www.glyfx.com) Common Toolbar Set,\n"
@@ -795,6 +796,8 @@ public final class VenusUI {
 			// Program has been successfully assembled, go to "execute mode"
             marsMode.setText("Edit");
             marsMode.setToolTipText("Edit MIPS program");
+            
+            adjustInternalFrames.doClick();
 
             toolbar.removeAll();
             toolbar.add(marsMode);
@@ -813,6 +816,7 @@ public final class VenusUI {
             toolbar.add(RunSpeedPanel.getInstance());
 
             leftPane.setTopComponent(executePane);
+            leftPane.doLayout();
         }
 		
 		// Repaint
@@ -826,6 +830,7 @@ public final class VenusUI {
      * @param evt KeyEvent for menu component to consider for processing.
      */
     public void dispatchEventToMenu(KeyEvent evt) {
+        // AP200501 - DANGER|TODO: An NPE is thrown each time the Windows key is pressed while focusing an editor pane!
         mainFrame.getMenuBar().dispatchEvent(evt);
     }
 

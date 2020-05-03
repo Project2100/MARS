@@ -18,4 +18,9 @@ public class OperatorToken extends Token<String> {
         super(value, sourceMIPSprogram, line, start);
     }
 
+    @Override
+    public String display() {
+        return value; //To change body of generated methods, choose Tools | Templates.
+    }
+
 }

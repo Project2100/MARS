@@ -37,5 +37,12 @@ public abstract class Token<E> {
         this.lineNumber = line;
         this.position = start;
     }
+    
+    /**
+     * Returns a displayable form of this token.
+     * 
+     * @return 
+     */
+    public abstract String display();
 
 }

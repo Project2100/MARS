@@ -12,9 +12,11 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import mars.assembler.SymbolTable;
+import mars.assembler.staticassembler.StaticAssembler;
 import mars.mips.hardware.Memory;
 import mars.mips.instructions.InstructionSet;
 import mars.mips.instructions.syscalls.SyscallNumberOverride;
+import mars.mips.newhardware.MIPSMachine;
 import mars.settings.StringSettings;
 //import mars.venus.MarsSplashScreen;
 import mars.venus.VenusUI;
@@ -85,6 +87,14 @@ public class Main {
 	 * Simulated MIPS memory component.
 	 */
 	public static Memory memory = new Memory();
+    
+    
+    public static MIPSMachine machine;
+    
+    public static StaticAssembler.ExecutableProgram exec;
+    
+    
+    
 	/**
 	 * Lock variable used at head of synchronized block to guard MIPS memory and
 	 * registers

@@ -18,4 +18,13 @@ public class IntegerToken extends Token<Integer> {
         super(value, sourceMIPSprogram, line, start);
     }
 
+    @Override
+    public String display() {
+        return display(true);
+    }
+    
+    public String display(boolean hexMode) {
+        return hexMode ? "0x" + Integer.toHexString(value) : Integer.toString(value);
+    }
+    
 }

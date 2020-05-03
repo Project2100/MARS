@@ -44,6 +44,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.function.ToIntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -136,7 +138,7 @@ public class StaticAssembler {
 
     }
     
-    static class SourceLine {
+    public static class SourceLine {
 
         public final String filename;
         public final int lineNumber;
@@ -212,7 +214,7 @@ public class StaticAssembler {
 
     }
 
-    static class Label {
+    public static class Label {
 
         public int address; // The label address, or 0 if not defined
         public boolean valid; // States if label has been actually declared (i.e. it has an actual address)
@@ -238,6 +240,7 @@ public class StaticAssembler {
     
     public static class ExecutableProgram {
         
+        public final String rootFileName;
         
         Map<String, List<Token<?>>> EQVs = new HashMap<>();
         Set<Macro> MACROs = new HashSet<>();
@@ -245,9 +248,21 @@ public class StaticAssembler {
         
         
         // 0/2 = text, 2/2 = ktext
-        HashMap<Integer, SourceLine> textsegs[] = new HashMap[] {new HashMap<>(), new HashMap<>()};
+        SortedMap<Integer, SourceLine> textsegs[] = new TreeMap[] {new TreeMap<>(), new TreeMap<>()};
         // 1/2 = data, 3/2 = kdata - INTEGER DIV
         HashMap<Integer, DataDir> datasegs[] = new HashMap[] {new HashMap<>(), new HashMap<>()};
+        
+        public ExecutableProgram(String name) {
+            this.rootFileName = name;
+        }
+        
+        public SortedMap<Integer, SourceLine>[] getTextSegments() {
+            return textsegs;
+        }
+        
+        public Map<String, Label> getLabels() {
+            return Labels;
+        }
     }
     
     
@@ -952,10 +967,12 @@ public class StaticAssembler {
      * @param machine
      * @throws ProcessingException
      */
-    static ExecutableProgram preprocessSourceUnit(MIPSprogram program, List<SourceLine> tokenProgram, MIPSMachine machine, Map<String, List<Token<?>>> EQVs, Set<Macro> MACROs, Map<String, Label> Labels, ErrorList errors) throws ProcessingException {
+    static void preprocessSourceUnit(ExecutableProgram s, MIPSprogram program, List<SourceLine> tokenProgram, MIPSMachine machine, ErrorList errors) throws ProcessingException {
         
-        ExecutableProgram s = new ExecutableProgram();
-        HashMap<Integer, SourceLine>[] textsegs = s.textsegs;
+        Map<String, Label> Labels = s.Labels;
+        Map<String, List<Token<?>>> EQVs = s.EQVs;
+        Set<Macro> MACROs = s.MACROs;
+        SortedMap<Integer, SourceLine>[] textsegs = s.textsegs;
         HashMap<Integer, DataDir>[] datasegs = s.datasegs;
         
         ////////////////////////////////////////////////////////////////////////
@@ -1078,7 +1095,7 @@ public class StaticAssembler {
                         // AP190812 - TODO: For now, forbid parentheses-less definitions
                         // Check opening parentheses
                         if (tokenLine.size() < 3 || !(tokenLine.get(2) instanceof LeftParenToken)) {
-                            errors.add(new ErrorMessage(program, line.lineNumber, tokenLine.get(2).position, "Expected '(' after macro identifier"));
+                            errors.add(new ErrorMessage(program, line.lineNumber, tokenLine.get(1).position, "Expected '(' after macro identifier"));
                             throw new ProcessingException(errors);
                         }
 
@@ -1187,13 +1204,13 @@ public class StaticAssembler {
                         }
 
                         // Attempt to read the file right away
-                        Path filename = Path.of(((StringToken) tokenLine.get(1)).value);
+                        Path inclfilename = Path.of(((StringToken) tokenLine.get(1)).value);
                         List<String> includedLines;
                         try {
-                            includedLines = Files.readAllLines(filename);
+                            includedLines = Files.readAllLines(inclfilename);
                         }
                         catch (IOException ex) {
-                            errors.add(new ErrorMessage(program, line.lineNumber, 0, "Could not access file \"" + filename + "\": " + ex.getMessage()));
+                            errors.add(new ErrorMessage(program, line.lineNumber, 0, "Could not access file \"" + inclfilename + "\": " + ex.getMessage()));
                             throw new ProcessingException(errors);
                         }
 
@@ -1657,7 +1674,7 @@ public class StaticAssembler {
                 }
 
                 // Pick the right map
-                HashMap<Integer, SourceLine> seg = textsegs[segment / 2];
+                Map<Integer, SourceLine> seg = textsegs[segment / 2];
 
                 // Register the source line to assemble
                 SourceLine put = seg.put(currentAddress, line);
@@ -1681,8 +1698,7 @@ public class StaticAssembler {
 
 
         }
-
-        return s;
+        
     }
     
     //</editor-fold>
@@ -2260,7 +2276,7 @@ public class StaticAssembler {
      * @param machine
      * @throws ProcessingException
      */
-    static void loadText(MIPSprogram program, HashMap<Integer, SourceLine> segMap, boolean extendedAssemblerEnabled, MIPSMachine machine, ErrorList errors, Map<String, Label> Labels) throws ProcessingException {
+    static void loadText(MIPSprogram program, Map<Integer, SourceLine> segMap, boolean extendedAssemblerEnabled, MIPSMachine machine, ErrorList errors, Map<String, Label> Labels) throws ProcessingException {
 
         for (Map.Entry<Integer, SourceLine> entry : segMap.entrySet()) {
             int address = entry.getKey();
@@ -2377,6 +2393,7 @@ public class StaticAssembler {
     /**
      * 
      * @param leadFilename
+     * @param machine
      * @param extendedAssemblerEnabled
      * @param warningsAreErrors
      * @param errors
@@ -2428,7 +2445,8 @@ public class StaticAssembler {
         // - Processes all segment directives
         // - Maps data directives to their respective addresses, labels are unresolved
         // - Maps text instructions to their respective addresses, labels are unresolved
-        ExecutableProgram s = preprocessSourceUnit(program, tokenProgram, machine, new HashMap<>(), new HashSet<>(), new HashMap<>(), errors);
+        ExecutableProgram s = new ExecutableProgram(leadFilename.getFileName().toString());
+        preprocessSourceUnit(s, program, tokenProgram, machine, errors);
 
         // LEGACY - REDO
         if (errors.errorLimitExceeded())

@@ -10,13 +10,17 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
+import java.util.SortedMap;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JCheckBox;
 import javax.swing.JInternalFrame;
@@ -43,11 +47,13 @@ import javax.swing.table.TableColumnModel;
 import mars.settings.ColorSettings;
 import mars.Main;
 import mars.ProgramStatement;
+import mars.assembler.staticassembler.StaticAssembler.SourceLine;
+import mars.assembler.staticassembler.StaticAssembler;
+import mars.assembler.staticassembler.token.IntegerToken;
 import mars.mips.hardware.AccessNotice;
 import mars.mips.hardware.AddressErrorException;
 import mars.mips.hardware.Memory;
 import mars.mips.hardware.MemoryAccessNotice;
-import mars.mips.hardware.RegisterFile;
 import mars.settings.BooleanSettings;
 import mars.settings.FontSettings;
 import mars.settings.StringSettings;
@@ -94,7 +100,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
     private static final int PROGRAM_ARGUMENT_TEXTFIELD_COLUMNS = 40;
     private JTable table;
     private JScrollPane tableScroller;
-    private Object[][] data;
+    private Object[][] dataTable;
     /* Maintain an int array of code addresses in parallel with ADDRESS_COLUMN,
      * to speed model-row -> text-address mapping.  Maintain a Hashtable of
      * (text-address, model-row) pairs to speed text-address -> model-row mapping.
@@ -148,50 +154,69 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
      * the lines of code over to the table rows and columns.
      *
      */
+    // TODO: KTEXT
+    // TODO: Self-Modifying code
+    // TODO: Pseudoinstructions
     public void setupTable() {
+        
+        // This is responsible for instruction address formatting: dec or hex
         int addressBase = Main.getGUI().dataSegment.getAddressDisplayBase();
+        
         codeHighlighting = true;
         breakpointsEnabled = true;
-        ArrayList<ProgramStatement> sourceStatementList = Main.program.getMachineList();
-        data = new Object[sourceStatementList.size()][columnNames.length];
-        intAddresses = new int[data.length];
-        addressRows = new Hashtable<>(data.length);
-        executeMods = new Hashtable<>(data.length);
+        
+        //ArrayList<ProgramStatement> sourceStatementList = Main.program.getMachineList();
+        SortedMap<Integer, StaticAssembler.SourceLine>[] textSegments = Main.exec.getTextSegments();
+        
+        // LEGACY?
+        dataTable = new Object[textSegments[0].size() + textSegments[1].size()][columnNames.length];
+        intAddresses = new int[dataTable.length];
+        addressRows = new Hashtable<>(dataTable.length);
+        executeMods = new Hashtable<>(dataTable.length);
+        
+        
+        
         // Get highest source line number to determine #leading spaces so line numbers will vertically align
         // In multi-file situation, this will not necessarily be the last line b/c sourceStatementList contains
         // source lines from all files.  DPS 3-Oct-10
-        int maxSourceLineNumber = 0;
-        for (int i = sourceStatementList.size() - 1; i >= 0; i--) {
-            ProgramStatement statement = sourceStatementList.get(i);
-            if (statement.getSourceLine() > maxSourceLineNumber)
-                maxSourceLineNumber = statement.getSourceLine();
-        }
-        int sourceLineDigits = ("" + maxSourceLineNumber).length();
-        int leadingSpaces;
-        int lastLine = -1;
+        int maxText = textSegments[0].values().stream().reduce(0, (i, l) -> Integer.max(i, l.lineNumber), Integer::compare);
+        int maxKText = textSegments[1].values().stream().reduce(0, (i, l) -> Integer.max(i, l.lineNumber), Integer::compare);
+        int sourceLineDigits = ("" + Integer.max(maxText, maxKText)).length();
+        
+        // AP200430: For now, operate on .text
+        Set<Map.Entry<Integer, SourceLine>> sourceStatementList = textSegments[0].entrySet();
+        Iterator<Map.Entry<Integer, SourceLine>> iterator = sourceStatementList.iterator();
+        
+        
         for (int i = 0; i < sourceStatementList.size(); i++) {
-            ProgramStatement statement = sourceStatementList.get(i);
-            intAddresses[i] = statement.getAddress();
+            Entry<Integer, SourceLine> statement = iterator.next();
+            
+            
+            intAddresses[i] = statement.getKey();
             addressRows.put(intAddresses[i], i);
-            data[i][BREAK_COLUMN] = Boolean.FALSE;
-            data[i][ADDRESS_COLUMN] = NumberDisplayBaseChooser.formatUnsignedInteger(statement.getAddress(), addressBase);
-            data[i][CODE_COLUMN] = NumberDisplayBaseChooser.formatNumber(statement.getBinaryStatement(), 16);
-            data[i][BASIC_COLUMN] = statement.getPrintableBasicAssemblyStatement();
-            String sourceString = "";
-            if (!statement.getSource().isEmpty()) {
-                leadingSpaces = sourceLineDigits - ("" + statement.getSourceLine()).length();
-                String lineNumber = "          ".substring(0, leadingSpaces)
-                        + statement.getSourceLine() + ": ";
-                if (statement.getSourceLine() == lastLine)
-                    lineNumber = "          ".substring(0, sourceLineDigits) + "  ";
-                sourceString = lineNumber
-                        + mars.venus.EditorFont.substituteSpacesForTabs(statement.getSource());
-            }
-            data[i][SOURCE_COLUMN] = sourceString;
-            lastLine = statement.getSourceLine();
+            dataTable[i][BREAK_COLUMN] = Boolean.FALSE;
+            dataTable[i][ADDRESS_COLUMN] = NumberDisplayBaseChooser.formatUnsignedInteger(statement.getKey(), addressBase);
+            
+            //dataTable[i][CODE_COLUMN] = NumberDisplayBaseChooser.formatNumber(statement.getBinaryStatement(), 16);
+            dataTable[i][CODE_COLUMN] = NumberDisplayBaseChooser.formatNumber(0, 16);
+            dataTable[i][BASIC_COLUMN] = statement.getValue().tokens.stream().reduce("", (s, t) -> s + (s.isEmpty() ? "" : " ") + t.display(), String::concat);
+//            String sourceString = "";
+//            if (!statement.getSource().isEmpty()) {
+//                leadingSpaces = sourceLineDigits - ("" + statement.getSourceLine()).length();
+//                String lineNumber = "          ".substring(0, leadingSpaces)
+//                        + statement.getSourceLine() + ": ";
+//                if (statement.getSourceLine() == lastLine)
+//                    lineNumber = "          ".substring(0, sourceLineDigits) + "  ";
+//                sourceString = lineNumber
+//                        + mars.venus.EditorFont.substituteSpacesForTabs(statement.getSource());
+//            }
+//            dataTable[i][SOURCE_COLUMN] = sourceString;
+            dataTable[i][SOURCE_COLUMN] = String.format("%" + sourceLineDigits + "d: %s", statement.getValue().lineNumber, statement.getValue().originalLine);
+            //lastLine = statement.getSourceLine();
         }
+        
         contentPane.removeAll();
-        tableModel = new TextTableModel(data);
+        tableModel = new TextTableModel(dataTable);
         if (tableModelListener != null) {
             tableModel.addTableModelListener(tableModelListener);
             tableModel.fireTableDataChanged();// initialize listener
@@ -307,28 +332,40 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
      * value display base is modified (e.g. between base 16 hex and base 10
      * dec).
      */
+    // TODO: KTEXT
+    // TODO: Self-Modifying code
+    // TODO: Pseudoinstructions
     public void updateBasicStatements() {
         if (contentPane.getComponentCount() == 0)
             return; // ignore if no content to change
-        ArrayList<ProgramStatement> sourceStatementList = Main.program.getMachineList();
-        for (int i = 0; i < sourceStatementList.size(); i++)
+        
+        // This is responsible for instruction address formatting: dec or hex
+        final int addressBase = Main.getGUI().dataSegment.getValueDisplayBase();
+        
+//        ArrayList<ProgramStatement> sourceStatementList = Main.program.getMachineList();
+        Set<Map.Entry<Integer, SourceLine>> sourceStatementList = Main.exec.getTextSegments()[0].entrySet();
+        Iterator<Map.Entry<Integer, SourceLine>> iterator = sourceStatementList.iterator();
+        for (int i = 0; i < sourceStatementList.size(); i++) {
             // Loop has been extended to cover self-modifying code.  If code at this memory location has been
             // modified at runtime, construct a ProgramStatement from the current address and binary code
             // then display its basic code.  DPS 11-July-2013
-            if (executeMods.get(i) == null) { // not modified, so use original logic.
-                ProgramStatement statement = sourceStatementList.get(i);
-                table.getModel().setValueAt(statement.getPrintableBasicAssemblyStatement(), i, BASIC_COLUMN);
-            }
-            else try {
-                ProgramStatement statement = new ProgramStatement(
-                        mars.util.Binary.stringToInt((String) table.getModel().getValueAt(i, CODE_COLUMN)),
-                        mars.util.Binary.stringToInt((String) table.getModel().getValueAt(i, ADDRESS_COLUMN))
-                );
-                table.getModel().setValueAt(statement.getPrintableBasicAssemblyStatement(), i, BASIC_COLUMN);
-            }
-            catch (NumberFormatException e) { // should never happen but just in case...
-                table.getModel().setValueAt("", i, BASIC_COLUMN);
-            }
+//            if (executeMods.get(i) == null) { // not modified, so use original logic.
+//                ProgramStatement statement = sourceStatementList.get(i);
+//                table.getModel().setValueAt(statement.getPrintableBasicAssemblyStatement(), i, BASIC_COLUMN);
+//            }
+//            else try {
+//                ProgramStatement statement = new ProgramStatement(
+//                        mars.util.Binary.stringToInt((String) table.getModel().getValueAt(i, CODE_COLUMN)),
+//                        mars.util.Binary.stringToInt((String) table.getModel().getValueAt(i, ADDRESS_COLUMN))
+//                );
+//                table.getModel().setValueAt(statement.getPrintableBasicAssemblyStatement(), i, BASIC_COLUMN);
+//            }
+//            catch (NumberFormatException e) { // should never happen but just in case...
+//                table.getModel().setValueAt("", i, BASIC_COLUMN);
+//            }
+            Entry<Integer, SourceLine> next = iterator.next();
+            table.getModel().setValueAt(next.getValue().tokens.stream().reduce("", (s, t) -> s + (s.isEmpty() ? "" : " ") + ((t instanceof IntegerToken) ? ((IntegerToken) t).display(addressBase == 16) : t.display()), String::concat), i, BASIC_COLUMN);
+        }
     }
 
     /**
@@ -415,7 +452,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
                 // called.  (2) it updates the memory cell which in turn notifies us which invokes
                 // the update() method - the method we're in right now.  All we need to do here is
                 // update the table model then notify the controller/view to update its display.
-                data[row][CODE_COLUMN] = strValue;
+                dataTable[row][CODE_COLUMN] = strValue;
                 tableModel.fireTableCellUpdated(row, CODE_COLUMN);
                 // The other columns do not present a problem since they are not editable by user.
                 tableModel.setValueAt(strBasic, row, BASIC_COLUMN);
@@ -465,8 +502,8 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
      */
     public int getBreakpointCount() {
         int breakpointCount = 0;
-        for (int i = 0; i < data.length; i++)
-            if (((Boolean) data[i][BREAK_COLUMN]).booleanValue())
+        for (int i = 0; i < dataTable.length; i++)
+            if (((Boolean) dataTable[i][BREAK_COLUMN]).booleanValue())
                 breakpointCount++;
         return breakpointCount;
     }
@@ -484,8 +521,8 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
             return null;
         int[] breakpoints = new int[breakpointCount];
         breakpointCount = 0;
-        for (int i = 0; i < data.length; i++)
-            if (((Boolean) data[i][BREAK_COLUMN]).booleanValue())
+        for (int i = 0; i < dataTable.length; i++)
+            if (((Boolean) dataTable[i][BREAK_COLUMN]).booleanValue())
                 breakpoints[breakpointCount++] = intAddresses[i];
         Arrays.sort(breakpoints);
         return breakpoints;
@@ -497,7 +534,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
      */
     public void clearAllBreakpoints() {
         for (int i = 0; i < tableModel.getRowCount(); i++)
-            if (((Boolean) data[i][BREAK_COLUMN]).booleanValue())
+            if (((Boolean) dataTable[i][BREAK_COLUMN]).booleanValue())
                 // must use this method to assure display updated and listener notified
                 tableModel.setValueAt(Boolean.FALSE, i, BREAK_COLUMN);
         // Handles an obscure situation: if you click to set some breakpoints then "immediately" clear them
@@ -517,7 +554,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
      * reaching breakpoints.
      */
     public void highlightStepAtPC() {
-        highlightStepAtAddress(RegisterFile.getProgramCounter(), false);
+        highlightStepAtAddress(Main.machine.getProgramCounter(), false);
     }
 
     /**
@@ -530,7 +567,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
      * otherwise.
      */
     public void highlightStepAtPC(boolean inDelaySlot) {
-        highlightStepAtAddress(RegisterFile.getProgramCounter(), inDelaySlot);
+        highlightStepAtAddress(Main.machine.getProgramCounter(), inDelaySlot);
     }
 
     /**
@@ -600,8 +637,8 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
     public void unhighlightAllSteps() {
         boolean saved = this.getCodeHighlighting();
         this.setCodeHighlighting(false);
-        table.tableChanged(new TableModelEvent(tableModel, 0, data.length - 1, BASIC_COLUMN));
-        table.tableChanged(new TableModelEvent(tableModel, 0, data.length - 1, SOURCE_COLUMN));
+        table.tableChanged(new TableModelEvent(tableModel, 0, dataTable.length - 1, BASIC_COLUMN));
+        table.tableChanged(new TableModelEvent(tableModel, 0, dataTable.length - 1, SOURCE_COLUMN));
         this.setCodeHighlighting(saved);
     }
 
@@ -1096,7 +1133,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer {
                         JCheckBox check = ((JCheckBox) ((DefaultCellEditor) table.getCellEditor(0, index)).getComponent());
                         breakpointsEnabled = !breakpointsEnabled;
                         check.setEnabled(breakpointsEnabled);
-                        table.tableChanged(new TableModelEvent(tableModel, 0, data.length - 1, BREAK_COLUMN));
+                        table.tableChanged(new TableModelEvent(tableModel, 0, dataTable.length - 1, BREAK_COLUMN));
                     }
                 }
 

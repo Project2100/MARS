@@ -19,4 +19,9 @@ public class DirectiveToken extends Token<Directive> {
         super(value, sourceMIPSprogram, line, start);
     }
 
+    @Override
+    public String display() {
+        return value.descriptor;
+    }
+
 }

@@ -19,4 +19,9 @@ public class FRegisterToken extends Token<Register> {
         super(value, sourceMIPSprogram, line, start);
     }
 
+    @Override
+    public String display() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
 }

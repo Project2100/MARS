@@ -42,10 +42,6 @@ public class Registers {
     private final Register[] userRegisters;
     private int defaultGP, defaultSP;
 
-    Registers() {
-        this(MIPSMachine.defaultConfig);
-    }
-
     Registers(MIPSMachine.Configuration config) {
         //TODO Optimize!
         userRegisters = new Register[Descriptor.values().length];
@@ -130,6 +126,9 @@ public class Registers {
                 : userRegisters[i].set(val);
     }
 
+    public int get(Descriptor reg) {
+        return userRegisters[reg.ordinal()].get();
+    }
 
     /**
      * Sets the register identified by the specified number to the given value.

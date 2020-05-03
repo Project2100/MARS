@@ -38,7 +38,7 @@ import mars.mips.hardware.AccessNotice;
 import mars.mips.hardware.AddressErrorException;
 import mars.mips.hardware.Memory;
 import mars.mips.hardware.MemoryAccessNotice;
-import mars.mips.hardware.RegisterFile;
+import mars.mips.newhardware.Registers;
 import mars.settings.BooleanSettings;
 import mars.settings.FontSettings;
 import mars.simulator.Simulator;
@@ -299,11 +299,11 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
         int baseAddress = displayBaseAddressArray[desiredComboBoxIndex];
         if (baseAddress == -1)
             if (desiredComboBoxIndex == GLOBAL_POINTER_ADDRESS_INDEX)
-                baseAddress = RegisterFile.getValue(RegisterFile.GLOBAL_POINTER_REGISTER)
-                        - (RegisterFile.getValue(RegisterFile.GLOBAL_POINTER_REGISTER) % BYTES_PER_ROW);
+                baseAddress = Main.machine.getGPRegisters().get(Registers.Descriptor.$gp)
+                        - (Main.machine.getGPRegisters().get(Registers.Descriptor.$gp) % BYTES_PER_ROW);
             else if (desiredComboBoxIndex == STACK_POINTER_BASE_ADDRESS_INDEX)
-                baseAddress = RegisterFile.getValue(RegisterFile.STACK_POINTER_REGISTER)
-                        - (RegisterFile.getValue(RegisterFile.STACK_POINTER_REGISTER) % BYTES_PER_ROW);
+                baseAddress = Main.machine.getGPRegisters().get(Registers.Descriptor.$sp)
+                        - (Main.machine.getGPRegisters().get(Registers.Descriptor.$sp) % BYTES_PER_ROW);
             else
                 return null;// shouldn't happen since these are the only two
         int byteOffset = address - baseAddress;
@@ -403,7 +403,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
             desiredComboBoxIndex = EXTERN_BASE_ADDRESS_INDEX;
         }
         // Check distance from global pointer; can be either side of it...
-        thisDistance = Math.abs(address - RegisterFile.getValue(RegisterFile.GLOBAL_POINTER_REGISTER)); // distance from global pointer
+        thisDistance = Math.abs(address - Main.machine.getGPRegisters().get(Registers.Descriptor.$gp)); // distance from global pointer
         if (thisDistance < shortDistance) {
             shortDistance = thisDistance;
             desiredComboBoxIndex = GLOBAL_POINTER_ADDRESS_INDEX;
@@ -421,34 +421,43 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
             desiredComboBoxIndex = HEAP_BASE_ADDRESS_INDEX;
         }
         // Check distance from stack pointer.  Can be on either side of it...
-        thisDistance = Math.abs(address - RegisterFile.getValue(RegisterFile.STACK_POINTER_REGISTER));
+        thisDistance = Math.abs(address - Main.machine.getGPRegisters().get(Registers.Descriptor.$sp));
         if (thisDistance < shortDistance) {
             shortDistance = thisDistance;
             desiredComboBoxIndex = STACK_POINTER_BASE_ADDRESS_INDEX;
         }
         return desiredComboBoxIndex;
     }
-
+    
     ////////////////////////////////////////////////////////////////////////////////
     //  Generates the Address/Data part of the Data Segment window.
     //   Returns the JScrollPane for the Address/Data part of the Data Segment window.
     private JScrollPane generateDataPanel() {
+        
+        
+        
         dataData = new Object[NUMBER_OF_ROWS][NUMBER_OF_COLUMNS];
         int valueBase = getValueDisplayBase();
         int addressBase = getAddressDisplayBase();
+        
+        // Data window currently displays half a KiB, or 128 words of memory
         int address = this.homeAddress;
+        int[] block = Main.machine.getMemory().getBlockView(address);
+        // Normalize home address to a value aligned to a data window size
+        address &= 0xFFFFFC00;
+        // Then morph it into an index suitable for accessing the right word in the block
+        address = address & mars.mips.newhardware.Memory.BLOCK_OFFSET_MASK >>> mars.mips.newhardware.Memory.WORD_BYTES_BITS;
+        
+        
         for (int row = 0; row < NUMBER_OF_ROWS; row++) {
             dataData[row][ADDRESS_COLUMN] = NumberDisplayBaseChooser.formatUnsignedInteger(address, addressBase);
             for (int column = 1; column < NUMBER_OF_COLUMNS; column++) {
-                try {
-                    dataData[row][column] = NumberDisplayBaseChooser.formatNumber(Main.memory.getRawWord(address), valueBase);
-                }
-                catch (AddressErrorException aee) {
-                    dataData[row][column] = NumberDisplayBaseChooser.formatNumber(0, valueBase);
-                }
-                address += BYTES_PER_VALUE;
+                dataData[row][column] = NumberDisplayBaseChooser.formatNumber(block[address], valueBase);
+                address ++;
             }
         }
+        
+        
         String[] names = new String[NUMBER_OF_COLUMNS];
         for (int i = 0; i < NUMBER_OF_COLUMNS; i++)
             names[i] = getHeaderStringForColumn(i, addressBase);
@@ -528,42 +537,53 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
             return; // ignore if no content to change
         int valueBase = getValueDisplayFormat();
         int addressBase = getAddressDisplayBase();
+        
+        // AP200501: We're mimicking generateDataPanel!
         int address = firstAddr;
+        int[] block = Main.machine.getMemory().getBlockView(address);
+        // Normalize home address to a value aligned to a data window size
+        address &= 0xFFFFFC00;
+        // Then morph it into an index suitable for accessing the right word in the block
+        address = address & mars.mips.newhardware.Memory.BLOCK_OFFSET_MASK >>> mars.mips.newhardware.Memory.WORD_BYTES_BITS;
+        
+        
         TableModel dataModel = dataTable.getModel();
         for (int row = 0; row < NUMBER_OF_ROWS; row++) {
             ((DataTableModel) dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatUnsignedInteger(address, addressBase), row, ADDRESS_COLUMN);
             for (int column = 1; column < NUMBER_OF_COLUMNS; column++) {
-                try {
-                    ((DataTableModel) dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(Main.memory.getWordNoNotify(address), valueBase), row, column);
-                }
-                catch (AddressErrorException aee) {
-                    // Bit of a hack here.  Memory will throw an exception if you try to read directly from text segment when the
-                    // self-modifying code setting is disabled.  This is a good thing if it is the executing MIPS program trying to
-                    // read.  But not a good thing if it is the DataSegmentDisplay trying to read.  I'll trick Memory by 
-                    // temporarily enabling the setting as "non persistent" so it won't write through to the registry.
-                    if (Memory.inTextSegment(address)) {
-                        int displayValue = 0;
-                        if (!BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
-                            BooleanSettings.SELF_MODIFYING_CODE.setNoPersist(true);
-                            try {
-                                displayValue = Main.memory.getWordNoNotify(address);
-                            }
-                            catch (AddressErrorException e) {
-                                // Still got an exception?  Doesn't seem possible but if we drop through it will write default value 0.
-                            }
-                            BooleanSettings.SELF_MODIFYING_CODE.setNoPersist(false);
-                        }
-                        ((DataTableModel) dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(displayValue, valueBase), row, column);
-                    }
-                    // Bug Fix: the following line of code disappeared during the release 4.4 mods, but is essential to
-                    // display values of 0 for valid MIPS addresses that are outside the MARS simulated address space.  Such
-                    // addresses cause an AddressErrorException.  Prior to 4.4, they performed this line of code unconditionally.  
-                    // With 4.4, I added the above IF statement to work with the text segment but inadvertently removed this line!
-                    // Now it becomes the "else" part, executed when not in text segment.  DPS 8-July-2014.
-                    else
-                        ((DataTableModel) dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(0, valueBase), row, column);
-                }
-                address += BYTES_PER_VALUE;
+//                try {
+//                    ((DataTableModel) dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(Main.memory.getWordNoNotify(address), valueBase), row, column);
+//                }
+//                catch (AddressErrorException aee) {
+//                    // Bit of a hack here.  Memory will throw an exception if you try to read directly from text segment when the
+//                    // self-modifying code setting is disabled.  This is a good thing if it is the executing MIPS program trying to
+//                    // read.  But not a good thing if it is the DataSegmentDisplay trying to read.  I'll trick Memory by 
+//                    // temporarily enabling the setting as "non persistent" so it won't write through to the registry.
+//                    if (Memory.inTextSegment(address)) {
+//                        int displayValue = 0;
+//                        if (!BooleanSettings.SELF_MODIFYING_CODE.isSet()) {
+//                            BooleanSettings.SELF_MODIFYING_CODE.setNoPersist(true);
+//                            try {
+//                                displayValue = Main.memory.getWordNoNotify(address);
+//                            }
+//                            catch (AddressErrorException e) {
+//                                // Still got an exception?  Doesn't seem possible but if we drop through it will write default value 0.
+//                            }
+//                            BooleanSettings.SELF_MODIFYING_CODE.setNoPersist(false);
+//                        }
+//                        ((DataTableModel) dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(displayValue, valueBase), row, column);
+//                    }
+//                    // Bug Fix: the following line of code disappeared during the release 4.4 mods, but is essential to
+//                    // display values of 0 for valid MIPS addresses that are outside the MARS simulated address space.  Such
+//                    // addresses cause an AddressErrorException.  Prior to 4.4, they performed this line of code unconditionally.  
+//                    // With 4.4, I added the above IF statement to work with the text segment but inadvertently removed this line!
+//                    // Now it becomes the "else" part, executed when not in text segment.  DPS 8-July-2014.
+//                    else
+//                        ((DataTableModel) dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(0, valueBase), row, column);
+//                }
+//                address += BYTES_PER_VALUE;
+                ((DataTableModel) dataModel).setDisplayAndModelValueAt(NumberDisplayBaseChooser.formatNumber(block[address], valueBase), row, column);
+                address++;
             }
         }
     }
@@ -697,7 +717,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
         globButton.addActionListener((ActionEvent ae) -> {
             userOrKernelMode = USER_MODE;
             // get $gp global pointer, but guard against it having value below data segment
-            firstAddress = Math.max(Memory.dataSegmentBaseAddress, RegisterFile.getValue(RegisterFile.GLOBAL_POINTER_REGISTER));
+            firstAddress = Math.max(Memory.dataSegmentBaseAddress, Main.machine.getGPRegisters().get(Registers.Descriptor.$gp));
             // updateModelForMemoryRange requires argument to be multiple of 4
             // but for cleaner display we'll make it multiple of 32 (last nibble is 0).
             // This makes it easier to mentally calculate address from row address + column offset.
@@ -710,7 +730,7 @@ public class DataSegmentWindow extends JInternalFrame implements Observer {
         stakButton.addActionListener((ActionEvent ae) -> {
             userOrKernelMode = USER_MODE;
             // get $sp stack pointer, but guard against it having value below data segment
-            firstAddress = Math.max(Memory.dataSegmentBaseAddress, RegisterFile.getValue(RegisterFile.STACK_POINTER_REGISTER));
+            firstAddress = Math.max(Memory.dataSegmentBaseAddress, Main.machine.getGPRegisters().get(Registers.Descriptor.$sp));
             // See comment above for gloButton...
             firstAddress = firstAddress - (firstAddress % BYTES_PER_ROW);
             homeAddress = Memory.stackBaseAddress;

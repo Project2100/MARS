@@ -19,4 +19,9 @@ public class RegisterToken extends Token<Registers.Descriptor> {
         super(value, sourceMIPSprogram, line, start);
     }
 
+    @Override
+    public String display() {
+        return "$" + value.ordinal();
+    }
+
 }

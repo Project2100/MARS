@@ -46,13 +46,12 @@ import mars.mips.hardware.Memory;
 import mars.mips.hardware.RegisterFile;
 import mars.mips.newhardware.MIPSMachine;
 import mars.settings.BooleanSettings;
-import mars.settings.StringSettings;
 import mars.util.SystemIO;
 
 /**
  * Action for the Run -> Reset menu item
  */
-class ExecuteAction extends AbstractAction {
+final class ExecuteAction extends AbstractAction {
 
     // Threshold for adding filename to printed message of files being assembled.
     private static final int LINE_LENGTH_LIMIT = 60;
@@ -95,14 +94,16 @@ class ExecuteAction extends AbstractAction {
         clearExecutePane();
         
         // Instantiate a new machine
-        MIPSMachine machine = new MIPSMachine(MIPSMachine.getConfigByName(StringSettings.MEMORY_CONFIGURATION.get()));
+        // AP200430: Default config for now
+        //MIPSMachine machine = new MIPSMachine(MIPSMachine.getConfigByName(StringSettings.MEMORY_CONFIGURATION.get()));
+        Main.machine = new MIPSMachine();
         StaticAssembler.ExecutableProgram exec;
         
         // Start the assembling process
         try {
             ErrorList warnings = new ErrorList();
             
-            exec = StaticAssembler.beginAssembling(leadingTab.getPath(), machine, extendedAssemblerEnabled, warningsAreErrors, warnings);
+            Main.exec = StaticAssembler.beginAssembling(leadingTab.getPath(), Main.machine, extendedAssemblerEnabled, warningsAreErrors, warnings);
             if (warnings.warningsOccurred())
                 Main.getGUI().messagesPane.postMarsMessage(warnings.generateWarningReport());
             
@@ -139,7 +140,7 @@ class ExecuteAction extends AbstractAction {
         Main.getGUI().dataSegment.setupTable();
         Main.getGUI().dataSegment.highlightCellForAddress(Memory.dataBaseAddress);
         Main.getGUI().dataSegment.clearHighlighting();
-        Main.getGUI().labelValues.setupTable();
+        Main.getGUI().labelValues.refresh();
         Main.getGUI().textSegment.setCodeHighlighting(true);
         Main.getGUI().textSegment.highlightStepAtPC();
         Main.getGUI().registersTab.clearWindow();
@@ -205,10 +206,10 @@ class ExecuteAction extends AbstractAction {
      * segment display, label display and register display. This will typically
      * be done upon File->Close, Open, New.
      */
+    @Deprecated
     public static void clearExecutePane() {
         Main.getGUI().textSegment.clearWindow();
         Main.getGUI().dataSegment.clearWindow();
-        Main.getGUI().labelValues.clearWindow();
         Main.getGUI().registersTab.clearWindow();
         Main.getGUI().coprocessor1Tab.clearWindow();
         Main.getGUI().coprocessor0Tab.clearWindow();

@@ -87,7 +87,7 @@ public class MIPSMachine {
 
 	public MIPSMachine(Configuration config) {
 		memory = new Memory(config);
-		gpRegisters = new Registers();
+		gpRegisters = new Registers(config);
 
 		coprocessor0 = new Coprocessor0();
 		coprocessor1 = new Coprocessor1();
@@ -109,6 +109,10 @@ public class MIPSMachine {
      */
     public Memory getMemory() {
         return memory;
+    }
+    
+    public Registers getGPRegisters() {
+        return gpRegisters;
     }
 
 	/**
@@ -1215,24 +1219,24 @@ public class MIPSMachine {
 		System.out.println(Integer.toHexString(m.memory.read(userSpace, Memory.Boundary.WORD, false)));
 	}
 
-	static final int genLoadStoreIinstr(int[] s, int opcode) {
-		// TODO Pass a SHORT as imm
-		// Extract operands
-		// NOTE ProgramStatement.getOperands return an array of
-		// register references, namely rs, rt and imm in order
-		int[] operands = s;
-		int rt = operands[0];
-		int imm = operands[1];
-		int rs = operands[2];
-
-		// TODO must assure operands are less than 32 | 0xFFFF!!!
-		assert (rs < 32 && rt < 32 && imm <= 0xFFFF);
-
-		// Align regnums
-		rs = rs << 21;
-		rt = rt << 16;
-
-		// Compose binary instruction
-		return opcode | rs | rt | imm;
-	}
+//	static final int genLoadStoreIinstr(int[] s, int opcode) {
+//		// TODO Pass a SHORT as imm
+//		// Extract operands
+//		// NOTE ProgramStatement.getOperands return an array of
+//		// register references, namely rs, rt and imm in order
+//		int[] operands = s;
+//		int rt = operands[0];
+//		int imm = operands[1];
+//		int rs = operands[2];
+//
+//		// TODO must assure operands are less than 32 | 0xFFFF!!!
+//		assert (rs < 32 && rt < 32 && imm <= 0xFFFF);
+//
+//		// Align regnums
+//		rs = rs << 21;
+//		rt = rt << 16;
+//
+//		// Compose binary instruction
+//		return opcode | rs | rt | imm;
+//	}
 }

@@ -18,4 +18,9 @@ public class ColonToken extends Token<String> {
         super(":", sourceMIPSprogram, line, start);
     }
 
+    @Override
+    public String display() {
+        return ":";
+    }
+
 }

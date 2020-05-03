@@ -75,17 +75,17 @@ public class Memory {
     /**
      * The number of bits needed to encode an index of any byte in an integer
      */
-    private static final int WORD_BYTES_BITS;
+    public static final int WORD_BYTES_BITS;
     static {
         assert(Integer.BYTES > 1);
         WORD_BYTES_BITS = log2(Integer.BYTES);
     }
     
-    private static final int BLOCK_OFFSET_BITS = log2(Memory.BLOCK_WORDS) + WORD_BYTES_BITS;
-    private static final int BLOCK_INDEX_BITS = 32 - BLOCK_OFFSET_BITS;
-    private static final int BLOCK_WORDS = 0x00000400; // 1KiW(or integers) (= 4KiB)
-    private static final int BLOCK_OFFSET_MASK = (BLOCK_WORDS << WORD_BYTES_BITS) - 1;
-    private static final int MEMORY_BLOCK_COUNT = 0x00100000; // 1MiP (4GiB(in 32bit)/BLOCK_SIZE)
+    public static final int BLOCK_OFFSET_BITS = log2(Memory.BLOCK_WORDS) + WORD_BYTES_BITS;
+    public static final int BLOCK_INDEX_BITS = 32 - BLOCK_OFFSET_BITS;
+    public static final int BLOCK_WORDS = 0x00000400; // 1KiW(or integers) (= 4KiB)
+    public static final int BLOCK_OFFSET_MASK = (BLOCK_WORDS << WORD_BYTES_BITS) - 1;
+    public static final int MEMORY_BLOCK_COUNT = 0x00100000; // 1MiP (4GiB(in 32bit)/BLOCK_SIZE)
 
     //--------------------------------------------------------------------------
     // Segment addresses cache
@@ -216,7 +216,7 @@ public class Memory {
     /**
      * Given a memory address, returns the block containing it.
      * 
-     * @param blockIndex
+     * @param address
      * @return 
      */
     private int[] getBlock(int address) {
@@ -241,6 +241,31 @@ public class Memory {
         }
 
         return block;
+    }
+    
+    static final int[] MEM_DUMMY = new int[BLOCK_WORDS];
+    static {
+        Arrays.fill(MEM_DUMMY, 0);
+    }
+
+    /**
+     * Given a memory address, returns a view of the memory block that contains
+     * it
+     *
+     * @implnote This method effectively creates a 1kB copy of memory if a block
+     * is instantiated
+     *
+     * @param address
+     * @return 
+     */
+    public int[] getBlockView(int address) {
+        
+        // AP200412: No bound checks, memory uses whole int range
+        // Get page from memmap - will return null if not allocated
+        // Logical shift - pages will have nonnegative indices
+        int blockIndex = address >>> BLOCK_OFFSET_BITS;
+        int[] b = primaryMemory.get(blockIndex);
+        return b != null ? Arrays.copyOf(b, BLOCK_WORDS) : MEM_DUMMY;
     }
 
     /**

@@ -18,4 +18,9 @@ public class MacroParameterToken extends Token<String> {
         super(value, sourceMIPSprogram, line, start);
     }
 
+    @Override
+    public String display() {
+        return value;
+    }
+
 }

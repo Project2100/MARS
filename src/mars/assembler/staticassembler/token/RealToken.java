@@ -18,4 +18,9 @@ public class RealToken extends Token<Double> {
         super(value, sourceMIPSprogram, line, start);
     }
 
+    @Override
+    public String display() {
+        return Double.toHexString(value);
+    }
+
 }
