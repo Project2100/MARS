@@ -44,7 +44,129 @@ import mars.settings.BooleanSettings;
  */
 public class MIPSMachine {
 
-	//<editor-fold defaultstate="collapsed" desc="Config statics">
+	//<editor-fold defaultstate="collapsed" desc="Configurations">
+    
+	/**
+	 * Models the memory configuration for the simulated MIPS machine.
+	 * "configuration" refers to the starting memory addresses for the various
+	 * memory segments. The default configuration is based on SPIM. Starting
+	 * with MARS 3.7, the configuration can be changed.
+	 *
+	 * @implSpec
+	 *
+	 * Base addresses listed here must be aligned on word boundary (i.e
+	 * multiples of 4), whereas limit addresses align on a word's last byte,
+	 * except the stack limit which is word aligned.
+	 *
+	 * @author Pete Sanderson
+	 * @version August 2009
+	 */
+	public static class Configuration {
+
+		// Default configuration comes from SPIM
+		private static final int[] defaultConfigValues = {
+			0x00400000, // .text Base Address
+			0x10000000, // Data Segment base address
+			0x10000000, // .extern Base Address
+			0x10008000, // Global Pointer $gp)
+			0x10010000, // .data base Address
+			0x10040000, // heap base address
+			0x7fffeffc, // stack pointer $sp (from SPIM not MIPS)
+			0x7ffffffc, // stack base address
+			0x7fffffff, // highest address in user space
+			0x80000000, // lowest address in kernel space
+			0x80000000, // .ktext base address
+			0x80000180, // exception handler address
+			0x90000000, // .kdata base address
+			0xffff0000, // MMIO base address
+			0xffffffff, // highest address in kernel (and memory)
+			0x7fffffff, // data segment limit address
+			0x0ffffffc, // text limit address
+			0xfffeffff, // kernel data segment limit address
+			0x8ffffffc, // kernel text limit address
+			0x10040000, // stack limit address
+			0xffffffff // memory map limit address
+		};
+
+		// Compact allows 16 bit addressing, data segment starts at 0
+		private static final int[] dataCompactConfigValues = {
+			0x00003000, // .text Base Address
+			0x00000000, // Data Segment base address
+			0x00001000, // .extern Base Address
+			0x00001800, // Global Pointer $gp)
+			0x00000000, // .data base Address
+			0x00002000, // heap base address
+			0x00002ffc, // stack pointer $sp 
+			0x00002ffc, // stack base address
+			0x00003fff, // highest address in user space
+			0x00004000, // lowest address in kernel space
+			0x00004000, // .ktext base address
+			0x00004180, // exception handler address
+			0x00005000, // .kdata base address
+			0x00007f00, // MMIO base address
+			0x00007fff, // highest address in kernel (and memory)
+			0x00002fff, // data segment limit address
+			0x00003ffc, // text limit address
+			0x00007eff, // kernel data segment limit address
+			0x00004ffc, // kernel text limit address
+			0x00002000, // stack limit address
+			0x00007fff // memory map limit address
+		};
+
+		// Compact allows 16 bit addressing, text segment starts at 0
+		private static final int[] textCompactConfigValues = {
+			0x00000000, // .text Base Address
+			0x00001000, // Data Segment base address
+			0x00001000, // .extern Base Address
+			0x00001800, // Global Pointer $gp)
+			0x00002000, // .data base Address
+			0x00003000, // heap base address
+			0x00003ffc, // stack pointer $sp 
+			0x00003ffc, // stack base address
+			0x00003fff, // highest address in user space
+			0x00004000, // lowest address in kernel space
+			0x00004000, // .ktext base address
+			0x00004180, // exception handler address
+			0x00005000, // .kdata base address
+			0x00007f00, // MMIO base address
+			0x00007fff, // highest address in kernel (and memory)
+			0x00003fff, // data segment limit address
+			0x00000ffc, // text limit address
+			0x00007eff, // kernel data segment limit address
+			0x00004ffc, // kernel text limit address
+			0x00003000, // stack limit address
+			0x00007fff // memory map limit address
+		};
+
+		// Identifier is used for saving setting; name is used for display
+		private final String identifier;
+		private final String name;
+		private final int[] addresses;
+
+		private Configuration(String id, String name, int[] values) {
+			super();
+			identifier = id;
+			this.name = name;
+			addresses = values;
+		}
+
+		public String getID() {
+			return identifier;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public int[] getAddresses() {
+			return Arrays.copyOf(addresses, addresses.length);
+		}
+
+		public int getAddress(Memory.Descriptor d) {
+			return addresses[d.ordinal()];
+		}
+	}
+    
 	// Starting with MARS 3.7, the configuration can be changed.
 	private static final HashSet<Configuration> configurations = new HashSet<>(3);
 	// The default configuration is based on SPIM.
@@ -78,7 +200,7 @@ public class MIPSMachine {
 	int delayArgument;
 	DelayState branchState;
 
-	// (Not-only)Memory configuration
+	// Memory configuration, kept here because it influences registers too
 	private Configuration currentConfig;
 
 	public MIPSMachine() {
@@ -212,7 +334,7 @@ public class MIPSMachine {
 	}
 
 
-	//<editor-fold defaultstate="collapsed" desc="Helpers">
+	//<editor-fold defaultstate="collapsed" desc="Instruction decoding helpers">
 	// PERSONAL NOTES
 	// --------------------
 	// 16bit Sign extension of int: val<<16>>16 | (int)(short)int
@@ -281,6 +403,7 @@ public class MIPSMachine {
 
 		// Execute instruction
 		// TODO test branches thoroughly on delayed/expedite
+        // TODO Capture undefined functions on each supercode!
 		switch (opcode(instruction)) {
 
 			//<editor-fold defaultstate="collapsed" desc="SPECIAL OPCODE">
@@ -292,12 +415,12 @@ public class MIPSMachine {
 
 				switch (instruction & 0b111111) { // read FUNCTION field
 
-					case 0b000000: // SLL (NOP, SSNOP, PAUSE, ?????)
+					case 0b000000: // SLL (NOP, SSNOP, ?????) - AP200503: NOP and SSNOP are assembly idioms!
 						// check if rs is empty
 						if (rs != 0)
 							throw new MIPSException("Invalid instruction: nonzero RS in SLL");
 						// Execute shift
-						//TODO: does not contemplate SSNOP PAUSE and ??????
+						//TODO: does not contemplate SSNOP and ??????
 						gpRegisters.set(rd, gpRegisters.read(rt) << shamt);
 						break;
 
@@ -727,14 +850,36 @@ public class MIPSMachine {
 			//</editor-fold>
 
 			case 0b010000: // COP0 - instruction format partially compatible with R-type
-				//TODO first decode RS, then FUNC!!!!
-				switch (instruction & 0b111111) {
-					case 0b011000: // ERET
-						// IMPORTANT: Implemented as specified in Volume II-A of spec, page 167
-						// Counter natural increment
-						// PENDING TODO: Original impl does not correct! Check correctness
-						setProgramCounter(coprocessor0.exceptionReturn() - 4);
-						break;
+                // Decide whether bit 25 is 0 or 1: this tells us which field to look for further decode
+                if ((instruction & 0x01000000) == 0) {
+                    switch (rs(instruction)) {
+                        case 0b00000: // MF (MFC0)
+                            if ((instruction & 0b11111111000) != 0) {
+                                throw new MIPSException("Unexpected bits in 0 field");
+                            }
+                            
+                            gpRegisters.set(rt(instruction), coprocessor0.read(rd(instruction), instruction & 0b111));
+                            
+                            break;
+                        case 0b00100: // MT (MTC0)
+                            if ((instruction & 0b11111111000) != 0) {
+                                throw new MIPSException("Unexpected bits in 0 field");
+                            }
+                            
+                            coprocessor0.write(rd(instruction), instruction & 0b111, gpRegisters.read(rt(instruction)));
+                            
+                            break;
+                    }
+                }
+                else { // Assume MSB is 1 -> read FUNC
+                    switch (instruction & 0b111111) {
+                        case 0b011000: // ERET
+                            // IMPORTANT: Implemented as specified in Volume II-A of spec, page 167
+                            // Counter natural increment
+                            // PENDING TODO: Original impl does not correct! Check correctness
+                            setProgramCounter(coprocessor0.exceptionReturn() - 4);
+                            break;
+                    }
 				}
 				break;
 
@@ -1059,127 +1204,6 @@ public class MIPSMachine {
 	}
 
 
-	/**
-	 * Models the memory configuration for the simulated MIPS machine.
-	 * "configuration" refers to the starting memory addresses for the various
-	 * memory segments. The default configuration is based on SPIM. Starting
-	 * with MARS 3.7, the configuration can be changed.
-	 *
-	 * @implSpec
-	 *
-	 * Base addresses listed here must be aligned on word boundary (i.e
-	 * multiples of 4), whereas limit addresses align on a word's last byte,
-	 * except the stack limit which is word aligned.
-	 *
-	 * @author Pete Sanderson
-	 * @version August 2009
-	 */
-	public static class Configuration {
-
-		// Default configuration comes from SPIM
-		private static final int[] defaultConfigValues = {
-			0x00400000, // .text Base Address
-			0x10000000, // Data Segment base address
-			0x10000000, // .extern Base Address
-			0x10008000, // Global Pointer $gp)
-			0x10010000, // .data base Address
-			0x10040000, // heap base address
-			0x7fffeffc, // stack pointer $sp (from SPIM not MIPS)
-			0x7ffffffc, // stack base address
-			0x7fffffff, // highest address in user space
-			0x80000000, // lowest address in kernel space
-			0x80000000, // .ktext base address
-			0x80000180, // exception handler address
-			0x90000000, // .kdata base address
-			0xffff0000, // MMIO base address
-			0xffffffff, // highest address in kernel (and memory)
-			0x7fffffff, // data segment limit address
-			0x0ffffffc, // text limit address
-			0xfffeffff, // kernel data segment limit address
-			0x8ffffffc, // kernel text limit address
-			0x10040000, // stack limit address
-			0xffffffff // memory map limit address
-		};
-
-		// Compact allows 16 bit addressing, data segment starts at 0
-		private static final int[] dataCompactConfigValues = {
-			0x00003000, // .text Base Address
-			0x00000000, // Data Segment base address
-			0x00001000, // .extern Base Address
-			0x00001800, // Global Pointer $gp)
-			0x00000000, // .data base Address
-			0x00002000, // heap base address
-			0x00002ffc, // stack pointer $sp 
-			0x00002ffc, // stack base address
-			0x00003fff, // highest address in user space
-			0x00004000, // lowest address in kernel space
-			0x00004000, // .ktext base address
-			0x00004180, // exception handler address
-			0x00005000, // .kdata base address
-			0x00007f00, // MMIO base address
-			0x00007fff, // highest address in kernel (and memory)
-			0x00002fff, // data segment limit address
-			0x00003ffc, // text limit address
-			0x00007eff, // kernel data segment limit address
-			0x00004ffc, // kernel text limit address
-			0x00002000, // stack limit address
-			0x00007fff // memory map limit address
-		};
-
-		// Compact allows 16 bit addressing, text segment starts at 0
-		private static final int[] textCompactConfigValues = {
-			0x00000000, // .text Base Address
-			0x00001000, // Data Segment base address
-			0x00001000, // .extern Base Address
-			0x00001800, // Global Pointer $gp)
-			0x00002000, // .data base Address
-			0x00003000, // heap base address
-			0x00003ffc, // stack pointer $sp 
-			0x00003ffc, // stack base address
-			0x00003fff, // highest address in user space
-			0x00004000, // lowest address in kernel space
-			0x00004000, // .ktext base address
-			0x00004180, // exception handler address
-			0x00005000, // .kdata base address
-			0x00007f00, // MMIO base address
-			0x00007fff, // highest address in kernel (and memory)
-			0x00003fff, // data segment limit address
-			0x00000ffc, // text limit address
-			0x00007eff, // kernel data segment limit address
-			0x00004ffc, // kernel text limit address
-			0x00003000, // stack limit address
-			0x00007fff // memory map limit address
-		};
-
-		// Identifier is used for saving setting; name is used for display
-		private final String identifier;
-		private final String name;
-		private final int[] addresses;
-
-		private Configuration(String id, String name, int[] values) {
-			super();
-			identifier = id;
-			this.name = name;
-			addresses = values;
-		}
-
-		public String getID() {
-			return identifier;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public int[] getAddresses() {
-			return Arrays.copyOf(addresses, addresses.length);
-		}
-
-		public int getAddress(Memory.Descriptor d) {
-			return addresses[d.ordinal()];
-		}
-	}
-
 	static enum DelayState {
 		IDLE,
 		DELAYED_B,
@@ -1188,55 +1212,4 @@ public class MIPSMachine {
 		JUMP
 	}
 
-
-	////////////////////////////////////////////////////////////////////////////
-	// TEST SECTION ------------------------------------------------------------
-	public static void main(String[] args) throws AddressErrorException {
-		testSWR();
-	}
-
-	static final void testSWR() throws AddressErrorException {
-		Main.symbolTable = new SymbolTable("global");
-		MIPSMachine m = new MIPSMachine();
-		int userSpace = m.configuration().getAddress(Memory.Descriptor.DATA_BASE_ADDRESS);
-		
-		m.gpRegisters.setUserRegister(Registers.Descriptor.$t0, userSpace);
-		m.memory.write(m, userSpace, 0x55120873, Memory.Boundary.WORD);
-		int readWord = m.memory.read(userSpace, Memory.Boundary.WORD, false);
-		System.out.println(Integer.toHexString(readWord));
-
-		m.gpRegisters.setUserRegister(Registers.Descriptor.$t1, 0xFD327593);
-		System.out.println(Integer.toHexString(m.gpRegisters.read(Registers.Descriptor.$t1.ordinal())));
-
-		
-		Main.initialize();
-		int[] s = new int[]{Registers.Descriptor.$t1.ordinal(), 1, Registers.Descriptor.$t0.ordinal()};
-		int instruction = InstructionSetArchitecture.BasicInstructionEncodings.get("swr").applyAsInt(s);
-		System.out.println(Integer.toBinaryString(instruction));
-
-		m.executeInstruction(instruction);
-
-		System.out.println(Integer.toHexString(m.memory.read(userSpace, Memory.Boundary.WORD, false)));
-	}
-
-//	static final int genLoadStoreIinstr(int[] s, int opcode) {
-//		// TODO Pass a SHORT as imm
-//		// Extract operands
-//		// NOTE ProgramStatement.getOperands return an array of
-//		// register references, namely rs, rt and imm in order
-//		int[] operands = s;
-//		int rt = operands[0];
-//		int imm = operands[1];
-//		int rs = operands[2];
-//
-//		// TODO must assure operands are less than 32 | 0xFFFF!!!
-//		assert (rs < 32 && rt < 32 && imm <= 0xFFFF);
-//
-//		// Align regnums
-//		rs = rs << 21;
-//		rt = rt << 16;
-//
-//		// Compose binary instruction
-//		return opcode | rs | rt | imm;
-//	}
 }

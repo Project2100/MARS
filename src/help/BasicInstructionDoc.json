@@ -427,7 +427,7 @@
         {
             "mnemonic": "jalr",
             "format": "R",
-            "example": ["jalr $rs, $rd", "jalr $rd"],
+            "example": ["jalr $rs, $rd", "jalr $rs"],
             "description": "Jump And Link Register : Set $rd ($ra if omitted) to Program Counter (return address) then jump to statement whose address is in $rs"
         }
         
@@ -537,6 +537,19 @@
 			"format": "R",
 			"example": "movt $t1, $t2, F",
 			"description": "Move if specfied FP condition flag true : Set $t1 to $t2 if FPU (Coprocessor 1) condition flag specified by the immediate is true (one)"
+		},
+        
+        {
+			"mnemonic": "mfc0",
+			"format": "R",
+			"example": "mfc0 $t1, (C0)$x",
+			"description": "Move from Coprocessor 0 : Set $t1 to the value stored in register x of Coprocessor 0"
+		},
+		{
+			"mnemonic": "mtc0",
+			"format": "R",
+			"example": "mtc0 $t1, (C0)$x",
+			"description": "Move to Coprocessor 0 : Set Coprocessor 0 register x to value stored in $t1"
 		}
         
         

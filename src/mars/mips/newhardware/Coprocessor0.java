@@ -12,7 +12,7 @@ package mars.mips.newhardware;
 public class Coprocessor0 {
 
     // Fields : CPA_..._HWI_SWI_..._UM_..._ERL_EXL_IE
-    // its 32-38 (CPA : CoProcessor Available) TODO explain?!? 
+    // bits 32-38 (CPA : CoProcessor Available) TODO explain?!? 
     // bits 8-15 (HWI::SWI : mask for interrupt levels) all set,
     // bit 4 (UM : user mode) set,
     // bit 2 (ERL : error level) not set,
@@ -48,19 +48,44 @@ public class Coprocessor0 {
         // Return point for exception handling, used by ERET
         regs[14] = new Register("EPC", 0);
 
-        //CP0.15.[0..5] : Config# (TODO)
+        //CP0.16.[0|1] : Config# (TODO)
         // ALL CONFIGS!!
         //
         //
-        //CP0.16.0 : LLAddr (TODO)
+        //CP0.17.0 : LLAddr (TODO)
         // @IMPLNOTE Holds physical address of last LL,
-        // The two LSBs will be always zero as by word alignemnt, thus the last bit is used to check validity of atomic RMW
-        regs[16] = new Register("LLAddr", 0);
+        // The two LSBs will be always zero as by word alignemnt, thus the last bit is used to check validity of atomic RMW - AP200503: Noes, this is on Release 5 :(
+        regs[17] = new Register("LLAddr", 0);
 
         //CP0.30.0 : ErrorEPC
         regs[30] = new Register("ErrorEPC", 0);
 
     }
+    
+    
+    // AP200503 - TODO: Use selector to pick the right register
+    /**
+     * Reads the register identified by the specified number.
+     *
+     * @param regNumber the number of the register to read
+     * @return the register's value
+     */
+    int read(int regNumber, int selector) {
+        return regs[regNumber].get();
+    }
+    
+    
+    /**
+     * Reads the register identified by the specified number.
+     *
+     * @param regNumber the number of the register to read
+     * @return the register's value
+     */
+    // AP200503 - TODO: WRITEABILITY CHECKS!
+    int write(int regNumber, int selector, int value) {
+        return regs[regNumber].set(value);
+    }
+    
 
     boolean isInKMode() {
         return (regs[12].value & 16) == 0;

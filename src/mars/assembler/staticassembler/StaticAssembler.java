@@ -1881,6 +1881,8 @@ public class StaticAssembler {
     // EXTERNAL HACKS REQUIRED:
     // - JAL has two distinct syntaxes by spec, the second one having an additional register than the first
     // - SYSCALL, BREAK, and all non-immediate traps may specify an additional code value, having either 10 bits for traps, or 20 otherwise
+    // TODO
+    // Add mfc0 and mtc0
     static InstructionSyntax getBasicSyntax(String operator) {
         switch (operator) {
 

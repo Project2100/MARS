@@ -213,7 +213,7 @@ public class InstructionSetArchitecture {
 		// Compose binary instruction
 		return opcode | rs | rt | imm;
 	}
-
+    
 	// ###### ttttt fffff ssssssssssssssss
     // Format: OPERATOR rt, offset(base) [FIELD ORDER: base, rt, offset(16)]
     // 
@@ -392,8 +392,7 @@ public class InstructionSetArchitecture {
 	static final int genFPUMOVinstr(int[] operands, int tfmask) {
 		int i = 0;
 
-        // GEtting operands
-
+        // Getting operands
         i |= (operands[0] << 11);
         i |= (operands[1] << 21);
         i |= (operands[2] << 18);
@@ -402,6 +401,15 @@ public class InstructionSetArchitecture {
         return i | tfmask | 0x00000001;
 	}
     
+    // 010000 00m00 fffff sssss 00000 000ttt
+    // Format: OPERATOR rt, rd, sel[3]
+    // 
+    // mtc0
+    // mfc0
+    int genCop0RInstr(int[] operands, int opsel) {
+
+        return opsel | (operands[0] << 16) | operands[1] << 11 | operands[2];
+    }
     
     
 
@@ -576,7 +584,13 @@ public class InstructionSetArchitecture {
 		});
 
 		// CP0 INSTRUCTIONS ----------------------------------------------------
+        
+        // SPECIAL
 		BasicInstructionEncodings.put("eret", (statement) -> 0x42000018);
+        
+		// R-TYOE SELECTOR
+		BasicInstructionEncodings.put("mfc0", (statement) -> genFPUMOVinstr(statement, 0x40000000));
+		BasicInstructionEncodings.put("mtc0", (statement) -> genFPUMOVinstr(statement, 0x40800000));
 
 		// CP1 INSTRUCTIONS ----------------------------------------------------
         
@@ -584,31 +598,16 @@ public class InstructionSetArchitecture {
 		BasicInstructionEncodings.put("movf", (statement) -> genFPUMOVinstr(statement, 0x00000000));
 		BasicInstructionEncodings.put("movt", (statement) -> genFPUMOVinstr(statement, 0x00010000));
 
+        
+        
+        
+        
+        
+        
+        
+        
+        
 		////////////////////////////////////////////////////////////////////////
-//        instructionSet.add(
-//                new BasicInstruction("mfc0 $t1,$8",
-//                        "Move from Coprocessor 0 : Set $t1 to the value stored in Coprocessor 0 register $8",
-//                        BasicInstructionFormat.R_FORMAT,
-//                        "010000 00000 fffff sssss 00000 000000",
-//                        new SimulationCode() {
-//                    public void simulate(ProgramStatement statement) throws ProcessingException {
-//                        int[] operands = statement.getOperands();
-//                        RegisterFile.updateRegister(operands[0],
-//                                Coprocessor0.getValue(operands[1]));
-//                    }
-//                }));
-//        instructionSet.add(
-//                new BasicInstruction("mtc0 $t1,$8",
-//                        "Move to Coprocessor 0 : Set Coprocessor 0 register $8 to value stored in $t1",
-//                        BasicInstructionFormat.R_FORMAT,
-//                        "010000 00100 fffff sssss 00000 000000",
-//                        new SimulationCode() {
-//                    public void simulate(ProgramStatement statement) throws ProcessingException {
-//                        int[] operands = statement.getOperands();
-//                        Coprocessor0.updateRegister(operands[1],
-//                                RegisterFile.getValue(operands[0]));
-//                    }
-//                }));
 		/////////////////////// Floating Point Instructions Start Here ////////////////
 //        instructionSet.add(
 //                new BasicInstruction("add.s $f0,$f1,$f3",
