@@ -63,22 +63,31 @@ public class Coprocessor0 {
     }
     
     
+    // SIMTHREAD
     // AP200503 - TODO: Use selector to pick the right register
     /**
      * Reads the register identified by the specified number.
+     * 
+     * @apinote This method is intended to be invoked only and exclusively in the simulating thread
      *
      * @param regNumber the number of the register to read
+     * @param selector 
      * @return the register's value
      */
+    // AP200503 - TODO: READABILITY CHECKS!
     int read(int regNumber, int selector) {
         return regs[regNumber].get();
     }
     
-    
+    // SIMTHREAD
     /**
-     * Reads the register identified by the specified number.
+     * Writes the given value to the register identified by the specified number.
+     * 
+     * @apinote This method is intended to be invoked only and exclusively in the simulating thread
      *
      * @param regNumber the number of the register to read
+     * @param selector 
+     * @param value the value to write in the CP0R
      * @return the register's value
      */
     // AP200503 - TODO: WRITEABILITY CHECKS!

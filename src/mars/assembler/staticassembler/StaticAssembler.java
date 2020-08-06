@@ -57,6 +57,7 @@ import mars.Main;
 import mars.ProcessingException;
 import mars.assembler.Directive;
 import mars.assembler.staticassembler.token.*;
+import mars.mips.newhardware.Coprocessor1;
 import mars.mips.newhardware.InstructionSetArchitecture;
 import mars.mips.newhardware.MIPSMachine;
 import mars.mips.newhardware.Memory;
@@ -75,52 +76,66 @@ public class StaticAssembler {
     /**
      * Enumeration of all possible MIPS instruction syntaxes; there aren't many,
      * so they're defined here for quick reference in the translation step.
+     * 
+     * G : GPR
+     * P : CP0R
+     * F : FPR
+     * D : FCR
+     * A : address
+     * I : integer
+     * C : code
+     * E : [empty]
+     * (LS) : Load-Store format --- shortcut for GI16(G)
      *
      * @author Andrea Proietto
      * @date 200406
      */
     static enum InstructionSyntax {
 
-        R3(new Class[] {
-            RegisterToken.class,
-            RegisterToken.class,
-            RegisterToken.class}),
-        R2(new Class[] {
-            RegisterToken.class,
-            RegisterToken.class}),
-        R2A16(new Class[] {
-            RegisterToken.class,
-            RegisterToken.class,
+        GGG(new Class[] {
+            GPRToken.class,
+            GPRToken.class,
+            GPRToken.class}),
+        GG(new Class[] {
+            GPRToken.class,
+            GPRToken.class}),
+        GGA16(new Class[] {
+            GPRToken.class,
+            GPRToken.class,
             IdentifierToken.class}),
-        R2C10(new Class[] {
-            RegisterToken.class,
-            RegisterToken.class,
+        GGC10(new Class[] {
+            GPRToken.class,
+            GPRToken.class,
             IntegerToken.class}),
-        R2I16(new Class[] {
-            RegisterToken.class,
-            RegisterToken.class,
+        GGI16(new Class[] {
+            GPRToken.class,
+            GPRToken.class,
             IntegerToken.class}),
-        R2I5(new Class[] {
-            RegisterToken.class,
-            RegisterToken.class,
+        GGI5(new Class[] {
+            GPRToken.class,
+            GPRToken.class,
             IntegerToken.class}),
-        R2I3(new Class[] {
-            RegisterToken.class,
-            RegisterToken.class,
+        GGI3(new Class[] {
+            GPRToken.class,
+            GPRToken.class,
+            IntegerToken.class}),
+        GPI3(new Class[] {
+            GPRToken.class,
+            RegNumberToken.class,
             IntegerToken.class}),
         LS(new Class[] {
-            RegisterToken.class,
+            GPRToken.class,
             IntegerToken.class,
             LeftParenToken.class,
-            RegisterToken.class,
+            GPRToken.class,
             RightParenToken.class}),
-        R1(new Class[] {
-            RegisterToken.class}),
-        R1A16(new Class[] {
-            RegisterToken.class,
+        G(new Class[] {
+            GPRToken.class}),
+        GA16(new Class[] {
+            GPRToken.class,
             IdentifierToken.class}),
-        R1I16(new Class[] {
-            RegisterToken.class,
+        GI16(new Class[] {
+            GPRToken.class,
             IntegerToken.class}),
         E(new Class[] {}),
         A26(new Class[] {
@@ -295,7 +310,7 @@ public class StaticAssembler {
     // AP190812 - TODO: For now, we accept only single token arguments
     static final Set<Class<?>> MACRO_PARAM_CLASSES = Set.of(
             IdentifierToken.class,
-            RegisterToken.class,
+            RegNumberToken.class,
             FRegisterToken.class,
             IntegerToken.class,
             RealToken.class,
@@ -354,6 +369,8 @@ public class StaticAssembler {
     static boolean isValidIdentifier(String value) {
         return IDENT_MATCHER.reset(value).matches();
     }
+    
+    static Pattern regNumber = Pattern.compile("^\\$(\\d|[12]\\d|3[01])$");
 
     /**
      * Builds a valid token from the given string form, along with additional
@@ -446,21 +463,28 @@ public class StaticAssembler {
         if (d != null)
             return new DirectiveToken(d, program, line, pos);
 
+        // Shortcut for tokens not starting with '$'
+        if (value.startsWith("$")) {
 
-        // See if it is a register, in case it is not, a dollar-lead token may be a label name
-        Registers.Descriptor reg = Registers.findByName(value);
-        if (reg != null && extendedAssemblerEnabled) {
-            return new RegisterToken(reg, program, line, pos);
-        }
-        reg = Registers.findByNumber(value);
-        if (reg != null) {
-            return new RegisterToken(reg, program, line, pos);
-        }
+            // See if it is a register, in case it is not, a dollar-lead token may be a label name
+            Registers.Descriptor reg = Registers.findByName(value);
+            if (reg != null && extendedAssemblerEnabled) {
+                return new GPRToken(reg, program, line, pos);
+            }
+            // See if it is a floating point register
+            Coprocessor1.Descriptor reg2 = Coprocessor1.findByName(value);
+            if (reg2 != null && extendedAssemblerEnabled) {
+                return new FPRToken(reg2, program, line, pos);
+            }
+            
+            // AP200806: Names of CP0 and FC registers aren't normally included, reg numbers can and will be used in such cases, at least for now
 
-        // See if it is a floating point register
-//        Register reg = Coprocessor1.getRegister(value);
-//        if (reg != null)
-//            return TokenType.FP_REGISTER_NAME;
+            // Check for valid reg number
+            Matcher m = regNumber.matcher(value);
+            if (m.matches())
+                return new RegNumberToken(Integer.decode(m.group(1)), program, line, pos);
+
+        }
 
         // See if it is an integer value
         // AP200424: Are there instances of a token other than an integer beginning with a digit? Can be a good fail-fast
@@ -1895,14 +1919,14 @@ public class StaticAssembler {
             case "maddu":
             case "msub":
             case "msubu":
-                return InstructionSyntax.R2;
-            case "tge": // TODO CODE MISSING!!
-            case "tgeu": // TODO CODE MISSING!!
-            case "tlt": // TODO CODE MISSING!!
-            case "tltu": // TODO CODE MISSING!!
-            case "teq": // TODO CODE MISSING!!
-            case "tne": // TODO CODE MISSING!!
-                return InstructionSyntax.R2C10;
+                return InstructionSyntax.GG;
+            case "tge":
+            case "tgeu":
+            case "tlt":
+            case "tltu":
+            case "teq":
+            case "tne":
+                return InstructionSyntax.GGC10;
 
             // [ZshamtReversedRinstr]
             case "sllv":
@@ -1922,13 +1946,13 @@ public class StaticAssembler {
             case "sltu":
             case "movz":
             case "movn":
-                return InstructionSyntax.R3;
+                return InstructionSyntax.GGG;
 
             // [ZrsRinstr]
             case "sll":
             case "srl":
             case "sra":
-                return InstructionSyntax.R2I5;
+                return InstructionSyntax.GGI5;
 
             // [ArithmIinstr]
             case "addi":
@@ -1938,7 +1962,7 @@ public class StaticAssembler {
             case "xori":
             case "slti":
             case "sltiu":
-                return InstructionSyntax.R2I16;
+                return InstructionSyntax.GGI16;
 
             // [LoadStoreIinstr]
             case "lb":
@@ -1964,19 +1988,19 @@ public class StaticAssembler {
             case "blez":
             case "bltz":
             case "bltzal":
-                return InstructionSyntax.R1A16;
+                return InstructionSyntax.GA16;
             case "tgei":
             case "tgeiu":
             case "tlti":
             case "tltiu":
             case "teqi":
             case "tnei":
-                return InstructionSyntax.R1I16;
+                return InstructionSyntax.GI16;
 
             // [BranchIinstr]
             case "beq":
             case "bne":
-                return InstructionSyntax.R2A16;
+                return InstructionSyntax.GGA16;
 
 
             // [HiLoRinstr]
@@ -1984,7 +2008,7 @@ public class StaticAssembler {
             case "mflo":
             case "mthi":
             case "mtlo":
-                return InstructionSyntax.R1;
+                return InstructionSyntax.G;
 
             // [Jinstr]
             case "j":
@@ -1994,39 +2018,43 @@ public class StaticAssembler {
             // [CountBitsRinstr]
             case "clo":
             case "clz":
-                return InstructionSyntax.R2;
+                return InstructionSyntax.GG;
 
             // CUSTOM: lui REG, IMM
             case "lui":
-                return InstructionSyntax.R1I16;
+                return InstructionSyntax.GI16;
 
             // CUSTOM: jr REG
             case "jr":
-                return InstructionSyntax.R1;
+                return InstructionSyntax.G;
 
             // CAUTION: Two distinct binary forms are specified for a JAL! A possible solution is to return R2 and implement a hack in the pattern matcher
             //    jalr REG
             //    jalr REG, REG
             // NOTE: The hint field is always set to zero by R2000 spec
             case "jalr":
-                return InstructionSyntax.R2; // CAN BE R1, CAUTION!
+                return InstructionSyntax.GG; // CAN BE 'G', CAUTION!
 
             case "eret":
             case "nop":
-            case "syscall": // TODO CODE MISSING!!
-            case "break": // TODO CODE MISSING!!
                 return InstructionSyntax.E;
+            case "syscall":
+            case "break":
+                return InstructionSyntax.C20;
 
-
-            // CAUTION: Immediate is 3-bit long
+            // [FPUMOVinstr]
             case "movf":
             case "movt":
-                return InstructionSyntax.R2I3;
+                return InstructionSyntax.GGI3;
+            // These instructions have an implicit selector form to zero; see solution above for 'jal'
+            case "mtc0":
+            case "mfc0":
+                return InstructionSyntax.GPI3; // CAN BE 'GP', CAUTION!
 
 
 
             default:
-                // Bad operator, it most probably is a pseudo-operator
+                // Bad operator, possibly unimplemented, or a pseudo-operator
                 return null;
         }
     }
@@ -2065,7 +2093,7 @@ public class StaticAssembler {
         int[] operands = new int[] {0, 0, 0};
         int i = 0;
         for (; i < pattern.length; i++) {
-
+            
             // Check if line is already exausted
             if (line.size() - 1 == i) {
 
@@ -2075,15 +2103,15 @@ public class StaticAssembler {
                     // Should be either a break or a syscall, operands are set to zero already
                     break;
                 }
-                if (syn == InstructionSyntax.R2C10 && i == 2) {
-                    // R-type trap instruction the reasoning above applies all the same
+                if (syn == InstructionSyntax.GGC10 && i == 2) {
+                    // R-type trap instruction, the reasoning above applies all the same
                     break;
                 }
 
-                // HACK: JALR also accepts an R1 syntay insted of R2
+                // HACK: JALR can also accept an R1 syntax instead of R2
                 if (operator.equals("jalr") && i == 1) {
-                    // Last reg has been left implicit, is $31
-                    operands[i] = Registers.Descriptor.$ra.ordinal();
+                    // Last reg has been left implicit, is $ra
+                    operands[i] = 31;
                     break;
                 }
                 //</editor-fold>
@@ -2095,12 +2123,13 @@ public class StaticAssembler {
             }
 
             Token<?> candidate = line.get(i + 1);
+            Class<?> candidateClass = candidate.getClass();
 
             //<editor-fold defaultstate="collapsed" desc="PARENTHESES">
             if (pattern[i] == RightParenToken.class || pattern[i] == LeftParenToken.class) {
 
-                if (candidate.getClass() != pattern[i]) {
-                    errors.add(new ErrorMessage(program, candidate.lineNumber, candidate.position, "Expected parenthesis"));
+                if (candidateClass != pattern[i]) {
+                    errors.add(new ErrorMessage(program, candidate.lineNumber, candidate.position, "Expected '" + (pattern[i] == RightParenToken.class ? ")" : "(") + "' parenthesis"));
                     throw new ProcessingException(errors);
                 }
 
@@ -2109,17 +2138,55 @@ public class StaticAssembler {
             }
             //</editor-fold>
 
-            //<editor-fold defaultstate="collapsed" desc="REGISTER">
-            if (pattern[i] == RegisterToken.class) {
+            //<editor-fold defaultstate="collapsed" desc="REGISTERS">
+            if (pattern[i] == GPRToken.class) {
 
-                if (candidate.getClass() != pattern[i]) {
-                    errors.add(new ErrorMessage(program, candidate.lineNumber, candidate.position, "Expected a register"));
+                if (candidateClass == GPRToken.class) {
+                    // Candidate is effectively a GPR, save the operand
+                    operands[i] = ((GPRToken) candidate).value.ordinal();
+                }
+                else if (candidateClass == RegNumberToken.class){
+                    // May have a reg number (throw a warning, in case extended assembler is on?)
+                    operands[i] = ((RegNumberToken) candidate).value;
+                }
+                else {
+                    // No good, even if it is a FPR
+                    errors.add(new ErrorMessage(program, candidate.lineNumber, candidate.position, "Expected a GPR"));
                     throw new ProcessingException(errors);
                 }
-
-                // Candidate is effectively a register, save the operand
-                operands[i] = ((RegisterToken) candidate).value.ordinal();
                 continue;
+            }
+            
+            if (pattern[i] == FPRToken.class) {
+
+                if (candidateClass == FPRToken.class) {
+                    // Candidate is effectively a FPR, save the operand
+                    operands[i] = ((FPRToken) candidate).value.ordinal();
+                }
+                else if (candidateClass == RegNumberToken.class){
+                    // May have a reg number (throw a warning, in case extended assembler is on?)
+                    operands[i] = ((RegNumberToken) candidate).value;
+                }
+                else {
+                    // No good, even if it is a GPR
+                    errors.add(new ErrorMessage(program, candidate.lineNumber, candidate.position, "Expected a FPR"));
+                    throw new ProcessingException(errors);
+                }
+                continue;
+            }
+            
+            if (pattern[i] == RegNumberToken.class) {
+                
+                if (candidateClass == RegNumberToken.class){
+                    // May have a reg number (throw a warning, in case extended assembler is on?)
+                    operands[i] = ((RegNumberToken) candidate).value;
+                }
+                else {
+                    errors.add(new ErrorMessage(program, candidate.lineNumber, candidate.position, "Expected a register number"));
+                    throw new ProcessingException(errors);
+                }
+                continue;
+
             }
             //</editor-fold>
 
@@ -2165,8 +2232,8 @@ public class StaticAssembler {
                         }
                         break;
 
-                    case R2A16:
-                    case R1A16:
+                    case GGA16:
+                    case GA16:
                         if (diff > 0x0000FFFF) {
                             // Truncation warning
                         }
@@ -2217,27 +2284,27 @@ public class StaticAssembler {
                         }
                         break;
 
-                    case R2I16:
-                    case R1I16:
+                    case GGI16:
+                    case GI16:
                     case LS:
                         if (immediate > 0x0000FFFF) {
                             // Truncation warning
                         }
                         break;
 
-                    case R2C10:
+                    case GGC10:
                         if (immediate > 0x000003FF) {
                             // Truncation warning
                         }
                         break;
 
-                    case R2I5:
+                    case GGI5:
                         if (immediate > 0x0000001F) {
                             // Truncation warning
                         }
                         break;
 
-                    case R2I3:
+                    case GGI3:
                         if (immediate > 0x00000008) {
                             // Truncation warning
                         }

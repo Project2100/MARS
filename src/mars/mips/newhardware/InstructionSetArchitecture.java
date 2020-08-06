@@ -381,13 +381,13 @@ public class InstructionSetArchitecture {
 	}
     
     
-    // 000000 sssss ttt 0x fffff 00000 000001
+    // 000000 sssss ttt 0# fffff 00000 000001
     // Format: OPERATOR rd, rs, cc[3]
     //
     // movf
     // movt
     //
-    // Note: 'x' bit is handled by the tfmask argument, opcode and func fields are fixed
+    // Note: '#' bit is handled by the true/false mask argument, opcode, shamt and func fields are fixed
     //
 	static final int genFPUMOVinstr(int[] operands, int tfmask) {
 		int i = 0;
@@ -401,14 +401,17 @@ public class InstructionSetArchitecture {
         return i | tfmask | 0x00000001;
 	}
     
-    // 010000 00m00 fffff sssss 00000 000ttt
+    // 010000 00#00 fffff sssss 00000000 ttt
     // Format: OPERATOR rt, rd, sel[3]
     // 
     // mtc0
     // mfc0
-    int genCop0RInstr(int[] operands, int opsel) {
+    //
+    // Note: '#' bit is handled by the MF/MT mask argument, opcode and shamt(8) fields are fixed
+    //
+    static final int genCop0Rinstr(int[] operands, int opmft) {
 
-        return opsel | (operands[0] << 16) | operands[1] << 11 | operands[2];
+        return opmft | (operands[0] << 16) | operands[1] << 11 | operands[2];
     }
     
     
@@ -575,7 +578,12 @@ public class InstructionSetArchitecture {
 		BasicInstructionEncodings.put("tnei", (statement) -> genBranchFuncIinstr(statement, 0x400E0000));
 
 		// R-TYPE SPECIAL
-		BasicInstructionEncodings.put("syscall", (statement) -> 0x0000000C);
+		// 000000 oooooooooooooooooooo 001100
+		BasicInstructionEncodings.put("syscall", (ops) -> {
+			// Translates both the valued and unvalued variants, the boilerplate checks should disappear...
+			// Expected assert is missing
+			return 0x0000000C | ((ops != null && ops.length != 0) ? ops[0] : 0);
+		});
 		// 000000 oooooooooooooooooooo 001101
 		BasicInstructionEncodings.put("break", (ops) -> {
 			// Translates both the valued and unvalued variants, the boilerplate checks should disappear...
@@ -589,8 +597,8 @@ public class InstructionSetArchitecture {
 		BasicInstructionEncodings.put("eret", (statement) -> 0x42000018);
         
 		// R-TYOE SELECTOR
-		BasicInstructionEncodings.put("mfc0", (statement) -> genFPUMOVinstr(statement, 0x40000000));
-		BasicInstructionEncodings.put("mtc0", (statement) -> genFPUMOVinstr(statement, 0x40800000));
+		BasicInstructionEncodings.put("mfc0", (statement) -> genCop0Rinstr(statement, 0x40000000));
+		BasicInstructionEncodings.put("mtc0", (statement) -> genCop0Rinstr(statement, 0x40800000));
 
 		// CP1 INSTRUCTIONS ----------------------------------------------------
         
@@ -601,14 +609,13 @@ public class InstructionSetArchitecture {
         
         
         
+		// ---------------------------------------------------------------------
+		// ------------- Floating Point Instructions Start Here ----------------
+		// ---------------------------------------------------------------------
         
         
         
         
-        
-        
-		////////////////////////////////////////////////////////////////////////
-		/////////////////////// Floating Point Instructions Start Here ////////////////
 //        instructionSet.add(
 //                new BasicInstruction("add.s $f0,$f1,$f3",
 //                        "Floating point addition single precision : Set $f0 to single-precision floating point value of $f1 plus $f3",

@@ -105,44 +105,53 @@ public class Registers {
     }
 
     /**
-     * This method updates the register value whose number is num.
+     * Standard setter for GPRs
      *
-     * @param reg Register to set the value of.
-     * @param val The desired value for the register.
-     * @return the register's previous value if backstepping disabled,
-     * {@code val} otherwise
+     * @param reg Register to set the value of
+     * @param val The desired value for the register
+     * @return the value previously held by the given GPR
      */
     public int setUserRegister(Descriptor reg, int val) {
-
-        int i = reg.ordinal();
-
-        // Denying reentrant synchronization
-        // PENDING test
-        if (Thread.holdsLock(userRegisters[i]))
-            throw new IllegalStateException("Reentrant call on register " + userRegisters[i].name);
-
-        return Main.isBackSteppingEnabled()
-                ? Main.program.getBackStepper().addRegisterFileRestore(i, userRegisters[i].set(val))
-                : userRegisters[i].set(val);
+        return userRegisters[reg.ordinal()].set(val);
     }
 
+    /**
+     * Standard setter for GPRs
+     *
+     * @param reg Register to get the value from
+     * @return the register's current value
+     */
     public int get(Descriptor reg) {
         return userRegisters[reg.ordinal()].get();
     }
 
+    // SIMTHREAD
     /**
      * Sets the register identified by the specified number to the given value.
+     * 
+     * @apinote This method is intended to be invoked only and exclusively in the simulating thread
      *
      * @param regNumber the number of the register to set
      * @param value the value to set the register to
      * @return the register's old value
      */
-    int set(int regNumber, int value) {
-        return setUserRegister(Descriptor.values()[regNumber], value);
+    int write(int regNumber, int value) {
+        
+        // Denying reentrant synchronization
+        // PENDING test
+        if (Thread.holdsLock(userRegisters[regNumber]))
+            throw new IllegalStateException("Reentrant call on register " + userRegisters[regNumber].name);
+
+        return Main.isBackSteppingEnabled()
+                ? Main.program.getBackStepper().addRegisterFileRestore(regNumber, userRegisters[regNumber].set(value))
+                : userRegisters[regNumber].set(value);
     }
 
+    // SIMTHREAD
     /**
      * Reads the register identified by the specified number.
+     * 
+     * @apinote This method is intended to be invoked only and exclusively in the simulating thread
      *
      * @param regNumber the number of the register to read
      * @return the register's value
@@ -193,7 +202,8 @@ public class Registers {
         return null;
     }
     
-    
+    // Was used for the assembling process, may not be needed anymore
+    @Deprecated
     public static Descriptor findByNumber(String name) {
         
         for (Descriptor desc : Descriptor.values()) {

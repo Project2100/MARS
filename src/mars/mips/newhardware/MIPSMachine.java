@@ -421,7 +421,7 @@ public class MIPSMachine {
 							throw new MIPSException("Invalid instruction: nonzero RS in SLL");
 						// Execute shift
 						//TODO: does not contemplate SSNOP and ??????
-						gpRegisters.set(rd, gpRegisters.read(rt) << shamt);
+						gpRegisters.write(rd, gpRegisters.read(rt) << shamt);
 						break;
 
 
@@ -435,10 +435,10 @@ public class MIPSMachine {
 						// Execute - see tf bit to discern MOVF from MOVT
 						if ((instruction & 0x00010000) == 0) {
 							if (coprocessor1.getFCC((instruction & 0x001B0000) >> 18) == false)
-								gpRegisters.set(rd, gpRegisters.read(rs));
+								gpRegisters.write(rd, gpRegisters.read(rs));
 						}
 						else if (coprocessor1.getFCC((instruction & 0x001B0000) >> 18) == true)
-							gpRegisters.set(rd, gpRegisters.read(rs));
+							gpRegisters.write(rd, gpRegisters.read(rs));
 
 
 					case 0b000010: // SRL
@@ -446,7 +446,7 @@ public class MIPSMachine {
 						if (rs != 0)
 							throw new MIPSException("Invalid instruction: nonzero RS in SRL");
 						// Execute shift
-						gpRegisters.set(rd, gpRegisters.read(rt) >>> shamt);
+						gpRegisters.write(rd, gpRegisters.read(rt) >>> shamt);
 						break;
 
 					case 0b000011: // SRA
@@ -454,7 +454,7 @@ public class MIPSMachine {
 						if (rs != 0)
 							throw new MIPSException("Invalid instruction: nonzero RS in SRA");
 						// Execute shift
-						gpRegisters.set(rd, gpRegisters.read(rt) >> shamt);
+						gpRegisters.write(rd, gpRegisters.read(rt) >> shamt);
 						break;
 
 					case 0b000100: // SLLV
@@ -462,7 +462,7 @@ public class MIPSMachine {
 						if (shamt != 0)
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in SLLV");
 						// Execute shift
-						gpRegisters.set(rd, gpRegisters.read(rs) << (gpRegisters.read(rt) & 0b11111));
+						gpRegisters.write(rd, gpRegisters.read(rs) << (gpRegisters.read(rt) & 0b11111));
 						break;
 
 					case 0b000110: // SRLV
@@ -470,7 +470,7 @@ public class MIPSMachine {
 						if (shamt != 0)
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in SRLV");
 						// Execute shift
-						gpRegisters.set(rd, gpRegisters.read(rs) >>> (gpRegisters.read(rt) & 0b11111));
+						gpRegisters.write(rd, gpRegisters.read(rs) >>> (gpRegisters.read(rt) & 0b11111));
 						break;
 
 					case 0b000111: // SRAV
@@ -478,7 +478,7 @@ public class MIPSMachine {
 						if (shamt != 0)
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in SRAV");
 						// Execute shift
-						gpRegisters.set(rd, gpRegisters.read(rs) >> (gpRegisters.read(rt) & 0b11111));
+						gpRegisters.write(rd, gpRegisters.read(rs) >> (gpRegisters.read(rt) & 0b11111));
 						break;
 
 					case 0b001000: // JR
@@ -495,7 +495,7 @@ public class MIPSMachine {
 						if (shamt != 0)
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in MOVZ");
 						if (gpRegisters.read(rt) == 0)
-							gpRegisters.set(rd, gpRegisters.read(rs));
+							gpRegisters.write(rd, gpRegisters.read(rs));
 						break;
 
 					case 0b001011: // MOVN
@@ -503,7 +503,7 @@ public class MIPSMachine {
 						if (shamt != 0)
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in MOVN");
 						if (gpRegisters.read(rt) != 0)
-							gpRegisters.set(rd, gpRegisters.read(rs));
+							gpRegisters.write(rd, gpRegisters.read(rs));
 						break;
 
 					case 0b001100: // SYSCALL
@@ -518,7 +518,7 @@ public class MIPSMachine {
 					case 0b010000: // MFHI
 						if (shamt != 0 || rs != 0 || rt != 0)
 							throw new MIPSException("Invalid instruction: nonzero field in MFHI");
-						gpRegisters.set(rd, hi.get());
+						gpRegisters.write(rd, hi.get());
 						break;
 
 					case 0b010001: // MTHI
@@ -530,7 +530,7 @@ public class MIPSMachine {
 					case 0b010010: // MFLO
 						if (shamt != 0 || rs != 0 || rt != 0)
 							throw new MIPSException("Invalid instruction: nonzero field in MFLO");
-						gpRegisters.set(rd, lo.get());
+						gpRegisters.write(rd, lo.get());
 						break;
 
 					case 0b010011: // MTLO
@@ -584,7 +584,7 @@ public class MIPSMachine {
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in ADD");
 						// Sum, check overflow and write to destination
 						try {
-							gpRegisters.set(rd, Math.addExact(gpRegisters.read(rs), gpRegisters.read(rt)));
+							gpRegisters.write(rd, Math.addExact(gpRegisters.read(rs), gpRegisters.read(rt)));
 						}
 						catch (ArithmeticException ex) {
 							throw new MIPSException("Integer overflow");
@@ -596,7 +596,7 @@ public class MIPSMachine {
 						if (shamt != 0)
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in ADDU");
 						// Sum and write to destination
-						gpRegisters.set(rd, gpRegisters.read(rs) + gpRegisters.read(rt));
+						gpRegisters.write(rd, gpRegisters.read(rs) + gpRegisters.read(rt));
 						break;
 
 					case 0b100010: //SUB
@@ -605,7 +605,7 @@ public class MIPSMachine {
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in SUB");
 						// Subtract, check overflow and write to destination
 						try {
-							gpRegisters.set(rd, Math.subtractExact(gpRegisters.read(rs), gpRegisters.read(rt)));
+							gpRegisters.write(rd, Math.subtractExact(gpRegisters.read(rs), gpRegisters.read(rt)));
 						}
 						catch (ArithmeticException ex) {
 							throw new MIPSException("Integer overflow");
@@ -617,7 +617,7 @@ public class MIPSMachine {
 						if (shamt != 0)
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in SUBU");
 						// Subtract and write to destination
-						gpRegisters.set(rd, gpRegisters.read(rs) - gpRegisters.read(rt));
+						gpRegisters.write(rd, gpRegisters.read(rs) - gpRegisters.read(rt));
 						break;
 
 					case 0b100100: //AND
@@ -625,7 +625,7 @@ public class MIPSMachine {
 						if (shamt != 0)
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in AND");
 						// Compute and write to destination
-						gpRegisters.set(rd, gpRegisters.read(rs) & gpRegisters.read(rt));
+						gpRegisters.write(rd, gpRegisters.read(rs) & gpRegisters.read(rt));
 						break;
 
 					case 0b100101: //OR
@@ -633,7 +633,7 @@ public class MIPSMachine {
 						if (shamt != 0)
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in OR");
 						// Compute and write to destination
-						gpRegisters.set(rd, gpRegisters.read(rs) | gpRegisters.read(rt));
+						gpRegisters.write(rd, gpRegisters.read(rs) | gpRegisters.read(rt));
 						break;
 
 					case 0b100110: //XOR
@@ -641,7 +641,7 @@ public class MIPSMachine {
 						if (shamt != 0)
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in XOR");
 						// Compute and write to destination
-						gpRegisters.set(rd, gpRegisters.read(rs) ^ gpRegisters.read(rt));
+						gpRegisters.write(rd, gpRegisters.read(rs) ^ gpRegisters.read(rt));
 						break;
 
 					case 0b100111: //NOR
@@ -649,21 +649,21 @@ public class MIPSMachine {
 						if (shamt != 0)
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in NOR");
 						// Compute and write to destination
-						gpRegisters.set(rd, ~(gpRegisters.read(rs) | gpRegisters.read(rt)));
+						gpRegisters.write(rd, ~(gpRegisters.read(rs) | gpRegisters.read(rt)));
 						break;
 
 					case 0b101010: // SLT
 						// check if shamt is empty
 						if (shamt != 0)
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in SLT");
-						gpRegisters.set(rd, (gpRegisters.read(rs) < gpRegisters.read(rt)) ? 1 : 0);
+						gpRegisters.write(rd, (gpRegisters.read(rs) < gpRegisters.read(rt)) ? 1 : 0);
 						break;
 
 					case 0b101011: // SLTU
 						// check if shamt is empty
 						if (shamt != 0)
 							throw new MIPSException("Invalid instruction: nonzero SHAMT in SLTU");
-						gpRegisters.set(rd, Integer.compareUnsigned(gpRegisters.read(rs), gpRegisters.read(rt)) < 0 ? 1 : 0);
+						gpRegisters.write(rd, Integer.compareUnsigned(gpRegisters.read(rs), gpRegisters.read(rt)) < 0 ? 1 : 0);
 						break;
 
 					case 0b110000: // TGE
@@ -812,7 +812,7 @@ public class MIPSMachine {
 			//<editor-fold defaultstate="collapsed" desc="ARITHMETIC-LOGIC IMMEDIATE INSTRUCTIONS">
 			case 0b001000: // ADDI
 				try {
-					gpRegisters.set(rt, Math.addExact(gpRegisters.read(rs), instruction << 16 >> 16));
+					gpRegisters.write(rt, Math.addExact(gpRegisters.read(rs), instruction << 16 >> 16));
 				}
 				catch (ArithmeticException ex) {
 					throw new MIPSException("Integer overflow");
@@ -820,37 +820,38 @@ public class MIPSMachine {
 				break;
 
 			case 0b001001: // ADDIU
-				gpRegisters.set(rt, gpRegisters.read(rs) + seimm(instruction));
+				gpRegisters.write(rt, gpRegisters.read(rs) + seimm(instruction));
 				break;
 
 			case 0b001010: // SLTI
-				gpRegisters.set(rt, gpRegisters.read(rs) < seimm(instruction) ? 1 : 0);
+				gpRegisters.write(rt, gpRegisters.read(rs) < seimm(instruction) ? 1 : 0);
 				break;
 
 			case 0b001011: // SLTIU
-				gpRegisters.set(rt, Integer.compareUnsigned(gpRegisters.read(rs), seimm(instruction)) < 0 ? 1 : 0);
+				gpRegisters.write(rt, Integer.compareUnsigned(gpRegisters.read(rs), seimm(instruction)) < 0 ? 1 : 0);
 				break;
 
 			case 0b001100: // ANDI
-				gpRegisters.set(rt, gpRegisters.read(rs) & zeimm(instruction));
+				gpRegisters.write(rt, gpRegisters.read(rs) & zeimm(instruction));
 				break;
 
 			case 0b001101: // ORI
-				gpRegisters.set(rt, gpRegisters.read(rs) | zeimm(instruction));
+				gpRegisters.write(rt, gpRegisters.read(rs) | zeimm(instruction));
 				break;
 
 			case 0b001110: // XORI
-				gpRegisters.set(rt, gpRegisters.read(rs) ^ zeimm(instruction));
+				gpRegisters.write(rt, gpRegisters.read(rs) ^ zeimm(instruction));
 				break;
 
 			case 0b001111: // LUI
 				// Direct instruction shift, no sign correction required
-				gpRegisters.set(rt, instruction << 16);
+				gpRegisters.write(rt, instruction << 16);
 				break;
 			//</editor-fold>
 
 			case 0b010000: // COP0 - instruction format partially compatible with R-type
                 // Decide whether bit 25 is 0 or 1: this tells us which field to look for further decode
+                // TODO: For MF and MT, throw an UB exception for incorrect reg/sel combos
                 if ((instruction & 0x01000000) == 0) {
                     switch (rs(instruction)) {
                         case 0b00000: // MF (MFC0)
@@ -858,7 +859,7 @@ public class MIPSMachine {
                                 throw new MIPSException("Unexpected bits in 0 field");
                             }
                             
-                            gpRegisters.set(rt(instruction), coprocessor0.read(rd(instruction), instruction & 0b111));
+                            gpRegisters.write(rt(instruction), coprocessor0.read(rd(instruction), instruction & 0b111));
                             
                             break;
                         case 0b00100: // MT (MTC0)
@@ -921,7 +922,7 @@ public class MIPSMachine {
 						long product = (long) rs * (long) rt;
 						hi.set((int) (product >> 32));
 						lo.set((int) product);
-						gpRegisters.set(rd, (int) product);
+						gpRegisters.write(rd, (int) product);
 						break;
 					}
 
@@ -951,7 +952,7 @@ public class MIPSMachine {
 					{
 						if (shamt != 0 || rd != rt)
 							throw new MIPSException("Invalid instruction: malformed CLZ");
-						gpRegisters.set(rd, Integer.numberOfLeadingZeros(gpRegisters.read(rs)));
+						gpRegisters.write(rd, Integer.numberOfLeadingZeros(gpRegisters.read(rs)));
 						break;
 					}
 
@@ -961,7 +962,7 @@ public class MIPSMachine {
 							throw new MIPSException("Invalid instruction: malformed CLO");
 						// Apparently Java doesn't have a corresponding function
 						// for counting ones... not a problem, though ;)
-						gpRegisters.set(rd, Integer.numberOfLeadingZeros(~gpRegisters.read(rs)));
+						gpRegisters.write(rd, Integer.numberOfLeadingZeros(~gpRegisters.read(rs)));
 						break;
 					}
 				}
@@ -974,7 +975,7 @@ public class MIPSMachine {
 			case 0b100000: // LB
 				try {
 					// Do sign extend
-					gpRegisters.set(rt, memory.read(gpRegisters.read(rs) + seimm(instruction), Memory.Boundary.BYTE, true) << 24 >> 24);
+					gpRegisters.write(rt, memory.read(gpRegisters.read(rs) + seimm(instruction), Memory.Boundary.BYTE, true) << 24 >> 24);
 				}
 				catch (AddressErrorException ex) {
 					throw new MIPSException("Invalid memory address", ex);
@@ -984,7 +985,7 @@ public class MIPSMachine {
 			case 0b100001: // LH
 				try {
 					// Do sign extend
-					gpRegisters.set(rt, memory.read(gpRegisters.read(rs) + seimm(instruction), Memory.Boundary.HALF_WORD, true) << 16 >> 16);
+					gpRegisters.write(rt, memory.read(gpRegisters.read(rs) + seimm(instruction), Memory.Boundary.HALF_WORD, true) << 16 >> 16);
 				}
 				catch (AddressErrorException ex) {
 					throw new MIPSException("Invalid memory address", ex);
@@ -1003,13 +1004,13 @@ public class MIPSMachine {
 				}
 
 				int bitOffset = ((address & 0b11) ^ 0b11) << 3;
-				gpRegisters.set(rt, (word << bitOffset) | (gpRegisters.read(rt) & ((-1 << bitOffset) ^ -1)));
+				gpRegisters.write(rt, (word << bitOffset) | (gpRegisters.read(rt) & ((-1 << bitOffset) ^ -1)));
 			}
 			break;
 
 			case 0b100011: // LW
 				try {
-					gpRegisters.set(rt, memory.read(gpRegisters.read(rs) + seimm(instruction), Memory.Boundary.WORD, false));
+					gpRegisters.write(rt, memory.read(gpRegisters.read(rs) + seimm(instruction), Memory.Boundary.WORD, false));
 				}
 				catch (AddressErrorException ex) {
 					throw new MIPSException("Invalid memory address", ex);
@@ -1018,7 +1019,7 @@ public class MIPSMachine {
 
 			case 0b100100: // LBU
 				try {
-					gpRegisters.set(rt, memory.read(gpRegisters.read(rs) + seimm(instruction), Memory.Boundary.BYTE, false));
+					gpRegisters.write(rt, memory.read(gpRegisters.read(rs) + seimm(instruction), Memory.Boundary.BYTE, false));
 				}
 				catch (AddressErrorException ex) {
 					throw new MIPSException("Invalid memory address", ex);
@@ -1027,7 +1028,7 @@ public class MIPSMachine {
 
 			case 0b100101: // LHU
 				try {
-					gpRegisters.set(rt, memory.read(gpRegisters.read(rs) + seimm(instruction), Memory.Boundary.HALF_WORD, false));
+					gpRegisters.write(rt, memory.read(gpRegisters.read(rs) + seimm(instruction), Memory.Boundary.HALF_WORD, false));
 				}
 				catch (AddressErrorException ex) {
 					throw new MIPSException("Invalid memory address", ex);
@@ -1046,7 +1047,7 @@ public class MIPSMachine {
 				}
 
 				int bitOffset = (address & 0b11) << 3;
-				gpRegisters.set(rt, (word >>> bitOffset) | (gpRegisters.read(rt) & ((-1 >>> bitOffset) ^ -1)));
+				gpRegisters.write(rt, (word >>> bitOffset) | (gpRegisters.read(rt) & ((-1 >>> bitOffset) ^ -1)));
 			}
 			break;
 
@@ -1113,7 +1114,7 @@ public class MIPSMachine {
 			{
 				try {
 					int address = gpRegisters.read(rs) + seimm(instruction);
-					gpRegisters.set(rt, memory.read(address, Memory.Boundary.WORD, false));
+					gpRegisters.write(rt, memory.read(address, Memory.Boundary.WORD, false));
 					coprocessor0.beginRMW(address);
 				}
 				catch (AddressErrorException ex) {
@@ -1129,12 +1130,12 @@ public class MIPSMachine {
 				// Must rethink the step sequence...
 				if (coprocessor0.isSynchronized(address & -2)) try {
 					memory.write(this, address, gpRegisters.read(rt), Memory.Boundary.WORD);
-					gpRegisters.set(rt, 1);
+					gpRegisters.write(rt, 1);
 				}
 				catch (AddressErrorException ex) {
 					throw new MIPSException("Invalid memory address", ex);
 				}
-				else gpRegisters.set(rt, 0);
+				else gpRegisters.write(rt, 0);
 				break;
 			}
 			//</editor-fold>
@@ -1199,7 +1200,7 @@ public class MIPSMachine {
 	 * @param m
 	 */
 	final void andLink(int regNumber) {
-		gpRegisters.set(regNumber, getProgramCounter()
+		gpRegisters.write(regNumber, getProgramCounter()
 				+ (BooleanSettings.DELAYED_BRANCHING.isSet() ? 8 : 4));
 	}
 

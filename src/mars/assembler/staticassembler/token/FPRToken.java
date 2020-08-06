@@ -6,19 +6,19 @@
 package mars.assembler.staticassembler.token;
 
 import mars.MIPSprogram;
-import mars.mips.newhardware.Registers;
+import mars.mips.newhardware.Coprocessor1;
 
 /**
- * The GPR type token
+ * The FPR type token
  *
  * @author Project2100
  */
-public class RegisterToken extends Token<Registers.Descriptor> {
+public class FPRToken extends Token<Coprocessor1.Descriptor> {
 
-    public RegisterToken(Registers.Descriptor value, MIPSprogram sourceMIPSprogram, int line, int start) {
+    public FPRToken(Coprocessor1.Descriptor value, MIPSprogram sourceMIPSprogram, int line, int start) {
         super(value, sourceMIPSprogram, line, start);
     }
-
+    
     @Override
     public String display() {
         return "$" + value.ordinal();
