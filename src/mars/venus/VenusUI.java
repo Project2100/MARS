@@ -830,8 +830,7 @@ public final class VenusUI {
      * @param evt KeyEvent for menu component to consider for processing.
      */
     public void dispatchEventToMenu(KeyEvent evt) {
-        // AP200501 - DANGER|TODO: An NPE is thrown each time the Windows key is pressed while focusing an editor pane!
-        mainFrame.getMenuBar().dispatchEvent(evt);
+        mainFrame.getJMenuBar().dispatchEvent(evt);
     }
 
     /**
