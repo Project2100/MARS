@@ -212,7 +212,7 @@ public class MIPSMachine {
 		gpRegisters = new Registers(config);
 
 		coprocessor0 = new Coprocessor0();
-		coprocessor1 = new Coprocessor1();
+		coprocessor1 = new Coprocessor1(this);
 
 		pc = new Register("pc", config.getAddress(Memory.Descriptor.TEXT_BASE_ADDRESS));
 		hi = new Register("hi", 0);
@@ -337,8 +337,8 @@ public class MIPSMachine {
 	//<editor-fold defaultstate="collapsed" desc="Instruction decoding helpers">
 	// PERSONAL NOTES
 	// --------------------
-	// 16bit Sign extension of int: val<<16>>16 | (int)(short)int
-	// 0-extension of int: val&0xFFFF
+	// 16bit sign extension of int: val << 16 >> 16 [Alternate: (int)(short)int]
+	// 16bit zero extension of int: val & 0xFFFF
 	static final int opcode(int i) {
 		return i >> 26 & 0b111111;
 	}
@@ -356,6 +356,22 @@ public class MIPSMachine {
 	}
 
 	static final int shamt(int i) {
+		return i >> 6 & 0b11111;
+	}
+
+	static final int fmt(int i) {
+		return i >> 21 & 0b11111;
+	}
+
+	static final int ft(int i) {
+		return i >> 16 & 0b11111;
+	}
+
+	static final int fs(int i) {
+		return i >> 11 & 0b11111;
+	}
+
+	static final int fd(int i) {
 		return i >> 6 & 0b11111;
 	}
 
@@ -883,6 +899,12 @@ public class MIPSMachine {
                     }
 				}
 				break;
+                
+            //<editor-fold defaultstate="collapsed" desc="COP1 OPCODE">
+            case 0b010001: // COP1
+                coprocessor1.executeCOP1(instruction);
+                break;
+            //</editor-fold>
 
 			//<editor-fold defaultstate="collapsed" desc="SPECIAL2 OPCODE">
 			case 0b011100: // SPECIAL2 opcode - instruction is implicitly R-typed
@@ -970,8 +992,8 @@ public class MIPSMachine {
 			}
 			//</editor-fold>
 
-			//<editor-fold defaultstate="collapsed" desc="MEMORY INSTRUCTIONS">
 			//TODO KMODE!
+			//<editor-fold defaultstate="collapsed" desc="MEMORY INSTRUCTIONS">
 			case 0b100000: // LB
 				try {
 					// Do sign extend
@@ -1121,6 +1143,34 @@ public class MIPSMachine {
 					throw new MIPSException("Invalid memory address", ex);
 				}
 			}
+            
+            case 0b110001: // LWC1
+            {
+				try {
+					coprocessor1.fpRegisters[rt].set(memory.read(gpRegisters.read(rs) + seimm(instruction), Memory.Boundary.WORD, false));
+				}
+				catch (AddressErrorException ex) {
+					throw new MIPSException("Invalid memory address", ex);
+				}
+				break;
+            }
+            
+            case 0b110101: // LDC1
+            {
+                if (rt % 2 != 0) {
+                    throw new MIPSException("Invalid register for double format");
+                }
+                long val;
+				try {
+					val = memory.read(gpRegisters.read(rs) + seimm(instruction), Memory.Boundary.DOUBLE_WORD, false);
+				}
+				catch (AddressErrorException ex) {
+					throw new MIPSException("Invalid memory address", ex);
+				}
+                coprocessor1.fpRegisters[rt].set((int) (val >> 32));
+                coprocessor1.fpRegisters[rt + 1].set((int) val);
+				break;
+            }
 
 			case 0b111000: // SC
 			{
@@ -1138,8 +1188,34 @@ public class MIPSMachine {
 				else gpRegisters.write(rt, 0);
 				break;
 			}
+            
+            case 0b111001: // SWC1
+            {
+				try {
+					memory.write(this, gpRegisters.read(rs) + seimm(instruction), coprocessor1.fpRegisters[rt].get(), Memory.Boundary.WORD);
+				}
+				catch (AddressErrorException ex) {
+					throw new MIPSException("Invalid memory address", ex);
+				}
+				break;
+            }
+            
+            case 0b111101: // SDC1
+            {
+                if (rt % 2 != 0) {
+                    throw new MIPSException("Invalid register for double format");
+                }
+                long val = (((long) coprocessor1.fpRegisters[rt].get()) << 32) | coprocessor1.fpRegisters[rt + 1].get();
+                try {
+                    memory.writeDouble(gpRegisters.read(rs) + seimm(instruction), val, coprocessor0.isInKMode());
+				}
+				catch (AddressErrorException ex) {
+					throw new MIPSException("Invalid memory address", ex);
+				}
+				break;
+            }
 			//</editor-fold>
-
+            
 			default:
 				throw new MIPSException("Invalid opcode:" + opcode(instruction));
 		}

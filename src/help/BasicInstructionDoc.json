@@ -505,19 +505,19 @@
             "mnemonic": "tgeiu",
             "format": "I",
             "example": "tgeiu $rs, Z",
-            "description": "Trap if greater or equal to immediate unsigned : Trap if $t1 greater than or equal to sign-extended 16 bit immediate, unsigned comparison"
+            "description": "Trap if greater or equal to immediate unsigned: Trap if $t1 greater than or equal to sign-extended 16 bit immediate, unsigned comparison"
         },
         {
             "mnemonic": "tlti",
             "format": "I",
             "example": "tlti $rs, Z",
-            "description": "Trap if less than immediate : Trap if $t1 less than sign-extended 16-bit immediate"
+            "description": "Trap if less than immediate: Trap if $t1 less than sign-extended 16-bit immediate"
         },
         {
             "mnemonic": "tltiu",
             "format": "I",
             "example": "tltiu $rs, Z",
-            "description": "Trap if less than immediate unsigned : Trap if $t1 less than sign-extended 16-bit immediate, unsigned comparison"
+            "description": "Trap if less than immediate unsigned: Trap if $t1 less than sign-extended 16-bit immediate, unsigned comparison"
         },
         {
             "mnemonic": "eret",
@@ -530,28 +530,323 @@
 			"mnemonic": "movf",
 			"format": "R",
 			"example": "movf $t1, $t2, F",
-			"description": "Move if specified FP condition flag false : Set $t1 to $t2 if FPU (Coprocessor 1) condition flag specified by the immediate is false (zero)"
+			"description": "Move if specified FP condition flag false: Set $t1 to $t2 if FPU (Coprocessor 1) condition flag specified by the immediate is false (zero)"
 		},
 		{
 			"mnemonic": "movt",
 			"format": "R",
 			"example": "movt $t1, $t2, F",
-			"description": "Move if specfied FP condition flag true : Set $t1 to $t2 if FPU (Coprocessor 1) condition flag specified by the immediate is true (one)"
+			"description": "Move if specfied FP condition flag true: Set $t1 to $t2 if FPU (Coprocessor 1) condition flag specified by the immediate is true (one)"
 		},
         
         {
 			"mnemonic": "mfc0",
 			"format": "R",
 			"example": "mfc0 $t1, (C0)$x",
-			"description": "Move from Coprocessor 0 : Set $t1 to the value stored in register x of Coprocessor 0"
+			"description": "Move from Coprocessor 0: Set $t1 to the value stored in register x of Coprocessor 0"
 		},
 		{
 			"mnemonic": "mtc0",
 			"format": "R",
 			"example": "mtc0 $t1, (C0)$x",
-			"description": "Move to Coprocessor 0 : Set Coprocessor 0 register x to value stored in $t1"
-		}
+			"description": "Move to Coprocessor 0: Set Coprocessor 0 register x to value stored in $t1"
+		},
         
+        
+		{
+			"mnemonic": "add.s",
+			"format": "R",
+			"example": "add.s $f1, $f3, $f5",
+			"description": "Floating point addition single precision: Set $f1 to single-precision floating point value of $f3 plus $f5"
+		},
+		{
+			"mnemonic": "sub.s",
+			"format": "R",
+			"example": "sub.s $f1, $f3, $f5",
+			"description": "Floating point subtraction single precision : Set $f1 to single-precision floating point value of $f3  minus $f5"
+		},
+		{
+			"mnemonic": "mul.s",
+			"format": "R",
+			"example": "mul.s $f1, $f3, $f5",
+			"description": "Floating point multiplication single precision : Set $f1 to single-precision floating point value of $f3 times $f5"
+		},
+		{
+			"mnemonic": "div.s",
+			"format": "R",
+			"example": "div.s $f1, $f3, $f5",
+			"description": "Floating point division single precision : Set $f1 to single-precision floating point value of $f3 divided by $f5"
+		},
+		{
+			"mnemonic": "sqrt.s",
+			"format": "R",
+			"example": "sqrt.s $f1, $f3",
+			"description": "Square root single precision : Set $f1 to single-precision floating point square root of $f3"
+		},
+		{
+			"mnemonic": "abs.s",
+			"format": "R",
+			"example": "abs.s $f1, $f3",
+			"description": "Floating point absolute value single precision : Set $f1 to absolute value of $f3, single precision"
+		},
+		{
+			"mnemonic": "mov.s",
+			"format": "R",
+			"example": "mov.s $f1, $f3",
+			"description": "Move floating point single precision : Set single precision $f1 to single precision value in $f3"
+		},
+		{
+			"mnemonic": "neg.s",
+			"format": "R",
+			"example": "neg.s $f1, $f3",
+			"description": "Floating point negate single precision : Set single precision $f1 to negation of single precision value in $f3"
+		},
+		{
+			"mnemonic": "movf.s",
+			"format": "R",
+			"example": ["movf.s $f1, $f3, 0", "movf.s $f1, $f3"],
+			"description": "Move floating point single precision : If condition flag specified by immediate (default = 0) is false, set single precision $f1 to single precision value in $f3"
+		},
+		{
+			"mnemonic": "movt.s",
+			"format": "R",
+			"example": ["movt.s $f1, $f3, 0", "movt.s $f1, $f3"],
+			"description": "Move floating point single precision : If condition flag specified by immediate (default = 0) is true, set single precision $f1 to single precision value in $f3"
+		},
+		{
+			"mnemonic": "movz.s",
+			"format": "R",
+			"example": "movz.s $f1, $f3, $f5",
+			"description": "Move floating point single precision : If $t0 is zero, set single precision $f1 to single precision value in $f3"
+		},
+		{
+			"mnemonic": "movn.s",
+			"format": "R",
+			"example": "movn.s $f1, $f3, $t0",
+			"description": "Move floating point single precision : If $t0 is not zero, set single precision $f1 to single precision value in $f3"
+		},
+		{
+			"mnemonic": "round.s",
+			"format": "R",
+			"example": "round.s $f1, $f3",
+			"description": "Round single precision to word : Set $f1 to 32-bit integer round of single-precision float in $f3"
+		},
+		{
+			"mnemonic": "trunc.s",
+			"format": "R",
+			"example": "trunc.s $f1, $f3",
+			"description": "Truncate single precision to word : Set $f1 to 32-bit integer truncation of single-precision float in $f3"
+		},
+		{
+			"mnemonic": "floor.s",
+			"format": "R",
+			"example": "floor.s $f1, $f3",
+			"description": "Floor single precision to word : Set $f1 to 32-bit integer floor of single-precision float in $f3"
+		},
+		{
+			"mnemonic": "ceil.s",
+			"format": "R",
+			"example": "ceil.s $f1, $f3",
+			"description": "Ceiling single precision to word : Set $f1 to 32-bit integer ceiling of single-precision float in $f3"
+		},
+		{
+			"mnemonic": "c.eq.s",
+			"format": "R",
+			"example": ["c.eq.s 0, $f1, $f3", "c.eq.s $f1, $f3"],
+			"description": "Compare equal single precision : If $f1 is equal to $f3, set Coprocessor 1 condition flag specified by immediate (default = 0) to true, else set it to false"
+		},
+		{
+			"mnemonic": "c.lt.s",
+			"format": "R",
+			"example": ["c.lt.s 0, $f1, $f3", "c.lt.s $f1, $f3"],
+			"description": "Compare equal single precision : If $f1 is less than $f3, set Coprocessor 1 condition flag specified by immediate (default = 0) to true, else set it to false"
+		},
+		{
+			"mnemonic": "c.le.s",
+			"format": "R",
+			"example": ["c.le.s 0, $f1, $f3", "c.le.s $f1, $f3"],
+			"description": "Compare equal single precision : If $f1 is less than or equal to $f3, set Coprocessor 1 condition flag specified by immediate (default = 0) to true, else set it to false"
+		},
+        
+        
+		{
+			"mnemonic": "add.d",
+			"format": "R",
+			"example": "add.d $f0, $f2, $f4",
+			"description": "Floating point addition double precision: Set $f0 to double-precision floating point value of $f2 plus $f4"
+		},
+		{
+			"mnemonic": "sub.d",
+			"format": "R",
+			"example": "sub.d $f0, $f2, $f4",
+			"description": "Floating point subtraction double precision : Set $f0 to double-precision floating point value of $f2 minus $f4"
+		},
+		{
+			"mnemonic": "mul.d",
+			"format": "R",
+			"example": "mul.d $f0, $f2, $f4",
+			"description": "Floating point multiplication double precision : Set $f0 to double-precision floating point value of $f2 times $f4"
+		},
+		{
+			"mnemonic": "div.d",
+			"format": "R",
+			"example": "div.d $f0, $f2, $f4",
+			"description": "Floating point division double precision : Set $f0 to double-precision floating point value of $f2 divided by $f4"
+		},
+		{
+			"mnemonic": "sqrt.d",
+			"format": "R",
+			"example": "sqrt.d $f0, $f2",
+			"description": "Square root double precision : Set $f0 to double-precision floating point square root of $f2"
+		},
+		{
+			"mnemonic": "abs.d",
+			"format": "R",
+			"example": "abs.d $f0, $f2",
+			"description": "Floating point absolute value double precision : Set $f0 to absolute value of $f2, double precision"
+		},
+		{
+			"mnemonic": "mov.d",
+			"format": "R",
+			"example": "mov.d $f0, $f2",
+			"description": "Move floating point double precision : Set double precision $f0 to double precision value in $f2"
+		},
+		{
+			"mnemonic": "neg.d",
+			"format": "R",
+			"example": "neg.d $f0, $f2",
+			"description": "Floating point negate double precision : Set double precision $f0 to negation of double precision value in $f2"
+		},
+		{
+			"mnemonic": "movf.d",
+			"format": "R",
+			"example": ["movf.d $f0, $f2, 0", "movf.d $f0, $f2"],
+			"description": "Move floating point double precision : If condition flag specified by immediate (default = 0) is false, set double precision $f0 to double precision value in $f2"
+		},
+		{
+			"mnemonic": "movt.d",
+			"format": "R",
+			"example": ["movt.d $f0, $f2, 0", "movt.d $f0, $f2"],
+			"description": "Move floating point double precision : If condition flag specified by immediate (default = 0) is true, set double precision $f0 to double precision value in $f2"
+		},
+		{
+			"mnemonic": "movz.d",
+			"format": "R",
+			"example": "movz.d $f0, $f2, $f4",
+			"description": "Move floating point double precision : If $t0 is zero, set double precision $f0 to double precision value in $f2"
+		},
+		{
+			"mnemonic": "movn.d",
+			"format": "R",
+			"example": "movn.d $f0, $f2, $t0",
+			"description": "Move floating point double precision : If $t0 is not zero, set double precision $f0 to double precision value in $f2"
+		},
+		{
+			"mnemonic": "round.d",
+			"format": "R",
+			"example": "round.d $f0, $f2",
+			"description": "Round double precision to word : Set $f0 to 32-bit integer round of double-precision float in $f2"
+		},
+		{
+			"mnemonic": "trunc.d",
+			"format": "R",
+			"example": "trunc.s $f0, $f2",
+			"description": "Truncate double precision to word : Set $f0 to 32-bit integer truncation of double-precision float in $f2"
+		},
+		{
+			"mnemonic": "floor.d",
+			"format": "R",
+			"example": "floor.d $f0, $f2",
+			"description": "Floor double precision to word : Set $f0 to 32-bit integer floor of double-precision float in $f2"
+		},
+		{
+			"mnemonic": "ceil.d",
+			"format": "R",
+			"example": "ceil.d $f0, $f2",
+			"description": "Ceiling double precision to word : Set $f0 to 32-bit integer ceiling of double-precision float in $f2"
+		},
+		{
+			"mnemonic": "c.eq.d",
+			"format": "R",
+			"example": ["c.eq.d 0, $f0, $f3", "c.eq.d $f0, $f2"],
+			"description": "Compare equal double precision : If $f0 is equal to $f2, set Coprocessor 1 condition flag specified by immediate (default = 0) to true, else set it to false"
+		},
+		{
+			"mnemonic": "c.lt.d",
+			"format": "R",
+			"example": ["c.lt.d 0, $f0, $f2", "c.lt.d $f0, $f2"],
+			"description": "Compare equal double precision : If $f0 is less than $f2, set Coprocessor 1 condition flag specified by immediate (default = 0) to true, else set it to false"
+		},
+		{
+			"mnemonic": "c.le.d",
+			"format": "R",
+			"example": ["c.le.d 0, $f0, $f2", "c.le.d $f0, $f2"],
+			"description": "Compare equal double precision : If $f0 is less than or equal to $f2, set Coprocessor 1 condition flag specified by immediate (default = 0) to true, else set it to false"
+		},
+        
+        
+		{
+			"mnemonic": "cvt.s.d",
+			"format": "R",
+			"example": "cvt.s.d $f1, $f0",
+			"description": "Convert from double precision to single precision : Set $f1 to single precision equivalent of double precision value in $f0"
+		},
+        {
+			"mnemonic": "cvt.s.w",
+			"format": "R",
+			"example": "cvt.s.w $f1, $f3",
+			"description": "Convert from word to single precision : Set $f1 to single precision equivalent of 32-bit integer value in $f3"
+		},
+        {
+			"mnemonic": "cvt.d.s",
+			"format": "R",
+			"example": "cvt.d.s $f0, $f1",
+			"description": "Convert from single precision to double precision : Set $f0 to double precision equivalent of single precision value in $f1"
+		},
+        {
+			"mnemonic": "cvt.d.w",
+			"format": "R",
+			"example": "cvt.d.w $f0, $f1",
+			"description": "Convert from word to double precision : Set $f0 to double precision equivalent of 32-bit integer value in $f1"
+		},
+        {
+			"mnemonic": "cvt.w.s",
+			"format": "R",
+			"example": "cvt.w.s $f1, $f3",
+			"description": "Convert from single precision to word : Set $f1 to 32-bit integer equivalent of single precision value in $f3"
+		},
+        {
+			"mnemonic": "cvt.w.d",
+			"format": "R",
+			"example": "cvt.w.d $f1, $f0",
+			"description": "Convert from double precision to word : Set $f1 to 32-bit integer equivalent of double precision value in $f0"
+		},
+        
+        
+        {
+			"mnemonic": "bc1f",
+			"format": "R",
+			"example": ["bc1f 0, label", "bc1f label"],
+			"description": "Branch if specified FP condition flag false: If Coprocessor 1 condition flag specified by immediate (default = 0) is false, then branch to statement at label's address"
+		},
+        {
+			"mnemonic": "bc1t",
+			"format": "R",
+			"example": ["bc1t 0, label", "bc1t label"],
+			"description": "Branch if specified FP condition flag true: If Coprocessor 1 condition flag specified by immediate (default = 0) is true, then branch to statement at label's address"
+		},
+        {
+			"mnemonic": "mfc1",
+			"format": "R",
+			"example": "mfc1 $t0, $f1",
+			"description": "Move from Coprocessor 1 (FPU) : Set $t0 to value in Coprocessor 1 register $f1"
+		},
+        {
+			"mnemonic": "mtc1",
+			"format": "R",
+			"example": "mtc1 $t0, $f1",
+			"description": "Move to Coprocessor 1 (FPU) : Set Coprocessor 1 register $f1 to value in $t0"
+		}
         
     ]
 }

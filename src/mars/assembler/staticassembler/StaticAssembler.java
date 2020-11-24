@@ -79,8 +79,8 @@ public class StaticAssembler {
      * 
      * G : GPR
      * P : CP0R
-     * F : FPR
-     * D : FCR
+     * F : FPR - single
+     * D : FPR - double
      * A : address
      * I : integer
      * C : code
@@ -96,6 +96,37 @@ public class StaticAssembler {
             GPRToken.class,
             GPRToken.class,
             GPRToken.class}),
+        FFF(new Class[] {
+            FPRToken.class,
+            FPRToken.class,
+            FPRToken.class}),
+        DDD(new Class[] {
+            DPRToken.class,
+            DPRToken.class,
+            DPRToken.class}),
+        FFG(new Class[] {
+            FPRToken.class,
+            FPRToken.class,
+            GPRToken.class}),
+        DDG(new Class[] {
+            DPRToken.class,
+            DPRToken.class,
+            GPRToken.class}),
+        FF(new Class[] {
+            FPRToken.class,
+            FPRToken.class}),
+        DD(new Class[] {
+            DPRToken.class,
+            DPRToken.class}),
+        DF(new Class[] {
+            DPRToken.class,
+            FPRToken.class}),
+        FD(new Class[] {
+            FPRToken.class,
+            DPRToken.class}),
+        GF(new Class[] {
+            GPRToken.class,
+            FPRToken.class}),
         GG(new Class[] {
             GPRToken.class,
             GPRToken.class}),
@@ -119,12 +150,40 @@ public class StaticAssembler {
             GPRToken.class,
             GPRToken.class,
             IntegerToken.class}),
+        FFI3(new Class[] {
+            FPRToken.class,
+            FPRToken.class,
+            IntegerToken.class}),
+        DDI3(new Class[] {
+            DPRToken.class,
+            DPRToken.class,
+            IntegerToken.class}),
+        FFC3(new Class[] {
+            FPRToken.class,
+            FPRToken.class,
+            IntegerToken.class}),
+        DDC3(new Class[] {
+            DPRToken.class,
+            DPRToken.class,
+            IntegerToken.class}),
         GPI3(new Class[] {
             GPRToken.class,
             RegNumberToken.class,
             IntegerToken.class}),
         LS(new Class[] {
             GPRToken.class,
+            IntegerToken.class,
+            LeftParenToken.class,
+            GPRToken.class,
+            RightParenToken.class}),
+        LSF(new Class[] {
+            FPRToken.class,
+            IntegerToken.class,
+            LeftParenToken.class,
+            GPRToken.class,
+            RightParenToken.class}),
+        LSD(new Class[] {
+            DPRToken.class,
             IntegerToken.class,
             LeftParenToken.class,
             GPRToken.class,
@@ -139,6 +198,9 @@ public class StaticAssembler {
             IntegerToken.class}),
         E(new Class[] {}),
         A26(new Class[] {
+            IdentifierToken.class}),
+        C3A16(new Class[] {
+            IntegerToken.class,
             IdentifierToken.class}),
         C20(new Class[] {
             IntegerToken.class});
@@ -311,7 +373,9 @@ public class StaticAssembler {
     static final Set<Class<?>> MACRO_PARAM_CLASSES = Set.of(
             IdentifierToken.class,
             RegNumberToken.class,
-            FRegisterToken.class,
+            GPRToken.class,
+            FPRToken.class,
+            DPRToken.class,
             IntegerToken.class,
             RealToken.class,
             StringToken.class,
@@ -474,7 +538,8 @@ public class StaticAssembler {
             // See if it is a floating point register
             Coprocessor1.Descriptor reg2 = Coprocessor1.findByName(value);
             if (reg2 != null && extendedAssemblerEnabled) {
-                return new FPRToken(reg2, program, line, pos);
+                // Check if it is capable of holding a double
+                return (reg2.ordinal() % 2 == 0) ? new DPRToken(reg2, program, line, pos) : new FPRToken(reg2, program, line, pos);
             }
             
             // AP200806: Names of CP0 and FC registers aren't normally included, reg numbers can and will be used in such cases, at least for now
@@ -1980,6 +2045,12 @@ public class StaticAssembler {
             case "ll":
             case "sc":
                 return InstructionSyntax.LS;
+            case "lwc1":
+            case "swc1":
+                return InstructionSyntax.LSF;
+            case "ldc1":
+            case "sdc1":
+                return InstructionSyntax.LSD;
 
             // [BranchFuncIinstr]
             case "bgez":
@@ -2050,8 +2121,82 @@ public class StaticAssembler {
             case "mtc0":
             case "mfc0":
                 return InstructionSyntax.GPI3; // CAN BE 'GP', CAUTION!
-
-
+                
+            // [FPURinstr]
+            case "add.s":
+            case "sub.s":
+            case "mul.s":
+            case "div.s":
+                return InstructionSyntax.FFF;
+            case "movz.s":
+            case "movn.s":
+                return InstructionSyntax.FFG;
+            case "add.d":
+            case "sub.d":
+            case "mul.d":
+            case "div.d":
+                return InstructionSyntax.DDD;
+            case "movz.d":
+            case "movn.d":
+                return InstructionSyntax.DDG;
+                
+            // [FPUzerortRinstr]
+            case "sqrt.s":
+            case "abs.s":
+            case "mov.s":
+            case "neg.s":
+            case "round.s":
+            case "trunc.s":
+            case "floor.s":
+            case "ceil.s":
+            case "cvt.w.s":
+            case "cvt.s.w":
+                return InstructionSyntax.FF;
+            case "sqrt.d":
+            case "abs.d":
+            case "mov.d":
+            case "neg.d":
+            case "round.d":
+            case "trunc.d":
+            case "floor.d":
+            case "ceil.d":
+                return InstructionSyntax.DD;
+            case "cvt.d.s":
+            case "cvt.d.w":
+                return InstructionSyntax.DF;
+            case "cvt.s.d":
+            case "cvt.w.d":
+                return InstructionSyntax.FD;
+                
+            // [FPUMOVCFinstr]
+            case "movf.s":
+            case "movt.s":
+                return InstructionSyntax.FFI3;
+            case "movf.d":
+            case "movt.d":
+                return InstructionSyntax.DDI3;
+                
+            // [FPUCinstr]
+            case "c.eq.s":
+            case "c.lt.s":
+            case "c.le.s":
+                return InstructionSyntax.FFC3;
+                
+            case "c.eq.d":
+            case "c.lt.d":
+            case "c.le.d":
+                return InstructionSyntax.DDC3;
+                
+            // [FPUBranchIinstr]
+            case "bc1t":
+            case "bc1f":
+                return InstructionSyntax.C3A16;
+                
+                // [FPUMOVCCRinstr]
+            case "mfc1":
+            case "mtc1":
+                return InstructionSyntax.GF;
+                
 
             default:
                 // Bad operator, possibly unimplemented, or a pseudo-operator
@@ -2087,17 +2232,66 @@ public class StaticAssembler {
         if (syn == null) {
             throw new RuntimeException("INTERNAL ERROR: Unrecognized operator");
         }
-
+        
         Class[] pattern = syn.sequence;
-
         int[] operands = new int[] {0, 0, 0};
         int i = 0;
+        
+        
+        //<editor-fold defaultstate="collapsed" desc="C3A16 exception">
+        // FCC branches are wonky
+        if (syn == InstructionSyntax.C3A16 && pattern.length == 1) {
+            // This is a branch on condition code with implicit code 0
+            // Code copypasted from identifier handler
+            int address;
+            Token<?> candidate = line.get(i + 1);
+            
+            if (candidate.getClass() == IdentifierToken.class) {
+                // There is a label reference, need to check if it is defined
+                Label l = Labels.get(((IdentifierToken) candidate).value);
+
+                if (l == null || !l.valid) {
+                    errors.add(new ErrorMessage(program, candidate.lineNumber, candidate.position, "Undefined label"));
+                    throw new ProcessingException(errors);
+                }
+
+                address = l.address;
+            }
+            else if (candidate.getClass() == IntegerToken.class) {
+                // Ehhhhhhhhhhhhhhhhhhhhhhhhhhh... throw a warning?
+
+                address = ((IntegerToken) candidate).value;
+            }
+            else {
+                errors.add(new ErrorMessage(program, candidate.lineNumber, candidate.position, "Expected a label"));
+                throw new ProcessingException(errors);
+            }
+
+            // Now check that this value can be correctly encoded inside the instruction
+            // AP200422 - CAUTION: If we're here, then the instruction expects a label pointing to text segments, and thus its 2 LSBs are truncated;
+            // Throw a warning on that too - BEWARE OF INTEGER INTERACTION
+            if ((address & 0b11) != 0) {
+                // WARNING
+            }
+            address >>>= 2;
+            
+            if ((Math.abs((opAddress >>> 2) - address)) > 0x0000FFFF) {
+                // Truncation warning
+            }
+
+            operands[0] = address;
+            i = 1; // Skip the next loop
+        }
+        //</editor-fold>
+        
+        
         for (; i < pattern.length; i++) {
+            
+            //<editor-fold defaultstate="collapsed" desc="Exceptions">
             
             // Check if line is already exausted
             if (line.size() - 1 == i) {
 
-                //<editor-fold defaultstate="collapsed" desc="Exceptions">
                 // Maybe the instruction expected a code, check for both syntaxes
                 if (syn == InstructionSyntax.C20 && i == 0) {
                     // Should be either a break or a syscall, operands are set to zero already
@@ -2107,6 +2301,10 @@ public class StaticAssembler {
                     // R-type trap instruction, the reasoning above applies all the same
                     break;
                 }
+                if (syn == InstructionSyntax.FFC3 && i == 2) {
+                    // R-type FPU instruction with optional condition code, the reasoning above applies all the same
+                    break;
+                }
 
                 // HACK: JALR can also accept an R1 syntax instead of R2
                 if (operator.equals("jalr") && i == 1) {
@@ -2114,13 +2312,13 @@ public class StaticAssembler {
                     operands[i] = 31;
                     break;
                 }
-                //</editor-fold>
 
                 // Barring the aforedealt cases, this line is clearly missing something
                 errors.add(new ErrorMessage(program, line.get(i).lineNumber, line.get(i).position, "Unexpected end of line"));
                 throw new ProcessingException(errors);
 
             }
+            //</editor-fold>
 
             Token<?> candidate = line.get(i + 1);
             Class<?> candidateClass = candidate.getClass();
@@ -2159,12 +2357,35 @@ public class StaticAssembler {
             
             if (pattern[i] == FPRToken.class) {
 
-                if (candidateClass == FPRToken.class) {
+                if (candidateClass == FPRToken.class || candidateClass == DPRToken.class) {
                     // Candidate is effectively a FPR, save the operand
                     operands[i] = ((FPRToken) candidate).value.ordinal();
                 }
                 else if (candidateClass == RegNumberToken.class){
                     // May have a reg number (throw a warning, in case extended assembler is on?)
+                    operands[i] = ((RegNumberToken) candidate).value;
+                }
+                else {
+                    // No good, even if it is a GPR
+                    errors.add(new ErrorMessage(program, candidate.lineNumber, candidate.position, "Expected a FPR"));
+                    throw new ProcessingException(errors);
+                }
+                continue;
+            }
+            
+            if (pattern[i] == DPRToken.class) {
+
+                if (candidateClass == DPRToken.class) {
+                    // Candidate is effectively a FPR that can handle a double, save the operand
+                    operands[i] = ((DPRToken) candidate).value.ordinal();
+                }
+                else if (candidateClass == RegNumberToken.class){
+                    // May have a reg number (throw a warning, in case extended assembler is on?)
+                    if (((RegNumberToken) candidate).value % 2 != 0) {
+                        // Invalid register for double format, throw
+                        errors.add(new ErrorMessage(program, candidate.lineNumber, candidate.position, "Invalid register for double format"));
+                        throw new ProcessingException(errors);
+                    }
                     operands[i] = ((RegNumberToken) candidate).value;
                 }
                 else {
@@ -2190,6 +2411,7 @@ public class StaticAssembler {
             }
             //</editor-fold>
 
+            // AP200903 - CAUTION: Jumps have an absolute address, while branches expect an offset!!
             //<editor-fold defaultstate="collapsed" desc="IDENTIFIER">
             if (pattern[i] == IdentifierToken.class) {
 
@@ -2305,6 +2527,8 @@ public class StaticAssembler {
                         break;
 
                     case GGI3:
+                    case FFI3:
+                    case FFC3:
                         if (immediate > 0x00000008) {
                             // Truncation warning
                         }
