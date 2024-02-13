@@ -16,6 +16,8 @@ import mars.venus.editors.jeditsyntax.SyntaxUtilities;
  Developed by Pete Sanderson (psanderson@otterbein.edu)
  and Kenneth Vollmar (kenvollmar@missouristate.edu)
 
+ Copyright (c) 2020 Andrea Proietto
+
  Permission is hereby granted, free of charge, to any person obtaining 
  a copy of this software and associated documentation files (the 
  "Software"), to deal in the Software without restriction, including 

@@ -1,7 +1,14 @@
+The project contains code from multiple authors; unless stated otherwise in the
+source files, the source can be attributed to either the original authors 
+(Pete Sanderson and Kenneth Vollmar) or the maintainer (Andrea Proietto)
+
 /*
  * MIT License
  * 
+ * Copyright (c) 2003-2008 Pete Sanderson and Kenneth Vollmar
+ *
  * Copyright (c) 2020 Andrea Proietto
+ * 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,25 +28,3 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-package mars.assembler.staticassembler.token;
-
-import mars.MIPSprogram;
-
-/**
- * The GPR type token
- *
- * @author Project2100
- */
-public class RegNumberToken extends Token<Integer> {
-
-    public RegNumberToken(Integer value, MIPSprogram sourceMIPSprogram, int line, int start) {
-        super(value, sourceMIPSprogram, line, start);
-    }
-    
-    @Override
-    public String display() {
-        return "$" + value;
-    }
-
-}
