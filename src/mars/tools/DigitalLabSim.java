@@ -115,8 +115,8 @@ public class DigitalLabSim extends AbstractMarsToolAndApplication {
                     System.exit(0);
                  }
            }
-           if (Main.getGUI() != null && (Main.getGUI().executePane).getTextSegmentWindow().getCodeHighlighting() ) {
-                (Main.getGUI().executePane).getDataSegmentWindow().updateValues();
+           if (Main.getGUI() != null && Main.getGUI().textSegment.getCodeHighlighting() ) {
+                Main.getGUI().dataSegment.updateValues();
            }
         }
      }
